@@ -1,10 +1,11 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, FileText, Users, Download } from 'lucide-react';
+import { ExternalLink, FileText, Users, Download, Upload } from 'lucide-react';
 import Modal from './Modal';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface ThemesProps {
   language: 'fr' | 'en';
@@ -12,11 +13,55 @@ interface ThemesProps {
 
 const Themes: React.FC<ThemesProps> = ({ language }) => {
   const { toast } = useToast();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submitForm, setSubmitForm] = useState({
+    nom: '',
+    prenom: '',
+    email: '',
+    fichier: null as File | null
+  });
+
+  const handleSubmitFormChange = (field: string, value: string | File | null) => {
+    setSubmitForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    handleSubmitFormChange('fichier', file);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Formulaire soumis:', submitForm);
+    // Ici vous pouvez ajouter la logique de soumission
+    setIsModalOpen(false);
+    setSubmitForm({ nom: '', prenom: '', email: '', fichier: null });
+    
+    toast({
+      title: language === 'fr' ? 'Soumission envoyée' : 'Submission sent',
+      description: language === 'fr' ? 'Votre soumission a été envoyée avec succès.' : 'Your submission has been sent successfully.',
+    });
+  };
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const content = {
     fr: {
       title: 'Thèmes de la Conférence',
       subtitle: 'Explorez nos thèmes de recherche',
+      inscription: 'Inscription',
+      deposit: 'Déposer',
+      modalTitle: 'Déposer votre soumission',
+      nom: 'Nom',
+      prenom: 'Prénom',
+      email: 'Email',
+      fichier: 'Fichier',
+      soumettre: 'Soumettre',
       themes: [
         {
           title: 'Industrie 4.0 et IoT',
@@ -62,14 +107,20 @@ const Themes: React.FC<ThemesProps> = ({ language }) => {
         }
       ],
       actions: {
-        submit: 'Soumettre dans ce thème',
-        details: 'Voir les détails',
-        examples: 'Voir des exemples'
+        details: 'Voir les détails'
       }
     },
     en: {
       title: 'Conference Themes',
       subtitle: 'Explore our research themes',
+      inscription: 'Registration',
+      deposit: 'Submit',
+      modalTitle: 'Submit your paper',
+      nom: 'Last Name',
+      prenom: 'First Name',
+      email: 'Email',
+      fichier: 'File',
+      soumettre: 'Submit',
       themes: [
         {
           title: 'Industry 4.0 & IoT',
@@ -115,53 +166,9 @@ const Themes: React.FC<ThemesProps> = ({ language }) => {
         }
       ],
       actions: {
-        submit: 'Submit in this theme',
-        details: 'View details',
-        examples: 'View examples'
+        details: 'View details'
       }
     }
-  };
-
-  const handleSubmit = (theme: string) => {
-    window.open('https://site-conf.com/call-for-papers', '_blank');
-  };
-
-  const showExamples = (theme: string) => {
-    toast({
-      title: language === 'fr' ? 'Exemples d\'articles' : 'Paper Examples',
-      description: language === 'fr' 
-        ? `Voici des exemples d'articles pour le thème "${theme}". Consultez notre site web pour plus de détails.`
-        : `Here are paper examples for the theme "${theme}". Check our website for more details.`,
-    });
-    
-    // Simulation d'ouverture d'une page d'exemples
-    setTimeout(() => {
-      window.open(`https://site-conf.com/examples/${encodeURIComponent(theme.toLowerCase())}`, '_blank');
-    }, 1000);
-  };
-
-  const downloadGuide = (theme: string) => {
-    toast({
-      title: language === 'fr' ? 'Téléchargement du guide' : 'Guide Download',
-      description: language === 'fr' 
-        ? `Téléchargement du guide de soumission pour "${theme}" en cours...`
-        : `Downloading submission guide for "${theme}"...`,
-    });
-    
-    // Simulation de téléchargement
-    setTimeout(() => {
-      const link = document.createElement('a');
-      link.href = '#';
-      link.download = `SITE2025_Guide_${theme.replace(/\s+/g, '_')}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast({
-        title: language === 'fr' ? 'Téléchargement terminé' : 'Download Complete',
-        description: language === 'fr' ? 'Le guide a été téléchargé.' : 'The guide has been downloaded.',
-      });
-    }, 2000);
   };
 
   return (
@@ -172,7 +179,7 @@ const Themes: React.FC<ThemesProps> = ({ language }) => {
             <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
               {content[language].title}
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-muted-foreground mb-8">
               {content[language].subtitle}
             </p>
           </div>
@@ -222,37 +229,82 @@ const Themes: React.FC<ThemesProps> = ({ language }) => {
                             ))}
                           </div>
                         </div>
-                        
-                        <div className="flex gap-2 pt-4">
-                          <Button onClick={() => handleSubmit(theme.title)} className="flex-1">
-                            <FileText className="w-4 h-4 mr-2" />
-                            {content[language].actions.submit}
-                          </Button>
-                          <Button variant="outline" onClick={() => showExamples(theme.title)} className="flex-1">
-                            <Users className="w-4 h-4 mr-2" />
-                            {content[language].actions.examples}
-                          </Button>
-                        </div>
-                        
-                        <Button 
-                          variant="outline" 
-                          onClick={() => downloadGuide(theme.title)}
-                          className="w-full"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          {language === 'fr' ? 'Télécharger le guide' : 'Download Guide'}
-                        </Button>
                       </div>
                     </Modal>
                     
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleSubmit(theme.title)}
-                      className="w-full"
-                    >
-                      <ExternalLink className="w-3 h-3 mr-2" />
-                      {content[language].actions.submit}
-                    </Button>
+                    {/* Boutons pour chaque thème */}
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        onClick={() => scrollToSection('registration')}
+                        className="flex-1"
+                      >
+                        {content[language].inscription}
+                      </Button>
+                      
+                      <Modal
+                        trigger={
+                          <Button 
+                            size="sm" 
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <Upload className="w-3 h-3 mr-2" />
+                            {content[language].deposit}
+                          </Button>
+                        }
+                        title={content[language].modalTitle}
+                      >
+                        <form onSubmit={handleFormSubmit} className="space-y-4">
+                          <div>
+                            <Label htmlFor="nom">{content[language].nom}</Label>
+                            <Input
+                              id="nom"
+                              type="text"
+                              value={submitForm.nom}
+                              onChange={(e) => handleSubmitFormChange('nom', e.target.value)}
+                              required
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="prenom">{content[language].prenom}</Label>
+                            <Input
+                              id="prenom"
+                              type="text"
+                              value={submitForm.prenom}
+                              onChange={(e) => handleSubmitFormChange('prenom', e.target.value)}
+                              required
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="email">{content[language].email}</Label>
+                            <Input
+                              id="email"
+                              type="email"
+                              value={submitForm.email}
+                              onChange={(e) => handleSubmitFormChange('email', e.target.value)}
+                              required
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="fichier">{content[language].fichier}</Label>
+                            <Input
+                              id="fichier"
+                              type="file"
+                              onChange={handleFileChange}
+                              accept=".pdf,.doc,.docx"
+                              required
+                            />
+                          </div>
+                          
+                          <Button type="submit" className="w-full">
+                            {content[language].soumettre}
+                          </Button>
+                        </form>
+                      </Modal>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
