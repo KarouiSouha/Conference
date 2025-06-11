@@ -113,47 +113,52 @@ const Program: React.FC<ProgramProps> = ({ language = 'fr' }) => {
 
   const getEventIcon = (type: string) => {
     switch (type) {
-      case 'welcome': return <Users className="w-5 h-5" />;
-      case 'keynote': return <Presentation className="w-5 h-5" />;
-      case 'break': return <Coffee className="w-5 h-5" />;
-      case 'session': return <Calendar className="w-5 h-5" />;
-      case 'meal': return <Coffee className="w-5 h-5" />;
-      case 'demo': return <Award className="w-5 h-5" />;
-      case 'panel': return <Users className="w-5 h-5" />;
-      case 'closing': return <Award className="w-5 h-5" />;
-      default: return <Clock className="w-5 h-5" />;
+      case 'welcome': return <Users className="w-4 h-4" />;
+      case 'keynote': return <Presentation className="w-4 h-4" />;
+      case 'break': return <Coffee className="w-4 h-4" />;
+      case 'session': return <Calendar className="w-4 h-4" />;
+      case 'meal': return <Coffee className="w-4 h-4" />;
+      case 'demo': return <Award className="w-4 h-4" />;
+      case 'panel': return <Users className="w-4 h-4" />;
+      case 'closing': return <Award className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
     }
   };
 
   const getEventColor = (type: string) => {
     switch (type) {
-      case 'welcome': return 'bg-blue-500';
-      case 'keynote': return 'bg-purple-500';
-      case 'break': return 'bg-green-500';
-      case 'session': return 'bg-orange-500';
-      case 'meal': return 'bg-red-500';
-      case 'demo': return 'bg-yellow-500';
-      case 'panel': return 'bg-pink-500';
-      case 'closing': return 'bg-indigo-500';
-      default: return 'bg-gray-500';
+      case 'welcome': return 'bg-slate-600';
+      case 'keynote': return 'bg-slate-700';
+      case 'break': return 'bg-slate-400';
+      case 'session': return 'bg-slate-600';
+      case 'meal': return 'bg-slate-500';
+      case 'demo': return 'bg-slate-600';
+      case 'panel': return 'bg-slate-700';
+      case 'closing': return 'bg-slate-800';
+      default: return 'bg-slate-500';
     }
   };
 
   return (
-    <section id="program" className="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
+    <section className="py-12 bg-white">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-16">
-            {currentContent.title}
-          </h2>
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+              {currentContent.title}
+            </h2>
+            <p className="text-slate-600 text-sm">
+              {currentContent.subtitle}
+            </p>
+          </div>
           
           <Tabs defaultValue="0" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8 bg-white shadow-lg">
+            <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100 h-10">
               {currentContent.days.map((day, index) => (
                 <TabsTrigger 
                   key={index} 
                   value={index.toString()}
-                  className="text-lg font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white"
+                  className="text-sm font-medium text-slate-700 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
                 >
                   {day.day}
                 </TabsTrigger>
@@ -162,38 +167,66 @@ const Program: React.FC<ProgramProps> = ({ language = 'fr' }) => {
             
             {currentContent.days.map((day, dayIndex) => (
               <TabsContent key={dayIndex} value={dayIndex.toString()}>
-                <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
-                  <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-t-lg">
-                    <CardTitle className="text-center text-2xl font-bold">
+                <Card className="shadow-sm border border-slate-200 bg-white">
+                  <CardHeader className="bg-slate-50 border-b border-slate-200 py-4">
+                    <CardTitle className="text-center text-lg font-semibold text-slate-800">
                       {day.day} - {day.date}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-8">
+                  <CardContent className="p-6">
                     <div className="relative">
-                      <div className="absolute left-1/2 transform -translate-x-1/2 w-1 bg-gradient-to-b from-blue-500 to-purple-500 h-full rounded-full"></div>
+                      {/* Ligne centrale verticale */}
+                      <div className="absolute left-1/2 transform -translate-x-1/2 w-0.5 bg-slate-300 h-full"></div>
                       
                       <div className="space-y-8">
                         {day.sessions.map((session, sessionIndex) => (
-                          <div 
-                            key={sessionIndex} 
-                            className={`flex items-center ${sessionIndex % 2 === 0 ? 'flex-row' : 'flex-row-reverse'} gap-8`}
-                          >
-                            <div className={`flex-1 ${sessionIndex % 2 === 0 ? 'text-right pr-4' : 'text-left pl-4'}`}>
-                              <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                                <div className="font-bold text-lg text-gray-800 mb-2">
-                                  {session.time}
+                          <div key={sessionIndex} className="relative flex items-center">
+                            {/* Contenu alternant gauche/droite */}
+                            {sessionIndex % 2 === 0 ? (
+                              // Index pair: contenu à gauche
+                              <>
+                                <div className="flex-1 pr-8 text-right">
+                                  <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200">
+                                    <div className="text-xs font-mono text-slate-600 mb-1">
+                                      {session.time}
+                                    </div>
+                                    <div className="font-medium text-slate-900 text-sm">
+                                      {session.event}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="text-gray-600 text-base leading-relaxed">
-                                  {session.event}
+                                
+                                {/* Cercle central */}
+                                <div className={`w-10 h-10 ${getEventColor(session.type)} rounded-full flex items-center justify-center text-white shadow-md relative z-10 shrink-0`}>
+                                  {getEventIcon(session.type)}
                                 </div>
-                              </div>
-                            </div>
-                            
-                            <div className={`w-12 h-12 ${getEventColor(session.type)} rounded-full flex items-center justify-center text-white shadow-lg relative z-10 shrink-0`}>
-                              {getEventIcon(session.type)}
-                            </div>
-                            
-                            <div className="flex-1"></div>
+                                
+                                {/* Espace à droite */}
+                                <div className="flex-1 pl-8"></div>
+                              </>
+                            ) : (
+                              // Index impair: contenu à droite
+                              <>
+                                {/* Espace à gauche */}
+                                <div className="flex-1 pr-8"></div>
+                                
+                                {/* Cercle central */}
+                                <div className={`w-10 h-10 ${getEventColor(session.type)} rounded-full flex items-center justify-center text-white shadow-md relative z-10 shrink-0`}>
+                                  {getEventIcon(session.type)}
+                                </div>
+                                
+                                <div className="flex-1 pl-8 text-left">
+                                  <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200">
+                                    <div className="text-xs font-mono text-slate-600 mb-1">
+                                      {session.time}
+                                    </div>
+                                    <div className="font-medium text-slate-900 text-sm">
+                                      {session.event}
+                                    </div>
+                                  </div>
+                                </div>
+                              </>
+                            )}
                           </div>
                         ))}
                       </div>
