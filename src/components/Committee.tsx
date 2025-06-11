@@ -240,6 +240,21 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
     }
   };
 
+  // Function to parse member string and separate name from affiliation
+  const parseMember = (memberString: string) => {
+    const match = memberString.match(/^(.+?)\s*\((.+)\)$/);
+    if (match) {
+      return {
+        name: match[1].trim(),
+        affiliation: match[2].trim()
+      };
+    }
+    return {
+      name: memberString,
+      affiliation: ''
+    };
+  };
+
   return (
     <section id="committee" className="py-20 bg-background">
       <div className="container mx-auto px-4">
@@ -259,27 +274,50 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
               <CardContent>
                 <div className="space-y-6">
                   {/* Chair */}
-                  <div className="border-l-4 border-primary pl-4">
-                    <h4 className="font-bold text-foreground">{content[language].scientific.chair.name}</h4>
-                    <p className="text-sm text-muted-foreground">{content[language].scientific.chair.affiliation}</p>
-                    <p className="text-xs text-primary font-medium">{content[language].scientific.chair.role}</p>
+                  <div className="border-l-4 border-primary pl-4 bg-primary/5 p-4 rounded-r-lg">
+                    <h4 className="font-bold text-lg text-foreground">{content[language].scientific.chair.name}</h4>
+                    <p className="text-sm text-muted-foreground italic">{content[language].scientific.chair.affiliation}</p>
+                    <p className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1">
+                      {content[language].scientific.chair.role}
+                    </p>
                   </div>
                   
                   {/* Co-Chair */}
-                  <div className="border-l-4 border-primary/60 pl-4">
-                    <h4 className="font-bold text-foreground">{content[language].scientific.coChair.name}</h4>
-                    <p className="text-sm text-muted-foreground">{content[language].scientific.coChair.affiliation}</p>
-                    <p className="text-xs text-primary font-medium">{content[language].scientific.coChair.role}</p>
+                  <div className="border-l-4 border-primary/60 pl-4 bg-primary/3 p-4 rounded-r-lg">
+                    <h4 className="font-bold text-lg text-foreground">{content[language].scientific.coChair.name}</h4>
+                    <p className="text-sm text-muted-foreground italic">{content[language].scientific.coChair.affiliation}</p>
+                    <p className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1">
+                      {content[language].scientific.coChair.role}
+                    </p>
                   </div>
                   
                   {/* Members */}
-                  <div className="max-h-96 overflow-y-auto space-y-2">
-                    <h5 className="font-semibold text-sm text-muted-foreground mb-2">{language === 'fr' ? 'Membres:' : 'Members:'}</h5>
-                    {content[language].scientific.members.map((member, index) => (
-                      <div key={index} className="border-l-2 border-primary/20 pl-3">
-                        <p className="text-sm text-foreground">{member}</p>
-                      </div>
-                    ))}
+                  <div className="max-h-96 overflow-y-auto space-y-3">
+                    <h5 className="font-semibold text-sm text-muted-foreground mb-4 uppercase tracking-wide">
+                      {language === 'fr' ? 'Membres' : 'Members'}
+                    </h5>
+                    <div className="grid gap-3">
+                      {content[language].scientific.members.map((member, index) => {
+                        const parsed = parseMember(member);
+                        return (
+                          <div 
+                            key={index} 
+                            className="border-l-3 border-primary/30 pl-4 py-2 hover:border-primary/60 hover:bg-primary/5 transition-all duration-200 rounded-r-md"
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-foreground text-sm leading-tight">
+                                {parsed.name}
+                              </span>
+                              {parsed.affiliation && (
+                                <span className="text-xs text-muted-foreground italic mt-1 opacity-80">
+                                  {parsed.affiliation}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -295,20 +333,31 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
               <CardContent>
                 <div className="space-y-6">
                   {/* Chair */}
-                  <div className="border-l-4 border-primary pl-4">
-                    <h4 className="font-bold text-foreground">{content[language].organizing.chair.name}</h4>
-                    <p className="text-sm text-muted-foreground">{content[language].organizing.chair.affiliation}</p>
-                    <p className="text-xs text-primary font-medium">{content[language].organizing.chair.role}</p>
+                  <div className="border-l-4 border-primary pl-4 bg-primary/5 p-4 rounded-r-lg">
+                    <h4 className="font-bold text-lg text-foreground">{content[language].organizing.chair.name}</h4>
+                    <p className="text-sm text-muted-foreground italic">{content[language].organizing.chair.affiliation}</p>
+                    <p className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1">
+                      {content[language].organizing.chair.role}
+                    </p>
                   </div>
                   
                   {/* Members */}
-                  <div className="max-h-96 overflow-y-auto space-y-2">
-                    <h5 className="font-semibold text-sm text-muted-foreground mb-2">{language === 'fr' ? 'Membres:' : 'Members:'}</h5>
-                    {content[language].organizing.members.map((member, index) => (
-                      <div key={index} className="border-l-2 border-primary/20 pl-3">
-                        <p className="text-sm text-foreground">{member}</p>
-                      </div>
-                    ))}
+                  <div className="max-h-96 overflow-y-auto space-y-3">
+                    <h5 className="font-semibold text-sm text-muted-foreground mb-4 uppercase tracking-wide">
+                      {language === 'fr' ? 'Membres' : 'Members'}
+                    </h5>
+                    <div className="grid gap-3">
+                      {content[language].organizing.members.map((member, index) => (
+                        <div 
+                          key={index} 
+                          className="border-l-3 border-primary/30 pl-4 py-2 hover:border-primary/60 hover:bg-primary/5 transition-all duration-200 rounded-r-md"
+                        >
+                          <span className="font-semibold text-foreground text-sm">
+                            {member}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </CardContent>
