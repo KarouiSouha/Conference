@@ -18,8 +18,6 @@ class Speaker extends Model
     // Relation Many-to-Many vers Realisation via la table pivot
     public function realisations()
     {
-        return $this->belongsToMany(Realisation::class, 'speaker_realisations', 'speaker_id', 'realisation_id')
-                    ->withTimestamps()
-                    ->withPivot('title_fr'); 
+        return $this->belongsToMany(Realisation::class, 'speaker_realisations', 'speaker_id', 'realisation_id');
     }
 }

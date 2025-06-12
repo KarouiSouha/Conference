@@ -18,8 +18,7 @@ class Realisation extends Model
     public function speakers()
     {
         return $this->belongsToMany(Speaker::class, 'speaker_realisations', 'realisation_id', 'speaker_id')
-                    ->withTimestamps()
-                    ->withPivot('id'); // Si vous voulez accéder à l'ID de la table pivot
+                    ->withTimestamps();
     }
 }
  
