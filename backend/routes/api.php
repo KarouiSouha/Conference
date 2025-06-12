@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SpeakerController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ImportantDateController;
@@ -20,3 +21,7 @@ use App\Http\Controllers\ImportantDateController;
 // });
 
 Route::apiResource('dates', ImportantDateController::class);
+Route::prefix('Speakers')->controller(SpeakerController::class)->group(function () {
+    Route::get('/all', 'displayAll');
+    Route::get('get/{id}', 'displayOne');
+});

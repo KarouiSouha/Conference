@@ -1,23 +1,60 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Mail, Globe, Award } from 'lucide-react';
+import { ExternalLink, Mail, Globe, Award, Loader2 } from 'lucide-react';
 import Modal from './Modal';
 import { useToast } from '@/hooks/use-toast';
 import 'keen-slider/keen-slider.min.css';
 import { useKeenSlider } from 'keen-slider/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+interface Realisation {
+  id: number;
+  title_fr: string;
+  title_en: string;
+  pivot?: {
+    title_fr: string;
+  };
+}
 
+interface Theme {
+  id: number;
+  name_fr: string;
+  name_en: string;
+}
+
+interface Speaker {
+  id: number;
+  name: string;
+  job_fr: string;
+  job_en: string;
+  country_fr: string;
+  country_en: string;
+  description_fr: string;
+  description_en: string;
+  theme_id: number;
+  theme?: Theme;
+  realisations: Realisation[];
+  email?: string; // Si vous voulez ajouter un champ email
+  website?: string; // Si vous voulez ajouter un champ website
+}
 
 interface SpeakersProps {
   language: 'fr' | 'en';
+  apiBaseUrl?: string; // URL de base de votre API Laravel
 }
 
-const Speakers: React.FC<SpeakersProps> = ({ language }) => {
+const Speakers: React.FC<SpeakersProps> = ({ 
+  language, 
+  apiBaseUrl = 'http://localhost:8000/api' 
+}) => {
   const { toast } = useToast();
+  const [speakers, setSpeakers] = useState<Speaker[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
     loop: true,
     mode: 'snap',
@@ -35,127 +72,151 @@ const Speakers: React.FC<SpeakersProps> = ({ language }) => {
     },
   });
 
+  // Charger les speakers depuis l'API Laravel
+  useEffect(() => {
+    const fetchSpeakers = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/Speakers/all');
+        if (!response.ok) {
+          throw new Error('Erreur lors du chargement des speakers');
+        }
+        const data = await response.json();
+        setSpeakers(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erreur inconnue');
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les speakers",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSpeakers();
+  }, [apiBaseUrl, toast]);
 
   const content = {
     fr: {
       title: 'Conférenciers Invités',
       subtitle: 'Des experts reconnus internationalement',
-      speakers: [
-        {
-          name: 'Dr. Sarah Johnson',
-          title: 'Professeure en IA',
-          affiliation: 'MIT, États-Unis',
-          specialty: 'Intelligence artificielle appliquée',
-          bio: 'Dr. Sarah Johnson est une pionnière dans le domaine de l\'intelligence artificielle appliquée à l\'industrie. Avec plus de 15 ans d\'expérience, elle a dirigé de nombreux projets révolutionnaires au MIT.',
-          achievements: ['Prix IEEE pour l\'Innovation en IA (2022)', 'Plus de 150 publications scientifiques', 'Conseillère pour Fortune 500'],
-          talk: 'L\'avenir de l\'IA dans l\'industrie moderne',
-          email: 'sarah.johnson@mit.edu',
-          website: 'https://ai.mit.edu/sarah-johnson'
-        },
-        {
-          name: 'Dr. Sarah Johnson',
-          title: 'Professeure en IA',
-          affiliation: 'MIT, États-Unis',
-          specialty: 'Intelligence artificielle appliquée',
-          bio: 'Dr. Sarah Johnson est une pionnière dans le domaine de l\'intelligence artificielle appliquée à l\'industrie. Avec plus de 15 ans d\'expérience, elle a dirigé de nombreux projets révolutionnaires au MIT.',
-          achievements: ['Prix IEEE pour l\'Innovation en IA (2022)', 'Plus de 150 publications scientifiques', 'Conseillère pour Fortune 500'],
-          talk: 'L\'avenir de l\'IA dans l\'industrie moderne',
-          email: 'sarah.johnson@mit.edu',
-          website: 'https://ai.mit.edu/sarah-johnson'
-        },
-        {
-          name: 'Dr. Sarah Johnson',
-          title: 'Professeure en IA',
-          affiliation: 'MIT, États-Unis',
-          specialty: 'Intelligence artificielle appliquée',
-          bio: 'Dr. Sarah Johnson est une pionnière dans le domaine de l\'intelligence artificielle appliquée à l\'industrie. Avec plus de 15 ans d\'expérience, elle a dirigé de nombreux projets révolutionnaires au MIT.',
-          achievements: ['Prix IEEE pour l\'Innovation en IA (2022)', 'Plus de 150 publications scientifiques', 'Conseillère pour Fortune 500'],
-          talk: 'L\'avenir de l\'IA dans l\'industrie moderne',
-          email: 'sarah.johnson@mit.edu',
-          website: 'https://ai.mit.edu/sarah-johnson'
-        },
-        {
-          name: 'Prof. Ahmed Benali',
-          title: 'Directeur de recherche',
-          affiliation: 'CNRS, France',
-          specialty: 'Technologies durables',
-          bio: 'Prof. Ahmed Benali est un expert reconnu en technologies durables et énergies renouvelables. Il dirige l\'équipe de recherche sur les technologies vertes au CNRS.',
-          achievements: ['Médaille d\'argent CNRS (2021)', 'Expert consultant pour l\'UE', '80+ brevets internationaux'],
-          talk: 'Innovation verte: Technologies pour un avenir durable',
-          email: 'ahmed.benali@cnrs.fr',
-          website: 'https://cnrs.fr/ahmed-benali'
-        },
-        {
-          name: 'Dr. Maria Rodriguez',
-          title: 'Ingénieure en chef',
-          affiliation: 'Siemens, Allemagne',
-          specialty: 'Industrie 4.0',
-          bio: 'Dr. Maria Rodriguez dirige l\'innovation en Industrie 4.0 chez Siemens. Elle est responsable du développement de solutions IoT industrielles de nouvelle génération.',
-          achievements: ['Innovation Award Siemens (2023)', 'Leader en transformation digitale', '120+ projets industriels'],
-          talk: 'Transformation digitale: De l\'IoT à l\'usine intelligente',
-          email: 'maria.rodriguez@siemens.com',
-          website: 'https://siemens.com/maria-rodriguez'
-        }
-      ],
       actions: {
         contact: 'Contacter',
         website: 'Site web',
         bio: 'Biographie complète'
+      },
+      labels: {
+        biography: 'Biographie',
+        achievements: 'Réalisations',
+        talk: 'Domaine d\'expertise',
+        loading: 'Chargement des speakers...',
+        error: 'Erreur lors du chargement'
       }
     },
     en: {
       title: 'Keynote Speakers',
       subtitle: 'Internationally recognized experts',
-      speakers: [
-        {
-          name: 'Dr. Sarah Johnson',
-          title: 'Professor in AI',
-          affiliation: 'MIT, USA',
-          specialty: 'Applied artificial intelligence',
-          bio: 'Dr. Sarah Johnson is a pioneer in the field of artificial intelligence applied to industry. With over 15 years of experience, she has led numerous groundbreaking projects at MIT.',
-          achievements: ['IEEE Innovation in AI Award (2022)', 'Over 150 scientific publications', 'Fortune 500 Advisor'],
-          talk: 'The Future of AI in Modern Industry',
-          email: 'sarah.johnson@mit.edu',
-          website: 'https://ai.mit.edu/sarah-johnson'
-        },
-        {
-          name: 'Prof. Ahmed Benali',
-          title: 'Research Director',
-          affiliation: 'CNRS, France',
-          specialty: 'Sustainable technologies',
-          bio: 'Prof. Ahmed Benali is a recognized expert in sustainable technologies and renewable energy. He leads the green technology research team at CNRS.',
-          achievements: ['CNRS Silver Medal (2021)', 'EU Expert Consultant', '80+ international patents'],
-          talk: 'Green Innovation: Technologies for a Sustainable Future',
-          email: 'ahmed.benali@cnrs.fr',
-          website: 'https://cnrs.fr/ahmed-benali'
-        },
-        {
-          name: 'Dr. Maria Rodriguez',
-          title: 'Chief Engineer',
-          affiliation: 'Siemens, Germany',
-          specialty: 'Industry 4.0',
-          bio: 'Dr. Maria Rodriguez leads Industry 4.0 innovation at Siemens. She is responsible for developing next-generation industrial IoT solutions.',
-          achievements: ['Siemens Innovation Award (2023)', 'Digital transformation leader', '120+ industrial projects'],
-          talk: 'Digital Transformation: From IoT to Smart Factory',
-          email: 'maria.rodriguez@siemens.com',
-          website: 'https://siemens.com/maria-rodriguez'
-        }
-      ],
       actions: {
         contact: 'Contact',
         website: 'Website',
         bio: 'Full Biography'
+      },
+      labels: {
+        biography: 'Biography',
+        achievements: 'Achievements',
+        talk: 'Area of Expertise',
+        loading: 'Loading speakers...',
+        error: 'Error loading speakers'
       }
     }
   };
 
-  const handleContact = (email: string) => {
-    window.location.href = `mailto:${email}`;
+  const handleContact = (speaker: Speaker) => {
+    if (speaker.email) {
+      window.location.href = `mailto:${speaker.email}`;
+    } else {
+      toast({
+        title: "Information",
+        description: "Email non disponible pour ce speaker",
+        variant: "default",
+      });
+    }
   };
 
-  const handleWebsite = (website: string) => {
-    window.open(website, '_blank');
+  const handleWebsite = (speaker: Speaker) => {
+    if (speaker.website) {
+      window.open(speaker.website, '_blank');
+    } else {
+      toast({
+        title: "Information",
+        description: "Site web non disponible pour ce speaker",
+        variant: "default",
+      });
+    }
   };
+
+  const getSpeakerJob = (speaker: Speaker) => {
+    return language === 'fr' ? speaker.job_fr : speaker.job_en;
+  };
+
+  const getSpeakerCountry = (speaker: Speaker) => {
+    return language === 'fr' ? speaker.country_fr : speaker.country_en;
+  };
+
+  const getSpeakerDescription = (speaker: Speaker) => {
+    return language === 'fr' ? speaker.description_fr : speaker.description_en;
+  };
+
+  const getSpeakerTheme = (speaker: Speaker) => {
+    if (!speaker.theme) return '';
+    return language === 'fr' ? speaker.theme.name_fr : speaker.theme.name_en;
+  };
+
+  const getRealisationTitle = (realisation: Realisation) => {
+    // Utiliser le titre du pivot si disponible, sinon le titre par défaut
+    if (realisation.pivot?.title_fr && language === 'fr') {
+      return realisation.pivot.title_fr;
+    }
+    return language === 'fr' ? realisation.title_fr : realisation.title_en;
+  };
+
+  if (loading) {
+    return (
+      <section id="speakers" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin mr-2" />
+            <span>{content[language].labels.loading}</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="speakers" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center text-red-500">
+            <p>{content[language].labels.error}: {error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (speakers.length === 0) {
+    return (
+      <section id="speakers" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p>Aucun speaker disponible pour le moment.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="speakers" className="py-20 bg-muted/30">
@@ -168,13 +229,12 @@ const Speakers: React.FC<SpeakersProps> = ({ language }) => {
             <p className="text-lg text-muted-foreground">
               {content[language].subtitle}
             </p>
-
           </div>
+          
           <div className="relative">
             <div ref={sliderRef} className="keen-slider">
-
-              {content[language].speakers.map((speaker, index) => (
-                <div key={index} className="keen-slider__slide">
+              {speakers.map((speaker, index) => (
+                <div key={speaker.id} className="keen-slider__slide">
                   <Card className="text-center h-full mx-2">
                     <CardContent className="p-6 flex flex-col h-full">
                       <div className="w-24 h-24 bg-primary/10 rounded-full mx-auto mb-4 flex items-center justify-center">
@@ -186,13 +246,13 @@ const Speakers: React.FC<SpeakersProps> = ({ language }) => {
                         {speaker.name}
                       </h3>
                       <p className="text-primary font-medium mb-1">
-                        {speaker.title}
+                        {getSpeakerJob(speaker)}
                       </p>
                       <p className="text-muted-foreground text-sm mb-2">
-                        {speaker.affiliation}
+                        {getSpeakerCountry(speaker)}
                       </p>
                       <p className="text-sm text-muted-foreground italic mb-4">
-                        {speaker.specialty}
+                        {getSpeakerTheme(speaker)}
                       </p>
 
                       <div className="space-y-2 mt-auto">
@@ -212,44 +272,59 @@ const Speakers: React.FC<SpeakersProps> = ({ language }) => {
                                 </span>
                               </div>
                               <h3 className="text-xl font-semibold">{speaker.name}</h3>
-                              <p className="text-primary">{speaker.title}</p>
-                              <p className="text-muted-foreground">{speaker.affiliation}</p>
+                              <p className="text-primary">{getSpeakerJob(speaker)}</p>
+                              <p className="text-muted-foreground">{getSpeakerCountry(speaker)}</p>
                             </div>
 
-                            <div>
-                              <h4 className="font-semibold mb-2">
-                                {language === 'fr' ? 'Biographie' : 'Biography'}
-                              </h4>
-                              <p className="text-muted-foreground">{speaker.bio}</p>
-                            </div>
+                            {getSpeakerDescription(speaker) && (
+                              <div>
+                                <h4 className="font-semibold mb-2">
+                                  {content[language].labels.biography}
+                                </h4>
+                                <p className="text-muted-foreground">{getSpeakerDescription(speaker)}</p>
+                              </div>
+                            )}
 
-                            <div>
-                              <h4 className="font-semibold mb-2">
-                                {language === 'fr' ? 'Réalisations' : 'Achievements'}
-                              </h4>
-                              <ul className="space-y-1">
-                                {speaker.achievements.map((achievement, idx) => (
-                                  <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
-                                    <Award className="w-3 h-3 text-primary mt-1 flex-shrink-0" />
-                                    {achievement}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
+                            {speaker.realisations && speaker.realisations.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold mb-2">
+                                  {content[language].labels.achievements}
+                                </h4>
+                                <ul className="space-y-1">
+                                  {speaker.realisations.map((realisation) => (
+                                    <li key={realisation.id} className="flex items-start gap-2 text-sm text-muted-foreground">
+                                      <Award className="w-3 h-3 text-primary mt-1 flex-shrink-0" />
+                                      {getRealisationTitle(realisation)}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
 
-                            <div>
-                              <h4 className="font-semibold mb-2">
-                                {language === 'fr' ? 'Conférence' : 'Talk'}
-                              </h4>
-                              <p className="text-muted-foreground italic">{speaker.talk}</p>
-                            </div>
+                            {getSpeakerTheme(speaker) && (
+                              <div>
+                                <h4 className="font-semibold mb-2">
+                                  {content[language].labels.talk}
+                                </h4>
+                                <p className="text-muted-foreground italic">{getSpeakerTheme(speaker)}</p>
+                              </div>
+                            )}
 
                             <div className="flex gap-2 pt-4">
-                              <Button onClick={() => handleContact(speaker.email)} className="flex-1">
+                              <Button 
+                                onClick={() => handleContact(speaker)} 
+                                className="flex-1"
+                                disabled={!speaker.email}
+                              >
                                 <Mail className="w-4 h-4 mr-2" />
                                 {content[language].actions.contact}
                               </Button>
-                              <Button variant="outline" onClick={() => handleWebsite(speaker.website)} className="flex-1">
+                              <Button 
+                                variant="outline" 
+                                onClick={() => handleWebsite(speaker)} 
+                                className="flex-1"
+                                disabled={!speaker.website}
+                              >
                                 <Globe className="w-4 h-4 mr-2" />
                                 {content[language].actions.website}
                               </Button>
@@ -261,8 +336,9 @@ const Speakers: React.FC<SpeakersProps> = ({ language }) => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleContact(speaker.email)}
+                            onClick={() => handleContact(speaker)}
                             className="flex-1"
+                            disabled={!speaker.email}
                           >
                             <Mail className="w-3 h-3 mr-1" />
                             {content[language].actions.contact}
@@ -270,8 +346,9 @@ const Speakers: React.FC<SpeakersProps> = ({ language }) => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleWebsite(speaker.website)}
+                            onClick={() => handleWebsite(speaker)}
                             className="flex-1"
+                            disabled={!speaker.website}
                           >
                             <ExternalLink className="w-3 h-3 mr-1" />
                             {content[language].actions.website}
@@ -283,21 +360,26 @@ const Speakers: React.FC<SpeakersProps> = ({ language }) => {
                 </div>
               ))}
             </div>
-            <button
-              onClick={() => instanceRef.current?.prev()}
-              className="absolute top-1/2 -translate-y-1/2 left-0 z-10 bg-white shadow p-2 rounded-full hover:bg-gray-100 transition"
-              aria-label="Précédent"
-            >
-              <ChevronLeft className="w-5 h-5 text-primary" />
-            </button>
+            
+            {speakers.length > 1 && (
+              <>
+                <button
+                  onClick={() => instanceRef.current?.prev()}
+                  className="absolute top-1/2 -translate-y-1/2 left-0 z-10 bg-white shadow p-2 rounded-full hover:bg-gray-100 transition"
+                  aria-label="Précédent"
+                >
+                  <ChevronLeft className="w-5 h-5 text-primary" />
+                </button>
 
-            <button
-              onClick={() => instanceRef.current?.next()}
-              className="absolute top-1/2 -translate-y-1/2 right-0 z-10 bg-white shadow p-2 rounded-full hover:bg-gray-100 transition"
-              aria-label="Suivant"
-            >
-              <ChevronRight className="w-5 h-5 text-primary" />
-            </button>
+                <button
+                  onClick={() => instanceRef.current?.next()}
+                  className="absolute top-1/2 -translate-y-1/2 right-0 z-10 bg-white shadow p-2 rounded-full hover:bg-gray-100 transition"
+                  aria-label="Suivant"
+                >
+                  <ChevronRight className="w-5 h-5 text-primary" />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
