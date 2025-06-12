@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Download, ExternalLink } from 'lucide-react';
+import { Calendar, Download, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Modal from './Modal';
 import { useToast } from '@/hooks/use-toast';
+
+interface ImportantDate {
+  id: number;
+  event_fr: string;
+  event_en: string;
+  date: string;
+  description_fr: string | null;
+  description_en: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 interface ImportantDatesProps {
   language: 'fr' | 'en';
@@ -11,89 +22,105 @@ interface ImportantDatesProps {
 
 const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
   const { toast } = useToast();
+  const [dates, setDates] = useState<ImportantDate[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const content = {
+  // Fonction pour formater la date
+  const formatDate = (dateString: string, lang: 'fr' | 'en'): string => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    };
+    
+    return date.toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', options);
+  };
+
+  // Fonction pour déterminer l'action basée sur le contenu de l'événement
+  const getActionType = (eventText: string): string => {
+    const lowerEvent = eventText.toLowerCase();
+    
+    if (lowerEvent.includes('soumission') || lowerEvent.includes('submission')) {
+      return 'deadline';
+    }
+    if (lowerEvent.includes('notification') || lowerEvent.includes('acceptation')) {
+      return 'notification';
+    }
+    if (lowerEvent.includes('inscription') || lowerEvent.includes('registration')) {
+      return 'register';
+    }
+    if (lowerEvent.includes('article complet') || lowerEvent.includes('full paper')) {
+      return 'final';
+    }
+    if (lowerEvent.includes('conférence') || lowerEvent.includes('conference')) {
+      return 'conference';
+    }
+    
+    return 'default';
+  };
+
+  // Appel API pour récupérer les dates
+  useEffect(() => {
+    const fetchImportantDates = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:8000/api/dates');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data: ImportantDate[] = await response.json();
+        setDates(data);
+        setError(null);
+      } catch (err) {
+        console.error('Erreur lors de la récupération des dates importantes:', err);
+        setError(language === 'fr' 
+          ? 'Erreur lors du chargement des dates importantes' 
+          : 'Error loading important dates'
+        );
+        
+        toast({
+          title: language === 'fr' ? 'Erreur' : 'Error',
+          description: language === 'fr' 
+            ? 'Impossible de charger les dates importantes' 
+            : 'Unable to load important dates',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchImportantDates();
+  }, [language, toast]);
+
+  const staticContent = {
     fr: {
       title: 'Dates Importantes',
-      dates: [
-        { 
-          event: 'Date limite de soumission (Résumé étendu)', 
-          date: '30 Juillet 2025',
-          action: 'deadline',
-          description: 'Date limite pour soumettre vos résumés étendus.'
-        },
-        { 
-          event: 'Notification d\'acceptation', 
-          date: '1er Septembre 2025',
-          action: 'notification',
-          description: 'Les auteurs recevront la notification d\'acceptation ou de refus de leur résumé étendu.'
-        },
-        { 
-          event: 'Date limite d\'inscription', 
-          date: '20 Septembre 2025',
-          action: 'register',
-          description: 'Date limite pour s\'inscrire à la conférence.'
-        },
-        { 
-          event: 'Date limite de soumission de l\'article complet', 
-          date: '1er Octobre 2025',
-          action: 'final',
-          description: 'Date limite pour soumettre la version complète des articles acceptés.'
-        },
-        { 
-          event: 'La Conférence', 
-          date: '24-26 Octobre 2025',
-          action: 'conference',
-          description: 'Trois jours de conférences, ateliers et networking.'
-        }
-      ],
       actions: {
         submit: 'Soumettre un résumé',
         register: 'S\'inscrire maintenant',
         download: 'Télécharger le guide',
         more: 'En savoir plus'
-      }
+      },
+      loading: 'Chargement...',
+      noData: 'Aucune date importante disponible',
+      dateLabel: 'Date:'
     },
     en: {
       title: 'Important Dates',
-      dates: [
-        { 
-          event: 'Submission Deadline (Extended abstract)', 
-          date: 'July 30th, 2025',
-          action: 'deadline',
-          description: 'Final deadline for extended abstract submissions.'
-        },
-        { 
-          event: 'Acceptance notification', 
-          date: 'September 1st, 2025',
-          action: 'notification',
-          description: 'Authors will receive acceptance or rejection notification for their extended abstracts.'
-        },
-        { 
-          event: 'Registration Deadline', 
-          date: 'September 20th, 2025',
-          action: 'register',
-          description: 'Final deadline for conference registration.'
-        },
-        { 
-          event: 'Full paper submission deadline', 
-          date: 'October 1st, 2025',
-          action: 'final',
-          description: 'Deadline for submitting full papers of accepted abstracts.'
-        },
-        { 
-          event: 'The Conference', 
-          date: 'October 24-26, 2025',
-          action: 'conference',
-          description: 'Three days of conferences, workshops and networking.'
-        }
-      ],
       actions: {
         submit: 'Submit Abstract',
         register: 'Register Now',
         download: 'Download Guide',
         more: 'Learn More'
-      }
+      },
+      loading: 'Loading...',
+      noData: 'No important dates available',
+      dateLabel: 'Date:'
     }
   };
 
@@ -113,7 +140,9 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
       case 'final':
         toast({
           title: language === 'fr' ? 'Information' : 'Information',
-          description: language === 'fr' ? 'Plus d\'informations seront disponibles prochainement.' : 'More information will be available soon.',
+          description: language === 'fr' 
+            ? 'Plus d\'informations seront disponibles prochainement.' 
+            : 'More information will be available soon.',
         });
         break;
       case 'conference':
@@ -128,83 +157,132 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
   const downloadGuide = () => {
     toast({
       title: language === 'fr' ? 'Téléchargement' : 'Download',
-      description: language === 'fr' ? 'Le guide sera disponible prochainement.' : 'The guide will be available soon.',
+      description: language === 'fr' 
+        ? 'Le guide sera disponible prochainement.' 
+        : 'The guide will be available soon.',
     });
   };
+
+  // Affichage du loader
+  if (loading) {
+    return (
+      <section id="dates" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-primary mb-12">
+              {staticContent[language].title}
+            </h2>
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <span className="text-muted-foreground">{staticContent[language].loading}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Affichage en cas d'erreur ou de données vides
+  if (error || dates.length === 0) {
+    return (
+      <section id="dates" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-primary mb-12">
+              {staticContent[language].title}
+            </h2>
+            <p className="text-muted-foreground">
+              {error || staticContent[language].noData}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="dates" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-primary mb-12">
-            {content[language].title}
+            {staticContent[language].title}
           </h2>
           
           <div className="grid md:grid-cols-2 gap-6">
-            {content[language].dates.map((item, index) => (
-              <Card key={index} className="border-l-4 border-l-primary hover:shadow-lg transition-all duration-300 cursor-pointer group">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4 mb-3">
-                    <Calendar className="w-8 h-8 text-primary flex-shrink-0" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
-                        {item.event}
-                      </h3>
-                      <p className="text-muted-foreground">{item.date}</p>
+            {dates.map((item) => {
+              const event = language === 'fr' ? item.event_fr : item.event_en;
+              const description = language === 'fr' ? item.description_fr : item.description_en;
+              const formattedDate = formatDate(item.date, language);
+              const actionType = getActionType(event);
+              
+              return (
+                <Card key={item.id} className="border-l-4 border-l-primary hover:shadow-lg transition-all duration-300 cursor-pointer group">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4 mb-3">
+                      <Calendar className="w-8 h-8 text-primary flex-shrink-0" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
+                          {event}
+                        </h3>
+                        <p className="text-muted-foreground">{formattedDate}</p>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground mb-4">{item.description}</p>
-                  
-                  <div className="flex gap-2">
-                    {(item.action === 'register' || item.action === 'conference') && (
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleAction(item.action)}
-                        className="flex items-center gap-1"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        {item.action === 'register' ? content[language].actions.register : 
-                         content[language].actions.more}
-                      </Button>
+                    
+                    {description && (
+                      <p className="text-sm text-muted-foreground mb-4">{description}</p>
                     )}
                     
-                    <Modal
-                      trigger={
-                        <Button variant="outline" size="sm">
-                          {content[language].actions.more}
+                    <div className="flex gap-2">
+                      {(actionType === 'register' || actionType === 'conference') && (
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleAction(actionType)}
+                          className="flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          {actionType === 'register' 
+                            ? staticContent[language].actions.register 
+                            : staticContent[language].actions.more}
                         </Button>
-                      }
-                      title={item.event}
-                    >
-                      <div className="space-y-4">
-                        <p><strong>{language === 'fr' ? 'Date:' : 'Date:'}</strong> {item.date}</p>
-                        <p>{item.description}</p>
-                        
-                        {item.action === 'deadline' && (
-                          <div className="space-y-2">
-                            <Button onClick={() => handleAction('submit')} className="w-full">
-                              <ExternalLink className="w-4 h-4 mr-2" />
-                              {content[language].actions.submit}
-                            </Button>
-                            <Button variant="outline" onClick={downloadGuide} className="w-full">
-                              <Download className="w-4 h-4 mr-2" />
-                              {content[language].actions.download}
-                            </Button>
-                          </div>
-                        )}
-                        
-                        {item.action === 'register' && (
-                          <Button onClick={() => handleAction('register')} className="w-full">
-                            {content[language].actions.register}
+                      )}
+                      
+                      <Modal
+                        trigger={
+                          <Button variant="outline" size="sm">
+                            {staticContent[language].actions.more}
                           </Button>
-                        )}
-                      </div>
-                    </Modal>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                        }
+                        title={event}
+                      >
+                        <div className="space-y-4">
+                          <p><strong>{staticContent[language].dateLabel}</strong> {formattedDate}</p>
+                          {description && <p>{description}</p>}
+                          
+                          {actionType === 'deadline' && (
+                            <div className="space-y-2">
+                              <Button onClick={() => handleAction('submit')} className="w-full">
+                                <ExternalLink className="w-4 h-4 mr-2" />
+                                {staticContent[language].actions.submit}
+                              </Button>
+                              <Button variant="outline" onClick={downloadGuide} className="w-full">
+                                <Download className="w-4 h-4 mr-2" />
+                                {staticContent[language].actions.download}
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {actionType === 'register' && (
+                            <Button onClick={() => handleAction('register')} className="w-full">
+                              {staticContent[language].actions.register}
+                            </Button>
+                          )}
+                        </div>
+                      </Modal>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </div>
