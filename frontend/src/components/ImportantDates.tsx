@@ -10,6 +10,7 @@ interface ImportantDate {
   event_fr: string;
   event_en: string;
   date: string;
+  end_date: string | null;
   description_fr: string | null;
   description_en: string | null;
   created_at: string;
@@ -26,16 +27,59 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fonction pour formater la date
-  const formatDate = (dateString: string, lang: 'fr' | 'en'): string => {
-    const date = new Date(dateString);
+  // Fonction pour formater la date avec support des plages de dates
+  const formatDate = (startDateString: string, endDateString: string | null, lang: 'fr' | 'en'): string => {
+    const startDate = new Date(startDateString);
+    
+    if (endDateString) {
+      const endDate = new Date(endDateString);
+      
+      // Vérifier si les dates sont dans le même mois et la même année
+      const sameMonth = startDate.getMonth() === endDate.getMonth() && 
+                       startDate.getFullYear() === endDate.getFullYear();
+      
+      if (sameMonth) {
+        // Format: "24-26 octobre 2025" ou "October 24-26, 2025"
+        if (lang === 'fr') {
+          const day1 = startDate.getDate();
+          const day2 = endDate.getDate();
+          const month = startDate.toLocaleDateString('fr-FR', { month: 'long' });
+          const year = startDate.getFullYear();
+          return `${day1}-${day2} ${month} ${year}`;
+        } else {
+          const month = startDate.toLocaleDateString('en-US', { month: 'long' });
+          const day1 = startDate.getDate();
+          const day2 = endDate.getDate();
+          const year = startDate.getFullYear();
+          return `${month} ${day1}-${day2}, ${year}`;
+        }
+      } else {
+        // Dates dans des mois différents
+        const startOptions: Intl.DateTimeFormatOptions = {
+          day: 'numeric',
+          month: 'long'
+        };
+        const endOptions: Intl.DateTimeFormatOptions = {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        };
+        
+        const startFormatted = startDate.toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', startOptions);
+        const endFormatted = endDate.toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', endOptions);
+        
+        return `${startFormatted} - ${endFormatted}`;
+      }
+    }
+    
+    // Une seule date
     const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     };
     
-    return date.toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', options);
+    return startDate.toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', options);
   };
 
   // Fonction pour déterminer l'action basée sur le contenu de l'événement
@@ -212,7 +256,7 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
             {dates.map((item) => {
               const event = language === 'fr' ? item.event_fr : item.event_en;
               const description = language === 'fr' ? item.description_fr : item.description_en;
-              const formattedDate = formatDate(item.date, language);
+              const formattedDate = formatDate(item.date, item.end_date, language);
               const actionType = getActionType(event);
               
               return (

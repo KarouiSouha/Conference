@@ -16,6 +16,7 @@ public function up()
         $table->string('event_fr');
         $table->string('event_en');
         $table->date('date');
+        $table->date('end_date');
         $table->text('description_fr')->nullable();
         $table->text('description_en')->nullable();
         $table->timestamps();
