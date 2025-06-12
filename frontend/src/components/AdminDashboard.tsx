@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, FileText, Calendar, Settings, Eye, Edit, Trash2, Plus, Send, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import Modal from './Modal';
 
 interface AdminDashboardProps {
   language: 'fr' | 'en';
@@ -12,8 +11,11 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ language }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [authToken, setAuthToken] = useState('');
+  const [user, setUser] = useState<any>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -73,7 +75,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ language }) => {
     fr: {
       title: 'Administration SITE 2025',
       login: 'Connexion',
-      username: 'Nom d\'utilisateur',
+      email: 'Email',
       password: 'Mot de passe',
       signin: 'Se connecter',
       logout: 'Déconnexion',
@@ -107,12 +109,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ language }) => {
         rejected: 'Rejeté',
         published: 'Publié',
         draft: 'Brouillon'
+      },
+      errors: {
+        loginFailed: 'Erreur de connexion',
+        invalidCredentials: 'Email ou mot de passe incorrect',
+        networkError: 'Erreur réseau. Vérifiez votre connexion.',
+        requiredFields: 'Tous les champs sont requis'
+      },
+      success: {
+        loginSuccess: 'Connexion réussie',
+        welcomeMessage: 'Bienvenue dans l\'administration'
       }
     },
     en: {
       title: 'SITE 2025 Administration',
       login: 'Login',
-      username: 'Username',
+      email: 'Email',
       password: 'Password',
       signin: 'Sign In',
       logout: 'Logout',
@@ -146,25 +158,102 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ language }) => {
         rejected: 'Rejected',
         published: 'Published',
         draft: 'Draft'
+      },
+      errors: {
+        loginFailed: 'Login Failed',
+        invalidCredentials: 'Invalid email or password',
+        networkError: 'Network error. Please check your connection.',
+        requiredFields: 'All fields are required'
+      },
+      success: {
+        loginSuccess: 'Login Successful',
+        welcomeMessage: 'Welcome to the administration panel'
       }
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Configuration de l'API
+  const API_BASE_URL = 'http://localhost:8000/api'; // Remplacez par votre URL d'API
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'site2025') {
-      setIsLoggedIn(true);
+    
+    // Validation des champs
+    if (!email || !password) {
       toast({
-        title: language === 'fr' ? 'Connexion réussie' : 'Login Successful',
-        description: language === 'fr' ? 'Bienvenue dans l\'administration' : 'Welcome to the administration panel',
-      });
-    } else {
-      toast({
-        title: language === 'fr' ? 'Erreur de connexion' : 'Login Error',
-        description: language === 'fr' ? 'Identifiants incorrects' : 'Invalid credentials',
+        title: content[language].errors.loginFailed,
+        description: content[language].errors.requiredFields,
         variant: 'destructive'
       });
+      return;
     }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Connexion réussie
+        setIsLoggedIn(true);
+        setAuthToken(data.access_token);
+        setUser(data.user);
+        
+        // Stocker le token pour les requêtes futures (optionnel, en mémoire seulement)
+        sessionStorage.setItem('auth_token', data.access_token);
+        sessionStorage.setItem('user', JSON.stringify(data.user));
+
+        toast({
+          title: content[language].success.loginSuccess,
+          description: content[language].success.welcomeMessage,
+        });
+      } else {
+        // Erreur de connexion
+        toast({
+          title: content[language].errors.loginFailed,
+          description: data.message || content[language].errors.invalidCredentials,
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: content[language].errors.loginFailed,
+        description: content[language].errors.networkError,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setAuthToken('');
+    setUser(null);
+    setEmail('');
+    setPassword('');
+    
+    // Nettoyer le stockage de session
+    sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('user');
+
+    toast({
+      title: language === 'fr' ? 'Déconnexion' : 'Logout',
+      description: language === 'fr' ? 'Vous avez été déconnecté avec succès' : 'You have been logged out successfully',
+    });
   };
 
   const handleView = (item: any, type: string) => {
@@ -341,14 +430,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ language }) => {
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      {content[language].username}
+                      {content[language].email}
                     </label>
                     <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                       required
+                      disabled={isLoading}
+                      placeholder="admin@example.com"
                     />
                   </div>
                   <div>
@@ -361,10 +452,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ language }) => {
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                       required
+                      disabled={isLoading}
                     />
                   </div>
-                  <Button type="submit" className="w-full">
-                    {content[language].signin}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        {language === 'fr' ? 'Connexion...' : 'Signing in...'}
+                      </div>
+                    ) : (
+                      content[language].signin
+                    )}
                   </Button>
                 </form>
               </CardContent>

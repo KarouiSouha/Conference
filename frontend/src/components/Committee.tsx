@@ -1,259 +1,171 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Award } from 'lucide-react';
+import { Users, Award, Loader2 } from 'lucide-react';
 
 interface CommitteeProps {
   language: 'fr' | 'en';
 }
 
+interface Member {
+  id: number;
+  name: string;
+  institute?: string;
+  job?: string;
+  special_role: 'chair' | 'co-chair' | 'member';
+  order: number;
+}
+
+interface CommitteeData {
+  scientific: {
+    chair: Member | null;
+    co_chair: Member | null;
+    members: Member[];
+  };
+  organizing: {
+    chair: Member | null;
+    members: Member[];
+  };
+}
+
+interface ApiResponse {
+  success: boolean;
+  language: string;
+  data: CommitteeData;
+}
+
 const Committee: React.FC<CommitteeProps> = ({ language }) => {
+  const [committeeData, setCommitteeData] = useState<CommitteeData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const content = {
     fr: {
       title: 'Comité Scientifique & Organisation',
       scientific: {
         title: 'Comité Scientifique',
-        chair: { name: 'Hassene SEDDIK', affiliation: 'ENSIT, Tunisia', role: 'Président Scientifique' },
-        coChair: { name: 'Mohamed Ali REZGUI', affiliation: 'ENSIT, Tunisia', role: 'Co-Président Scientifique' },
-        members: [
-          'Abdallah NASSOUR (Rostock University, Germany)',
-          'Abdelaziz SAHBANI (FSB, Tunisia)',
-          'Adel BECHIKH (ISET Rades, Tunisia)',
-          'Afef ABDELKRIM (ENICarthage, Tunisia)',
-          'Ali TRABELSI (ENSIT, Tunisia)',
-          'Anis HAMROUNI (UVT, Tunisia)',
-          'Atef BOULILA (INSAT, Tunisia)',
-          'Basma LAMOUCHI (ENSIT, Tunisia)',
-          'Bechir ALLOUCH (UVT, Tunisia)',
-          'Besma BEN SALAH (ISET Sousse, Tunisia)',
-          'Chiraz GHARBI (ISET Bizerte, Tunisia)',
-          'Faouzi BACHA (ENSIT, Tunisia)',
-          'Faouzi BOUANI (ENIT, Tunisia)',
-          'Ferid KOURDA (ENIT, Tunisia)',
-          'Foued LANDOLSI (ISET Nabeul, Tunisia)',
-          'Habib SMEI (ISET Rades, Tunisia)',
-          'Hassen KHARROUBI (ESIM, Tunisia)',
-          'Hechmi KHATERCHI (UVT, Tunisia)',
-          'Houria GHODBANE (Souk Ahras University, Algeria)',
-          'Houyem ABDERRAZEK (INRAP, Tunisia)',
-          'Jamel BELHADJ (ENSIT, Tunisia)',
-          'Jamel MEJRI (ESIM, Tunisia)',
-          'Jihed ZGHAL (IUT Paris Nanterre, France)',
-          'Jihen ARBI ZIANI (ParisTech, France)',
-          'Kamel BEN SAAD (ENIT, Tunisia)',
-          'Kamel MESSAOUDI (Souk Ahras University, Algeria)',
-          'Karem DHOUIB (ENSIT, Tunisia)',
-          'Khaled BOUGHZALA (ISET Ksar Hellal, Tunisia)',
-          'Khaled EL MOUEDDEB (ENSIM, Tunisia)',
-          'Kaouther GHOZZI (ISET Radès, Tunisia)',
-          'Kerstin KUCHTA (TUHH, Germany)',
-          'Latifa RABAI (ISG, Tunisia)',
-          'Malek KHADRAOUI (ISET Kasserine, Tunisia)',
-          'Mahfoudh AYADI (ENIB, Tunisia)',
-          'Mehdi TURKI (ESIM, Tunisia)',
-          'Mehrez ROMDHANE (ENIG, Tunisia)',
-          'Mohamed Fadhel SAAD (ISET Gafsa, Tunisia)',
-          'Mohamed Habib SELLAMI (ESIM, Tunisia)',
-          'Mohamed Toumi NASRI (ENIB, Tunisia)',
-          'Monia GUIZA (ENIG, Tunisia)',
-          'Mounir BEN MUSTAPHA (ISET Bizerte, Tunisia)',
-          'Mounir FRIJA (ISSAT Sousse, Tunisia)',
-          'Moktar HAMDI (INSAT, Tunisia)',
-          'Noureddine BEN YAHYA (ENSIT, Tunisia)',
-          'Noureddine HAJJAJI (ENIG, Tunisia)',
-          'Rached GHARBI (ENSIT, Tunisia)',
-          'Rachid NASRI (ENIT, Tunisia)',
-          'Rainer STEGMANN (TUHH, Germany)',
-          'Riad TOUFOUTI (Souk Ahras University, Algeria)',
-          'Ridha AZIZI (ISET Sousse, Tunisia)',
-          'Ridha KHEDRI (McMaster University, Canada)',
-          'Rima ABBASSI (ISETCom, Tunisia)',
-          'Sabri MESAOUDI (Qassim University, KSA)',
-          'Salah BEJAOUI (ISET Bizerte, Tunisia)',
-          'Sami BELLALAH (ISET Nabeul, Tunisia)',
-          'Samira BOUMOUS (Souk Ahras University, Algeria)',
-          'Sana BENKHLIFA (ESIM, Tunisia)',
-          'Sawssen EL EUCH (ISET Rades, Tunisia)',
-          'Sherien EL AGROUDY (Ain Shems University, Egypt)',
-          'Sina OUERIMI (ISET Gabès, Tunisia)',
-          'Skander REJEB (ENIG Gabès, Tunisia)',
-          'Slaheddine KHELIFI (ISET Bizerte, Tunisia)',
-          'Taoufik MHAMDI (ISET Kasserine, Tunisia)',
-          'Tarek HAMROUNI (ISAMM, Tunisia)',
-          'Toufik THELLAIDJIA (Souk Ahras University, Algeria)',
-          'Walid BARHOUMI (ENICarthage, Tunisia)',
-          'Yacine SAHRAOUI (University Soukahras, Algeria)',
-          'Yahia KOURD (University Soukahras, Algeria)',
-          'Youssef AGUERBI ZORGANI (ISET Sfax, Tunisia)',
-          'Zouhir BOUMOUS (Souk Ahras University, Algeria)'
-        ]
+        chairRole: 'Président Scientifique',
+        coChairRole: 'Co-Président Scientifique',
+        membersTitle: 'Membres'
       },
       organizing: {
         title: 'Comité d\'Organisation',
-        chair: { name: 'Manel KHATERCHI', affiliation: 'ISET Bizerte', role: 'Président Général' },
-        members: [
-          'Ali BEJAOUI',
-          'Aymen ELAMRAOUI',
-          'Bilel ZEMZEM',
-          'Boudour BARATLI',
-          'Dalila AMARA',
-          'Faten SAIDANE',
-          'Hajer BEN HAMMOUDA',
-          'Hmaied HMIDA',
-          'Houda KHATERCHI',
-          'Imen FARHAT',
-          'Jihen BOKRI',
-          'Kamel KAROUI',
-          'Khaled HAMROUNI',
-          'Ltaief LAMMARI',
-          'Malek KHADHRAOUI',
-          'Mohamed Ali REZGUI',
-          'Mohamed GHARBI',
-          'Mohamed Toumi NASRI',
-          'Mounir BEN MUSTAPHA',
-          'Naoufel FARES',
-          'Nourallah AOUINA',
-          'Ramzi BEN CHEHIDA',
-          'Salah BEJAOUI',
-          'Samira BOUMOUS',
-          'Sana DILOU',
-          'Souhaib AMDOUNI',
-          'Yamna BEN JEMAA',
-          'Yosr Zina ABDELKRIM',
-          'Zouhir BOUMOUS'
-        ]
-      }
+        chairRole: 'Président Général',
+        membersTitle: 'Membres'
+      },
+      loading: 'Chargement...',
+      error: 'Erreur lors du chargement des données'
     },
     en: {
       title: 'Scientific & Organizing Committee',
       scientific: {
         title: 'Scientific Committee',
-        chair: { name: 'Hassene SEDDIK', affiliation: 'ENSIT, Tunisia', role: 'Scientific Chair' },
-        coChair: { name: 'Mohamed Ali REZGUI', affiliation: 'ENSIT, Tunisia', role: 'Scientific Co-Chair' },
-        members: [
-          'Abdallah NASSOUR (Rostock University, Germany)',
-          'Abdelaziz SAHBANI (FSB, Tunisia)',
-          'Adel BECHIKH (ISET Rades, Tunisia)',
-          'Afef ABDELKRIM (ENICarthage, Tunisia)',
-          'Ali TRABELSI (ENSIT, Tunisia)',
-          'Anis HAMROUNI (UVT, Tunisia)',
-          'Atef BOULILA (INSAT, Tunisia)',
-          'Basma LAMOUCHI (ENSIT, Tunisia)',
-          'Bechir ALLOUCH (UVT, Tunisia)',
-          'Besma BEN SALAH (ISET Sousse, Tunisia)',
-          'Chiraz GHARBI (ISET Bizerte, Tunisia)',
-          'Faouzi BACHA (ENSIT, Tunisia)',
-          'Faouzi BOUANI (ENIT, Tunisia)',
-          'Ferid KOURDA (ENIT, Tunisia)',
-          'Foued LANDOLSI (ISET Nabeul, Tunisia)',
-          'Habib SMEI (ISET Rades, Tunisia)',
-          'Hassen KHARROUBI (ESIM, Tunisia)',
-          'Hechmi KHATERCHI (UVT, Tunisia)',
-          'Houria GHODBANE (Souk Ahras University, Algeria)',
-          'Houyem ABDERRAZEK (INRAP, Tunisia)',
-          'Jamel BELHADJ (ENSIT, Tunisia)',
-          'Jamel MEJRI (ESIM, Tunisia)',
-          'Jihed ZGHAL (IUT Paris Nanterre, France)',
-          'Jihen ARBI ZIANI (ParisTech, France)',
-          'Kamel BEN SAAD (ENIT, Tunisia)',
-          'Kamel MESSAOUDI (Souk Ahras University, Algeria)',
-          'Karem DHOUIB (ENSIT, Tunisia)',
-          'Khaled BOUGHZALA (ISET Ksar Hellal, Tunisia)',
-          'Khaled EL MOUEDDEB (ENSIM, Tunisia)',
-          'Kaouther GHOZZI (ISET Radès, Tunisia)',
-          'Kerstin KUCHTA (TUHH, Germany)',
-          'Latifa RABAI (ISG, Tunisia)',
-          'Malek KHADRAOUI (ISET Kasserine, Tunisia)',
-          'Mahfoudh AYADI (ENIB, Tunisia)',
-          'Mehdi TURKI (ESIM, Tunisia)',
-          'Mehrez ROMDHANE (ENIG, Tunisia)',
-          'Mohamed Fadhel SAAD (ISET Gafsa, Tunisia)',
-          'Mohamed Habib SELLAMI (ESIM, Tunisia)',
-          'Mohamed Toumi NASRI (ENIB, Tunisia)',
-          'Monia GUIZA (ENIG, Tunisia)',
-          'Mounir BEN MUSTAPHA (ISET Bizerte, Tunisia)',
-          'Mounir FRIJA (ISSAT Sousse, Tunisia)',
-          'Moktar HAMDI (INSAT, Tunisia)',
-          'Noureddine BEN YAHYA (ENSIT, Tunisia)',
-          'Noureddine HAJJAJI (ENIG, Tunisia)',
-          'Rached GHARBI (ENSIT, Tunisia)',
-          'Rachid NASRI (ENIT, Tunisia)',
-          'Rainer STEGMANN (TUHH, Germany)',
-          'Riad TOUFOUTI (Souk Ahras University, Algeria)',
-          'Ridha AZIZI (ISET Sousse, Tunisia)',
-          'Ridha KHEDRI (McMaster University, Canada)',
-          'Rima ABBASSI (ISETCom, Tunisia)',
-          'Sabri MESAOUDI (Qassim University, KSA)',
-          'Salah BEJAOUI (ISET Bizerte, Tunisia)',
-          'Sami BELLALAH (ISET Nabeul, Tunisia)',
-          'Samira BOUMOUS (Souk Ahras University, Algeria)',
-          'Sana BENKHLIFA (ESIM, Tunisia)',
-          'Sawssen EL EUCH (ISET Rades, Tunisia)',
-          'Sherien EL AGROUDY (Ain Shems University, Egypt)',
-          'Sina OUERIMI (ISET Gabès, Tunisia)',
-          'Skander REJEB (ENIG Gabès, Tunisia)',
-          'Slaheddine KHELIFI (ISET Bizerte, Tunisia)',
-          'Taoufik MHAMDI (ISET Kasserine, Tunisia)',
-          'Tarek HAMROUNI (ISAMM, Tunisia)',
-          'Toufik THELLAIDJIA (Souk Ahras University, Algeria)',
-          'Walid BARHOUMI (ENICarthage, Tunisia)',
-          'Yacine SAHRAOUI (University Soukahras, Algeria)',
-          'Yahia KOURD (University Soukahras, Algeria)',
-          'Youssef AGUERBI ZORGANI (ISET Sfax, Tunisia)',
-          'Zouhir BOUMOUS (Souk Ahras University, Algeria)'
-        ]
+        chairRole: 'Scientific Chair',
+        coChairRole: 'Scientific Co-Chair',
+        membersTitle: 'Members'
       },
       organizing: {
         title: 'Organizing Committee',
-        chair: { name: 'Manel KHATERCHI', affiliation: 'ISET Bizerte', role: 'General Chair' },
-        members: [
-          'Ali BEJAOUI',
-          'Aymen ELAMRAOUI',
-          'Bilel ZEMZEM',
-          'Boudour BARATLI',
-          'Dalila AMARA',
-          'Faten SAIDANE',
-          'Hajer BEN HAMMOUDA',
-          'Hmaied HMIDA',
-          'Houda KHATERCHI',
-          'Imen FARHAT',
-          'Jihen BOKRI',
-          'Kamel KAROUI',
-          'Khaled HAMROUNI',
-          'Ltaief LAMMARI',
-          'Malek KHADHRAOUI',
-          'Mohamed Ali REZGUI',
-          'Mohamed GHARBI',
-          'Mohamed Toumi NASRI',
-          'Mounir BEN MUSTAPHA',
-          'Naoufel FARES',
-          'Nourallah AOUINA',
-          'Ramzi BEN CHEHIDA',
-          'Salah BEJAOUI',
-          'Samira BOUMOUS',
-          'Sana DILOU',
-          'Souhaib AMDOUNI',
-          'Yamna BEN JEMAA',
-          'Yosr Zina ABDELKRIM',
-          'Zouhir BOUMOUS'
-        ]
-      }
+        chairRole: 'General Chair',
+        membersTitle: 'Members'
+      },
+      loading: 'Loading...',
+      error: 'Error loading data'
     }
   };
 
-  // Function to parse member string and separate name from affiliation
-  const parseMember = (memberString: string) => {
-    const match = memberString.match(/^(.+?)\s*\((.+)\)$/);
-    if (match) {
-      return {
-        name: match[1].trim(),
-        affiliation: match[2].trim()
-      };
-    }
-    return {
-      name: memberString,
-      affiliation: ''
+  useEffect(() => {
+    const fetchCommitteeData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch(`http://localhost:8000/api/Comite/all?lang=${language}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result: ApiResponse = await response.json();
+        
+        if (result.success) {
+          setCommitteeData(result.data);
+        } else {
+          throw new Error('API returned success: false');
+        }
+      } catch (err) {
+        console.error('Error fetching committee data:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
     };
-  };
+
+    fetchCommitteeData();
+  }, [language]);
+
+  const renderMember = (member: Member, index: number, isChair: boolean = false) => (
+    <div 
+      key={member.id || index} 
+      className={`${isChair 
+        ? 'border-l-4 border-primary pl-4 bg-primary/5 p-4 rounded-r-lg' 
+        : 'border-l-3 border-primary/30 pl-4 py-2 hover:border-primary/60 hover:bg-primary/5 transition-all duration-200 rounded-r-md'
+      }`}
+    >
+      <div className="flex flex-col">
+        <span className={`font-semibold text-foreground ${isChair ? 'text-lg' : 'text-sm'} leading-tight`}>
+          {member.name}
+        </span>
+        {member.institute && (
+          <span className={`text-muted-foreground italic mt-1 opacity-80 ${isChair ? 'text-sm' : 'text-xs'}`}>
+            {member.institute}
+          </span>
+        )}
+        {isChair && member.job && (
+          <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1 w-fit">
+            {member.job}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <section id="committee" className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-center h-64">
+              <div className="flex items-center gap-2 text-primary">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="text-lg">{content[language].loading}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="committee" className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center text-red-500">
+                <p className="text-lg">{content[language].error}</p>
+                <p className="text-sm text-muted-foreground mt-2">{error}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!committeeData) {
+    return null;
+  }
 
   return (
     <section id="committee" className="py-20 bg-background">
@@ -264,6 +176,7 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8">
+            {/* Scientific Committee */}
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary">
@@ -274,55 +187,45 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
               <CardContent>
                 <div className="space-y-6">
                   {/* Chair */}
-                  <div className="border-l-4 border-primary pl-4 bg-primary/5 p-4 rounded-r-lg">
-                    <h4 className="font-bold text-lg text-foreground">{content[language].scientific.chair.name}</h4>
-                    <p className="text-sm text-muted-foreground italic">{content[language].scientific.chair.affiliation}</p>
-                    <p className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1">
-                      {content[language].scientific.chair.role}
-                    </p>
-                  </div>
+                  {committeeData.scientific.chair && renderMember(committeeData.scientific.chair, 0, true)}
                   
                   {/* Co-Chair */}
-                  <div className="border-l-4 border-primary/60 pl-4 bg-primary/3 p-4 rounded-r-lg">
-                    <h4 className="font-bold text-lg text-foreground">{content[language].scientific.coChair.name}</h4>
-                    <p className="text-sm text-muted-foreground italic">{content[language].scientific.coChair.affiliation}</p>
-                    <p className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1">
-                      {content[language].scientific.coChair.role}
-                    </p>
-                  </div>
+                  {committeeData.scientific.co_chair && (
+                    <div className="border-l-4 border-primary/60 pl-4 bg-primary/3 p-4 rounded-r-lg">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-foreground text-lg leading-tight">
+                          {committeeData.scientific.co_chair.name}
+                        </span>
+                        {committeeData.scientific.co_chair.institute && (
+                          <span className="text-sm text-muted-foreground italic mt-1 opacity-80">
+                            {committeeData.scientific.co_chair.institute}
+                          </span>
+                        )}
+                        {committeeData.scientific.co_chair.job && (
+                          <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1 w-fit">
+                            {committeeData.scientific.co_chair.job}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Members */}
-                  <div className="max-h-96 overflow-y-auto space-y-3">
-                    <h5 className="font-semibold text-sm text-muted-foreground mb-4 uppercase tracking-wide">
-                      {language === 'fr' ? 'Membres' : 'Members'}
-                    </h5>
-                    <div className="grid gap-3">
-                      {content[language].scientific.members.map((member, index) => {
-                        const parsed = parseMember(member);
-                        return (
-                          <div 
-                            key={index} 
-                            className="border-l-3 border-primary/30 pl-4 py-2 hover:border-primary/60 hover:bg-primary/5 transition-all duration-200 rounded-r-md"
-                          >
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-foreground text-sm leading-tight">
-                                {parsed.name}
-                              </span>
-                              {parsed.affiliation && (
-                                <span className="text-xs text-muted-foreground italic mt-1 opacity-80">
-                                  {parsed.affiliation}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                  {committeeData.scientific.members.length > 0 && (
+                    <div className="max-h-96 overflow-y-auto space-y-3">
+                      <h5 className="font-semibold text-sm text-muted-foreground mb-4 uppercase tracking-wide">
+                        {content[language].scientific.membersTitle}
+                      </h5>
+                      <div className="grid gap-3">
+                        {committeeData.scientific.members.map((member, index) => renderMember(member, index))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
+            {/* Organizing Committee */}
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary">
@@ -333,32 +236,19 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
               <CardContent>
                 <div className="space-y-6">
                   {/* Chair */}
-                  <div className="border-l-4 border-primary pl-4 bg-primary/5 p-4 rounded-r-lg">
-                    <h4 className="font-bold text-lg text-foreground">{content[language].organizing.chair.name}</h4>
-                    <p className="text-sm text-muted-foreground italic">{content[language].organizing.chair.affiliation}</p>
-                    <p className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1">
-                      {content[language].organizing.chair.role}
-                    </p>
-                  </div>
+                  {committeeData.organizing.chair && renderMember(committeeData.organizing.chair, 0, true)}
                   
                   {/* Members */}
-                  <div className="max-h-96 overflow-y-auto space-y-3">
-                    <h5 className="font-semibold text-sm text-muted-foreground mb-4 uppercase tracking-wide">
-                      {language === 'fr' ? 'Membres' : 'Members'}
-                    </h5>
-                    <div className="grid gap-3">
-                      {content[language].organizing.members.map((member, index) => (
-                        <div 
-                          key={index} 
-                          className="border-l-3 border-primary/30 pl-4 py-2 hover:border-primary/60 hover:bg-primary/5 transition-all duration-200 rounded-r-md"
-                        >
-                          <span className="font-semibold text-foreground text-sm">
-                            {member}
-                          </span>
-                        </div>
-                      ))}
+                  {committeeData.organizing.members.length > 0 && (
+                    <div className="max-h-96 overflow-y-auto space-y-3">
+                      <h5 className="font-semibold text-sm text-muted-foreground mb-4 uppercase tracking-wide">
+                        {content[language].organizing.membersTitle}
+                      </h5>
+                      <div className="grid gap-3">
+                        {committeeData.organizing.members.map((member, index) => renderMember(member, index))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
