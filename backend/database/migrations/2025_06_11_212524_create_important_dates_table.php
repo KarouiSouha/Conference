@@ -18,7 +18,6 @@ public function up()
         $table->date('date');
         $table->text('description_fr')->nullable();
         $table->text('description_en')->nullable();
-        $table->string('action')->nullable(); // ex: register, deadline...
         $table->timestamps();
     });
 }

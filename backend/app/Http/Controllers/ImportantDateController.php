@@ -20,8 +20,7 @@ class ImportantDateController extends Controller
             'event_en' => 'required|string',
             'date' => 'required|date',
             'description_fr' => 'nullable|string',
-            'description_en' => 'nullable|string',
-            'action' => 'nullable|string',
+            'description_en' => 'nullable|string'
         ]);
 
         return ImportantDate::create($validated);
