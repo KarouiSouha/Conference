@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 class SpeakerController extends Controller
 {
     public function displayAll(){
-        $speakers = Speaker::fincAll();
+        $speakers = Speaker::with('realisations')::all();
         return response()->json($speakers);
     }
     public function displayOne($id){

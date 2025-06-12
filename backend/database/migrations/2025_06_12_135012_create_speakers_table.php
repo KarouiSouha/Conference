@@ -14,12 +14,14 @@ return new class extends Migration
         Schema::create('speakers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('emaail')->unique();
             $table->string('job_fr');
+            $table->string('job_en');
             $table->string('country_fr');
             $table->string('country_en');
             $table->text('description_fr')->nullable();
             $table->text('description_en')->nullable();
-            $table->foreignId('theme_id')->constrained('themes')->onDelete('cascade');
+            $table->foreignId('theme_id')->nullable()->constrained('themes')->onDelete('cascade');
             $table->timestamps();
         });
     }
