@@ -246,14 +246,38 @@ const formatDate = (startDateString: string, endDateString: string | null, lang:
     }
   };
 
-  const downloadGuide = () => {
+  const downloadGuide = async () => {
+  try {
+    const response = await fetch('http://localhost:8080/storage/app/public/pdfs/Template_SITE2023.pdf');
+    if (!response.ok) throw new Error('Fichier non trouvé');
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Template_SITE2023.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+
     toast({
       title: language === 'fr' ? 'Téléchargement' : 'Download',
       description: language === 'fr' 
-        ? 'Le guide sera disponible prochainement.' 
-        : 'The guide will be available soon.',
+        ? 'Téléchargement du guide en cours...' 
+        : 'Downloading the guide...',
     });
-  };
+  } catch (error) {
+    toast({
+      title: language === 'fr' ? 'Erreur' : 'Error',
+      description: language === 'fr' 
+        ? 'Le guide n\'a pas pu être téléchargé.' 
+        : 'The guide could not be downloaded.',
+      status: 'error',
+    });
+  }
+};
+
 
   // Affichage du loader
   if (loading) {
