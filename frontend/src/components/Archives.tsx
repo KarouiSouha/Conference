@@ -81,8 +81,8 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
   };
 
   const handleDownload = (year: string) => {
-    setDownloadStatus(currentLanguage === 'fr' 
-      ? `Téléchargement des actes SITE ${year} en cours...` 
+    setDownloadStatus(currentLanguage === 'fr'
+      ? `Téléchargement des actes SITE ${year} en cours...`
       : `Downloading SITE ${year} proceedings...`);
 
     setTimeout(() => {
@@ -92,9 +92,9 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      setDownloadStatus(currentLanguage === 'fr' 
-        ? 'Téléchargement terminé!' 
+
+      setDownloadStatus(currentLanguage === 'fr'
+        ? 'Téléchargement terminé!'
         : 'Download complete!');
 
       setTimeout(() => setDownloadStatus(''), 3000);
@@ -102,10 +102,10 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
   };
 
   const handleViewBestPapers = (year: string) => {
-    setDownloadStatus(currentLanguage === 'fr' 
+    setDownloadStatus(currentLanguage === 'fr'
       ? `Redirection vers les meilleurs articles de ${year}...`
       : `Redirecting to best papers from ${year}...`);
-    
+
     setTimeout(() => {
       window.open(`https://site-conf.com/best-papers/${year}`, '_blank');
       setDownloadStatus('');
@@ -113,15 +113,19 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
   };
 
   const handleViewPhotos = (year: string) => {
-    setDownloadStatus(currentLanguage === 'fr' 
-      ? `Ouverture de la galerie photos ${year}...`
-      : `Opening photo gallery ${year}...`);
-    
+    setDownloadStatus(
+      currentLanguage === 'fr'
+        ? `Ouverture de la galerie photos ${year}...`
+        : `Opening photo gallery ${year}...`
+    );
+
     setTimeout(() => {
-      window.open(`https://site-conf.com/gallery/${year}`, '_blank');
+      const url = `https://site-conf.com/site-${year}/`;
+      window.open(url, '_blank'); // ouvre dans un nouvel onglet
       setDownloadStatus('');
     }, 500);
   };
+
 
   return (
     <section id="archives" className="py-20 bg-slate-50">
@@ -140,7 +144,7 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
               </div>
             )}
           </div>
-          
+
           <div className="space-y-6">
             {content[currentLanguage].editions.map((edition, index) => (
               <Card key={index} className="border border-slate-200 hover:shadow-lg transition-all duration-300">
@@ -180,14 +184,14 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="grid md:grid-cols-3 gap-4">
-                    <Button 
+                    <Button
                       onClick={() => handleDownload(edition.year)}
                       className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white"
                     >
                       <Download className="w-4 h-4" />
                       {content[currentLanguage].actions.download}
                     </Button>
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={() => handleViewBestPapers(edition.year)}
                       className="flex items-center gap-2 border-slate-600 text-slate-700 hover:bg-slate-50"
@@ -195,7 +199,7 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
                       <ExternalLink className="w-4 h-4" />
                       {content[currentLanguage].actions.bestPapers}
                     </Button>
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={() => handleViewPhotos(edition.year)}
                       className="flex items-center gap-2 border-slate-600 text-slate-700 hover:bg-slate-50"

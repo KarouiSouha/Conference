@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Calendar } from 'lucide-react';
@@ -13,22 +12,22 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       title: 'Contact & Informations Pratiques',
       venue: {
         title: 'Lieu de la conférence',
-        name: 'ISET Bizerte',
-        address: 'Route de Tunis Km 7, 7021 Bizerte, Tunisie',
-        description: 'Campus moderne avec toutes les facilités nécessaires'
+        name: 'Yasmine Hammamet',
+        address: 'Station touristique Yasmine Hammamet, 8050 Hammamet, Tunisie',
+        description: 'Station balnéaire moderne avec toutes les facilités nécessaires'
       },
       accommodation: {
         title: 'Hébergement',
         hotels: [
-          { name: 'Hôtel Bizerte Resort', distance: '5 km du campus' },
-          { name: 'Corniche Palace', distance: '8 km du campus' },
-          { name: 'Villa Lassagne', distance: '10 km du campus' }
+          { name: 'Four Seasons Hotel Tunis', distance: 'Dans la station' },
+          { name: 'Mövenpick Resort & Marine Spa', distance: '2 km' },
+          { name: 'Iberostar Averroes', distance: '3 km' }
         ]
       },
       contact: {
         title: 'Contact',
         email: 'contact@site2025.tn',
-        phone: '+216 72 590 312',
+        phone: '+216 98 954 990',
         organizer: 'Comité d\'organisation SITE 2025'
       }
     },
@@ -36,22 +35,22 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
       title: 'Contact & Practical Information',
       venue: {
         title: 'Conference Venue',
-        name: 'ISET Bizerte',
-        address: 'Route de Tunis Km 7, 7021 Bizerte, Tunisia',
-        description: 'Modern campus with all necessary facilities'
+        name: 'Yasmine Hammamet',
+        address: 'Yasmine Hammamet Tourist Resort, 8050 Hammamet, Tunisia',
+        description: 'Modern seaside resort with all necessary facilities'
       },
       accommodation: {
         title: 'Accommodation',
         hotels: [
-          { name: 'Bizerte Resort Hotel', distance: '5 km from campus' },
-          { name: 'Corniche Palace', distance: '8 km from campus' },
-          { name: 'Villa Lassagne', distance: '10 km from campus' }
+          { name: 'Four Seasons Hotel Tunis', distance: 'Within the resort' },
+          { name: 'Mövenpick Resort & Marine Spa', distance: '2 km' },
+          { name: 'Iberostar Averroes', distance: '3 km' }
         ]
       },
       contact: {
         title: 'Contact',
         email: 'contact@site2025.tn',
-        phone: '+216 72 590 312',
+        phone: '+216 98 954 990',
         organizer: 'SITE 2025 Organizing Committee'
       }
     }
@@ -64,7 +63,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
           <h2 className="text-3xl md:text-4xl font-bold text-center text-primary mb-12">
             {content[language].title}
           </h2>
-          
+         
           <div className="grid md:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
@@ -85,7 +84,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                 </p>
               </CardContent>
             </Card>
-            
+           
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -104,7 +103,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                 </div>
               </CardContent>
             </Card>
-            
+           
             <Card>
               <CardHeader>
                 <CardTitle>{content[language].contact.title}</CardTitle>

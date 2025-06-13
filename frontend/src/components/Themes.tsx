@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  ExternalLink, 
-  FileText, 
-  Users, 
-  Download, 
-  Upload, 
+import {
+  ExternalLink,
+  FileText,
+  Users,
+  Download,
+  Upload,
   Loader2,
   BookOpen,
   Brain,
@@ -82,7 +82,7 @@ const getIconComponent = (iconString: string, title: string) => {
 
   // Sinon, essayer de deviner l'icône basée sur le titre (en minuscules)
   const lowerTitle = title.toLowerCase();
-  
+
   if (lowerTitle.includes('technolog') || lowerTitle.includes('informatique') || lowerTitle.includes('digital')) {
     return Computer;
   } else if (lowerTitle.includes('santé') || lowerTitle.includes('health') || lowerTitle.includes('médical')) {
@@ -105,7 +105,25 @@ const getIconComponent = (iconString: string, title: string) => {
   return FileText;
 };
 
-const Themes: React.FC<ThemesProps> = ({ 
+// Fonction pour extraire la première phrase
+const getFirstSentence = (text: string): string => {
+  if (!text) return '';
+  
+  // Chercher le premier point suivi d'un espace ou fin de chaîne
+  const match = text.match(/^[^.!?]*[.!?](?:\s|$)/);
+  if (match) {
+    return match[0].trim();
+  }
+  
+  // Si pas de ponctuation trouvée, limiter à 100 caractères avec "..."
+  if (text.length > 100) {
+    return text.substring(0, 97) + '...';
+  }
+  
+  return text;
+};
+
+const Themes: React.FC<ThemesProps> = ({
   language,
   apiBaseUrl = 'http://localhost:8000/api'
 }) => {
@@ -130,7 +148,7 @@ const Themes: React.FC<ThemesProps> = ({
           throw new Error('Erreur lors du chargement des thèmes');
         }
         const data = await response.json();
-        
+
         if (data.success) {
           setThemes(data.data);
         } else {
@@ -166,7 +184,7 @@ const Themes: React.FC<ThemesProps> = ({
     // Ici vous pouvez ajouter la logique de soumission vers votre API
     setIsModalOpen(false);
     setSubmitForm({ nom: '', prenom: '', email: '', fichier: null });
-    
+
     toast({
       title: language === 'fr' ? 'Soumission envoyée' : 'Submission sent',
       description: language === 'fr' ? 'Votre soumission a été envoyée avec succès.' : 'Your submission has been sent successfully.',
@@ -227,11 +245,11 @@ const Themes: React.FC<ThemesProps> = ({
 
   if (loading) {
     return (
-      <section id="themes" className="py-20 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <section id="themes" className="py-20 bg-gradient-to-br from-background to-secondary/30">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center min-h-[200px]">
             <div className="text-center">
-              <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-600" />
+              <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
               <span className="text-lg text-muted-foreground">{content[language].labels.loading}</span>
             </div>
           </div>
@@ -242,11 +260,11 @@ const Themes: React.FC<ThemesProps> = ({
 
   if (error) {
     return (
-      <section id="themes" className="py-20 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <section id="themes" className="py-20 bg-gradient-to-br from-background to-secondary/30">
         <div className="container mx-auto px-4">
           <div className="text-center min-h-[200px] flex items-center justify-center">
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
-              <div className="text-red-600 dark:text-red-400">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6">
+              <div className="text-destructive">
                 <p className="font-semibold">{content[language].labels.error}</p>
                 <p className="text-sm mt-1">{error}</p>
               </div>
@@ -259,12 +277,12 @@ const Themes: React.FC<ThemesProps> = ({
 
   if (themes.length === 0) {
     return (
-      <section id="themes" className="py-20 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <section id="themes" className="py-20 bg-gradient-to-br from-background to-secondary/30">
         <div className="container mx-auto px-4">
           <div className="text-center min-h-[200px] flex items-center justify-center">
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
-              <FileText className="w-12 h-12 mx-auto mb-4 text-yellow-600" />
-              <p className="text-yellow-800 dark:text-yellow-200">{content[language].labels.noThemes}</p>
+            <div className="bg-secondary/50 border border-border rounded-lg p-6">
+              <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">{content[language].labels.noThemes}</p>
             </div>
           </div>
         </div>
@@ -273,66 +291,66 @@ const Themes: React.FC<ThemesProps> = ({
   }
 
   return (
-    <section id="themes" className="py-20 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+    <section id="themes" className="py-20 bg-gradient-to-br from-background to-secondary/30">
       <div className="container mx-auto px-4">
         <div className="max-w-7xl mx-auto">
           {/* En-tête de section */}
           <div className="text-center mb-16">
             <div className="flex items-center justify-center mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-primary-foreground" />
                 </div>
-                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                <div className="w-1 h-1 bg-primary/60 rounded-full"></div>
               </div>
             </div>
-            <h2 className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-4">
+            <h2 className="text-3xl font-bold text-primary mb-4">
               {content[language].title}
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               {content[language].subtitle}
             </p>
           </div>
-          
+
           {/* Grille des thèmes */}
           <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {themes.map((theme, index) => {
               const IconComponent = getIconComponent(theme.icon, theme.title);
-              
+
               return (
-                <Card 
-                  key={theme.id} 
-                  className="group hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:-translate-y-2 relative overflow-hidden"
+                <Card
+                  key={theme.id}
+                  className="group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border-border bg-card/80 backdrop-blur-sm hover:-translate-y-2 relative overflow-hidden"
                 >
                   {/* Gradient de fond animé */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
                   <CardHeader className="relative">
                     <div className="flex items-start gap-4 mb-3">
-                      <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                        <IconComponent className="w-7 h-7 text-white" />
+                      <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                        <IconComponent className="w-7 h-7 text-primary-foreground" />
                       </div>
                       <div className="flex-1">
-                        <CardTitle className="text-xl font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 leading-tight">
+                        <CardTitle className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight">
                           {theme.title}
                         </CardTitle>
                       </div>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="relative space-y-6">
                     <p className="text-muted-foreground leading-relaxed text-sm">
-                      {theme.description}
+                      {getFirstSentence(theme.description)}
                     </p>
-                    
+
                     {/* Bouton voir détails */}
                     <Modal
                       trigger={
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="w-full justify-between group/btn hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors duration-300"
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-between group/btn hover:bg-primary/10 border border-border hover:border-primary/50 transition-colors duration-300"
                         >
                           <span className="flex items-center gap-2">
                             <Eye className="w-4 h-4" />
@@ -345,29 +363,29 @@ const Themes: React.FC<ThemesProps> = ({
                     >
                       <div className="space-y-6">
                         <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                            <IconComponent className="w-8 h-8 text-white" />
+                          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
+                            <IconComponent className="w-8 h-8 text-primary-foreground" />
                           </div>
                           <div>
-                            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{theme.title}</h3>
+                            <h3 className="text-2xl font-bold text-foreground">{theme.title}</h3>
                           </div>
                         </div>
-                        
-                        <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+
+                        <div className="bg-secondary/50 rounded-lg p-4 border border-border">
                           <p className="text-muted-foreground leading-relaxed">{theme.description}</p>
                         </div>
-                        
+
                         {theme.keywords && theme.keywords.length > 0 && (
                           <div>
-                            <h4 className="font-semibold mb-3 flex items-center gap-2">
+                            <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
                               <Search className="w-4 h-4" />
                               {content[language].labels.keywords}
                             </h4>
                             <div className="flex flex-wrap gap-2">
                               {theme.keywords.map((keyword) => (
-                                <span 
-                                  key={keyword.id} 
-                                  className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-700 hover:bg-blue-500/20 transition-colors duration-200"
+                                <span
+                                  key={keyword.id}
+                                  className="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-medium border border-primary/20 hover:bg-primary/20 transition-colors duration-200"
                                 >
                                   {keyword.keyword}
                                 </span>
@@ -377,111 +395,28 @@ const Themes: React.FC<ThemesProps> = ({
                         )}
                       </div>
                     </Modal>
-                    
+
                     {/* Boutons d'action */}
                     <div className="flex gap-3 pt-2">
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         onClick={() => scrollToSection('registration')}
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
                       >
                         <Users className="w-4 h-4 mr-2" />
                         {content[language].inscription}
                       </Button>
-                      
-                      <Modal
-                        trigger={
-                          <Button 
-                            size="sm" 
-                            className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-300"
-                          >
-                            <Upload className="w-4 h-4 mr-2" />
-                            {content[language].deposit}
-                          </Button>
-                        }
-                        title={content[language].modalTitle}
+
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => window.location.href = 'https://cmt3.research.microsoft.com/User/Login?ReturnUrl=%2FConference%2FRecent'}
+                        className="flex-1 bg-secondary hover:bg-secondary/80 text-secondary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
                       >
-                        <div className="space-y-6">
-                          <div className="text-center pb-4 border-b border-slate-200 dark:border-slate-700">
-                            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-                              <Upload className="w-8 h-8 text-white" />
-                            </div>
-                            <h3 className="text-xl font-semibold">{content[language].modalTitle}</h3>
-                          </div>
-                          
-                          <form onSubmit={handleFormSubmit} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label htmlFor="nom" className="flex items-center gap-2 mb-2">
-                                  <Users className="w-4 h-4" />
-                                  {content[language].nom}
-                                </Label>
-                                <Input
-                                  id="nom"
-                                  type="text"
-                                  value={submitForm.nom}
-                                  onChange={(e) => handleSubmitFormChange('nom', e.target.value)}
-                                  className="focus:ring-2 focus:ring-green-500"
-                                  required
-                                />
-                              </div>
-                              
-                              <div>
-                                <Label htmlFor="prenom" className="flex items-center gap-2 mb-2">
-                                  <Users className="w-4 h-4" />
-                                  {content[language].prenom}
-                                </Label>
-                                <Input
-                                  id="prenom"
-                                  type="text"
-                                  value={submitForm.prenom}
-                                  onChange={(e) => handleSubmitFormChange('prenom', e.target.value)}
-                                  className="focus:ring-2 focus:ring-green-500"
-                                  required
-                                />
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <Label htmlFor="email" className="flex items-center gap-2 mb-2">
-                                <Globe className="w-4 h-4" />
-                                {content[language].email}
-                              </Label>
-                              <Input
-                                id="email"
-                                type="email"
-                                value={submitForm.email}
-                                onChange={(e) => handleSubmitFormChange('email', e.target.value)}
-                                className="focus:ring-2 focus:ring-green-500"
-                                required
-                              />
-                            </div>
-                            
-                            <div>
-                              <Label htmlFor="fichier" className="flex items-center gap-2 mb-2">
-                                <FileText className="w-4 h-4" />
-                                {content[language].fichier}
-                              </Label>
-                              <Input
-                                id="fichier"
-                                type="file"
-                                onChange={handleFileChange}
-                                accept=".pdf,.doc,.docx"
-                                className="focus:ring-2 focus:ring-green-500"
-                                required
-                              />
-                            </div>
-                            
-                            <Button 
-                              type="submit" 
-                              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-300 py-3"
-                            >
-                              <Upload className="w-4 h-4 mr-2" />
-                              {content[language].soumettre}
-                            </Button>
-                          </form>
-                        </div>
-                      </Modal>
+                        <Upload className="w-4 h-4 mr-2" />
+                        {content[language].deposit}
+                      </Button>
+
                     </div>
                   </CardContent>
                 </Card>
