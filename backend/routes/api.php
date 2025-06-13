@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ImportantDateController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ComiteController;
+use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\PartnerController;
 
 /*
@@ -36,7 +37,13 @@ Route::prefix('Comite')->controller(ComiteController::class)->group(function () 
     Route::put('/{id}', 'update');     // PUT /api/Comite/{id}
     Route::delete('/{id}', 'destroy'); // DELETE /api/Comite/{id}
 });
-
+Route::prefix('Theme')->controller(ThemeController::class)->group(function () {
+    Route::get('/all', 'displayAll');    // GET /api/Theme/all?lang=fr ou ?lang=en
+    Route::get('/{id}', 'displayOne');   // GET /api/Theme/{id}?lang=fr ou ?lang=en
+    Route::post('/', 'store');           // POST /api/Theme
+    Route::put('/{id}', 'update');       // PUT /api/Theme/{id}
+    Route::delete('/{id}', 'destroy');   // DELETE /api/Theme/{id}
+});
 Route::prefix('Partners')->controller(PartnerController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
