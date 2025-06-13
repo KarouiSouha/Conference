@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Globe, Menu } from 'lucide-react';
@@ -16,7 +15,6 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
     }
   };
 
-  // ... navItems remains the same but with "partners" added before "contact"
   const navItems = {
     fr: [
       { label: 'Accueil', id: 'home' },
@@ -52,20 +50,18 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
     ]
   };
 
-
   return (
     <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm shadow-sm z-50 border-b border-slate-200 h-20">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-3">
-            <div >
+            <div>
               <div className="text-white font-bold text-xl">
                 <div className="flex flex-col items-center leading-none">
                   <img src="/assets/Logo.png" alt="Logo" className="w-40 h-40" />
                 </div>
               </div>
             </div>
-
           </div>
 
           <nav className="hidden lg:flex items-center space-x-1 relative">
@@ -90,24 +86,24 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
 
                     {isAfterHome && (
                       <div className="relative group">
-                        <button
-                          className="text-sm text-slate-600 hover:text-blue-700 transition-colors px-3 py-2 rounded-md hover:bg-blue-50"
-                        >
+                        <button className="text-sm text-slate-600 hover:text-blue-700 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
                           {language === 'fr' ? 'Infos' : 'Info'}
                         </button>
-                        <div className="absolute left-0 mt-2 w-48 bg-white border border-slate-200 rounded shadow-md opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
-                          <button
-                            onClick={() => scrollToSection('about')}
-                            className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-blue-50"
-                          >
-                            {language === 'fr' ? 'À propos' : 'About'}
-                          </button>
-                          <button
-                            onClick={() => scrollToSection('practical-info')}
-                            className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-blue-50"
-                          >
-                            {language === 'fr' ? 'Infos pratiques' : 'Practical Info'}
-                          </button>
+                        <div className="absolute left-0 top-full pt-1 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                          <div className="bg-white border border-slate-200 rounded shadow-md">
+                            <button
+                              onClick={() => scrollToSection('about')}
+                              className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 rounded-t-md"
+                            >
+                              {language === 'fr' ? 'À propos' : 'About'}
+                            </button>
+                            <button
+                              onClick={() => scrollToSection('practical-info')}
+                              className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 rounded-b-md"
+                            >
+                              {language === 'fr' ? 'Infos pratiques' : 'Practical Info'}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -131,9 +127,6 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
               {language === 'fr' ? 'Contact' : 'Contact'}
             </button>
           </nav>
-
-
-
 
           <div className="flex items-center space-x-2">
             <Button
