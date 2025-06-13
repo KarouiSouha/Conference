@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ImportantDateController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ComiteController;
+use App\Http\Controllers\PartnerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,4 +35,9 @@ Route::prefix('Comite')->controller(ComiteController::class)->group(function () 
     Route::post('/', 'store');         // POST /api/Comite
     Route::put('/{id}', 'update');     // PUT /api/Comite/{id}
     Route::delete('/{id}', 'destroy'); // DELETE /api/Comite/{id}
+});
+
+Route::prefix('Partners')->controller(PartnerController::class)->group(function () {
+    Route::get('/all', 'displayAll');
+    Route::get('get/{id}', 'displayOne');
 });
