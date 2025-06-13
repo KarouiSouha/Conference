@@ -243,7 +243,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
   );
 
   return (
-    <section className="min-h-screen bg-white py-12">
+    <section className="min-h-screen bg-white py-12" id="registration">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto">
           

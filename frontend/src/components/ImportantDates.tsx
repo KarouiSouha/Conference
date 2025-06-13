@@ -167,7 +167,8 @@ const formatDate = (startDateString: string, endDateString: string | null, lang:
         submit: 'Soumettre un résumé',
         register: 'S\'inscrire maintenant',
         download: 'Télécharger le guide',
-        more: 'En savoir plus'
+        more: 'En savoir plus',
+        viewProgram: 'Voir le programme'
       },
       loading: 'Chargement...',
       noData: 'Aucune date importante disponible',
@@ -179,7 +180,8 @@ const formatDate = (startDateString: string, endDateString: string | null, lang:
         submit: 'Submit Abstract',
         register: 'Register Now',
         download: 'Download Guide',
-        more: 'Learn More'
+        more: 'Learn More',
+        viewProgram: 'View Program'
       },
       loading: 'Loading...',
       noData: 'No important dates available',
@@ -188,9 +190,10 @@ const formatDate = (startDateString: string, endDateString: string | null, lang:
   };
 
   const handleAction = (action: string) => {
+    console.log("handleAction appelé avec:", action);
     switch (action) {
       case 'submit':
-        window.open('https://site-conf.com/call-for-papers', '_blank');
+        window.open('https://cmt3.research.microsoft.com/User/Login?ReturnUrl=%2FConference%2FRecent', '_blank');
         break;
       case 'register':
         const element = document.getElementById('registration');
@@ -209,9 +212,35 @@ const formatDate = (startDateString: string, endDateString: string | null, lang:
         });
         break;
       case 'conference':
+        console.log("Case conference atteint");
         const programElement = document.getElementById('program');
+        console.log("Element trouvé:", programElement);
         if (programElement) {
+          console.log("Hello world");
           programElement.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          console.log("Element avec id 'program' non trouvé, tentative avec délai...");
+          // Essayer après un court délai
+          setTimeout(() => {
+            const delayedElement = document.getElementById('program');
+            if (delayedElement) {
+              console.log("Element trouvé après délai");
+              delayedElement.scrollIntoView({ behavior: 'smooth' });
+            } else {
+              console.log("Element toujours non trouvé après délai");
+              // Essayer d'autres IDs possibles
+              const alternatives = ['programme', 'programs', 'conference-program', 'program-section'];
+              for (const altId of alternatives) {
+                const altElement = document.getElementById(altId);
+                if (altElement) {
+                  console.log(`Element trouvé avec l'ID alternatif: ${altId}`);
+                  altElement.scrollIntoView({ behavior: 'smooth' });
+                  return;
+                }
+              }
+              console.log("Aucun element programme trouvé");
+            }
+          }, 100);
         }
         break;
     }
@@ -296,16 +325,25 @@ const formatDate = (startDateString: string, endDateString: string | null, lang:
                     )}
                     
                     <div className="flex gap-2">
-                      {(actionType === 'register' || actionType === 'conference') && (
+                      {actionType === 'register' && (
                         <Button 
                           size="sm" 
                           onClick={() => handleAction(actionType)}
                           className="flex items-center gap-1"
                         >
                           <ExternalLink className="w-3 h-3" />
-                          {actionType === 'register' 
-                            ? staticContent[language].actions.register 
-                            : staticContent[language].actions.more}
+                          {staticContent[language].actions.register}
+                        </Button>
+                      )}
+                      
+                      {actionType === 'conference' && (
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleAction(actionType)}
+                          className="flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          {staticContent[language].actions.viewProgram}
                         </Button>
                       )}
                       
@@ -337,6 +375,12 @@ const formatDate = (startDateString: string, endDateString: string | null, lang:
                           {actionType === 'register' && (
                             <Button onClick={() => handleAction('register')} className="w-full">
                               {staticContent[language].actions.register}
+                            </Button>
+                          )}
+                          
+                          {actionType === 'conference' && (
+                            <Button onClick={() => handleAction('conference')} className="w-full">
+                              {staticContent[language].actions.viewProgram}
                             </Button>
                           )}
                         </div>

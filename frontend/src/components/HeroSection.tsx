@@ -88,7 +88,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language }) => {
   };
 
   const openCallForPapers = () => {
-    window.open('https://site-conf.com/call-for-papers', '_blank');
+    window.open('https://cmt3.research.microsoft.com/User/Login?ReturnUrl=%2FConference%2FRecent', '_blank');
   };
 
   return (

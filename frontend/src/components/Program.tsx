@@ -140,7 +140,7 @@ const Program: React.FC<ProgramProps> = ({ language = 'fr' }) => {
   };
 
   return (
-    <section className="py-12 bg-white">
+    <section className="py-12 bg-white" id="program">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
