@@ -248,7 +248,7 @@ const formatDate = (startDateString: string, endDateString: string | null, lang:
 
   const downloadGuide = async () => {
   try {
-    const response = await fetch('http://localhost:8080/storage/app/public/pdfs/Template_SITE2023.pdf');
+    const response = await fetch('/assets/Template_SITE2023.pdf');
     if (!response.ok) throw new Error('Fichier non trouvé');
 
     const blob = await response.blob();
@@ -273,7 +273,7 @@ const formatDate = (startDateString: string, endDateString: string | null, lang:
       description: language === 'fr' 
         ? 'Le guide n\'a pas pu être téléchargé.' 
         : 'The guide could not be downloaded.',
-      status: 'error',
+      variant: 'destructive',
     });
   }
 };
