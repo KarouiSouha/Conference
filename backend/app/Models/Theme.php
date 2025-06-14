@@ -12,8 +12,7 @@ class Theme extends Model
         'title_en',
         'description_fr',
         'description_en',
-        'icon_fr',
-        'icon_en',
+        'icon',
         'order',
         'is_active'
     ];
@@ -45,5 +44,40 @@ class Theme extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('order')->orderBy('id');
+    }
+
+    /**
+     * Accesseur pour obtenir le titre selon la langue
+     */
+    public function getTitle($locale = 'fr')
+    {
+        return $this->{"title_{$locale}"} ?? $this->title_fr;
+    }
+
+    /**
+     * Accesseur pour obtenir la description selon la langue
+     */
+    public function getDescription($locale = 'fr')
+    {
+        return $this->{"description_{$locale}"} ?? $this->description_fr;
+    }
+
+    /**
+     * Accesseur pour l'URL complète de l'icône (si c'est un fichier)
+     */
+    public function getIconUrlAttribute()
+    {
+        if ($this->icon && !str_starts_with($this->icon, 'http') && !str_contains($this->icon, 'fa-')) {
+            return asset('storage/icons/' . $this->icon);
+        }
+        return $this->icon;
+    }
+
+    /**
+     * Vérifie si l'icône est une classe CSS
+     */
+    public function isIconClass()
+    {
+        return $this->icon && (str_contains($this->icon, 'fa-') || str_contains($this->icon, 'bi-') || str_contains($this->icon, 'icon-'));
     }
 }

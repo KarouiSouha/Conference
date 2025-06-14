@@ -17,12 +17,13 @@ return new class extends Migration
             // Colonnes pour le français
             $table->string('title_fr');
             $table->text('description_fr');
-            $table->string('icon_fr')->nullable(); // Pour stocker l'icône ou la classe CSS
 
             // Colonnes pour l'anglais
             $table->string('title_en');
             $table->text('description_en');
-            $table->string('icon_en')->nullable();
+
+            // Icône partagée (nom de fichier, classe CSS, ou code d'icône)
+            $table->string('icon')->nullable();
 
             // Ordre d'affichage
             $table->integer('order')->default(0);

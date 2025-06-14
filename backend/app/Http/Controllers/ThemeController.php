@@ -30,9 +30,11 @@ class ThemeController extends Controller
 
             return [
                 'id' => $theme->id,
-                'title' => $language === 'en' ? $theme->title_en : $theme->title_fr,
-                'description' => $language === 'en' ? $theme->description_en : $theme->description_fr,
-                'icon' => $language === 'en' ? $theme->icon_en : $theme->icon_fr,
+                'title' => $theme->getTitle($language),
+                'description' => $theme->getDescription($language),
+                'icon' => $theme->icon,
+                'icon_url' => $theme->icon_url, // URL complète pour les fichiers
+                'is_icon_class' => $theme->isIconClass(), // Indique si c'est une classe CSS
                 'order' => $theme->order,
                 'keywords' => $keywords,
                 'is_active' => $theme->is_active
@@ -62,9 +64,11 @@ class ThemeController extends Controller
 
         $formatted_theme = [
             'id' => $theme->id,
-            'title' => $language === 'en' ? $theme->title_en : $theme->title_fr,
-            'description' => $language === 'en' ? $theme->description_en : $theme->description_fr,
-            'icon' => $language === 'en' ? $theme->icon_en : $theme->icon_fr,
+            'title' => $theme->getTitle($language),
+            'description' => $theme->getDescription($language),
+            'icon' => $theme->icon,
+            'icon_url' => $theme->icon_url,
+            'is_icon_class' => $theme->isIconClass(),
             'order' => $theme->order,
             'keywords' => $keywords,
             'is_active' => $theme->is_active
@@ -84,8 +88,7 @@ class ThemeController extends Controller
             'title_en' => 'required|string|max:255',
             'description_fr' => 'required|string',
             'description_en' => 'required|string',
-            'icon_fr' => 'nullable|string|max:255',
-            'icon_en' => 'nullable|string|max:255',
+            'icon' => 'nullable|string|max:255',
             'order' => 'integer|min:0',
             'is_active' => 'boolean',
             'keywords' => 'array',
@@ -103,8 +106,7 @@ class ThemeController extends Controller
                 'title_en' => $validated['title_en'],
                 'description_fr' => $validated['description_fr'],
                 'description_en' => $validated['description_en'],
-                'icon_fr' => $validated['icon_fr'] ?? null,
-                'icon_en' => $validated['icon_en'] ?? null,
+                'icon' => $validated['icon'] ?? null,
                 'order' => $validated['order'] ?? 0,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
@@ -150,8 +152,7 @@ class ThemeController extends Controller
             'title_en' => 'string|max:255',
             'description_fr' => 'string',
             'description_en' => 'string',
-            'icon_fr' => 'nullable|string|max:255',
-            'icon_en' => 'nullable|string|max:255',
+            'icon' => 'nullable|string|max:255',
             'order' => 'integer|min:0',
             'is_active' => 'boolean',
             'keywords' => 'array',
@@ -170,8 +171,7 @@ class ThemeController extends Controller
                 'title_en' => $validated['title_en'] ?? $theme->title_en,
                 'description_fr' => $validated['description_fr'] ?? $theme->description_fr,
                 'description_en' => $validated['description_en'] ?? $theme->description_en,
-                'icon_fr' => $validated['icon_fr'] ?? $theme->icon_fr,
-                'icon_en' => $validated['icon_en'] ?? $theme->icon_en,
+                'icon' => $validated['icon'] ?? $theme->icon,
                 'order' => $validated['order'] ?? $theme->order,
                 'is_active' => $validated['is_active'] ?? $theme->is_active,
             ]));

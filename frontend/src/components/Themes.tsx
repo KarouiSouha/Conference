@@ -27,7 +27,12 @@ import {
   ChevronRight,
   Calendar,
   MapPin,
-  Eye
+  Eye,
+  Code,
+  Database,
+  Cloud,
+  Smartphone,
+  Lock
 } from 'lucide-react';
 import Modal from './Modal';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +50,8 @@ interface Theme {
   title: string;
   description: string;
   icon: string;
+  icon_url: string;
+  is_icon_class: boolean;
   order: number;
   keywords: Keyword[];
   is_active: boolean;
@@ -55,54 +62,157 @@ interface ThemesProps {
   apiBaseUrl?: string;
 }
 
-// Mapping des icônes basé sur le titre ou l'icône emoji
-const getIconComponent = (iconString: string, title: string) => {
-  const iconMap: { [key: string]: React.ComponentType<React.SVGProps<SVGSVGElement>> } = {
-    '📋': FileText,
-    '🧠': Brain,
-    '💡': Lightbulb,
-    '🌍': Globe,
-    '⚡': Zap,
-    '🎯': Target,
-    '🔍': Search,
-    '🏆': Award,
-    '🔬': Microscope,
-    '💻': Computer,
-    '❤️': Heart,
-    '🛡️': Shield,
-    '🌱': Leaf,
-    '🏢': Building,
-    '📖': BookOpen,
-  };
+// Mapping des icônes FontAwesome vers Lucide React
+const fontAwesomeToLucideMap: { [key: string]: React.ComponentType<React.SVGProps<SVGSVGElement>> } = {
+  // Technologies Web
+  'fa-code': Code,
+  'fa-laptop-code': Computer,
+  'fa-html5': Code,
+  'fa-css3': Code,
+  'fa-js': Code,
+  'fa-react': Code,
+  'fa-vue': Code,
+  'fa-angular': Code,
+  
+  // Intelligence Artificielle
+  'fa-brain': Brain,
+  'fa-robot': Brain,
+  'fa-neural-network': Brain,
+  'fa-microchip': Microscope,
+  
+  // Base de données
+  'fa-database': Database,
+  'fa-server': Database,
+  'fa-hdd': Database,
+  
+  // Cybersécurité
+  'fa-shield': Shield,
+  'fa-shield-alt': Shield,
+  'fa-lock': Lock,
+  'fa-key': Lock,
+  'fa-fingerprint': Shield,
+  
+  // DevOps et Cloud
+  'fa-cloud': Cloud,
+  'fa-docker': Cloud,
+  'fa-aws': Cloud,
+  'fa-digital-ocean': Cloud,
+  
+  // Mobile
+  'fa-mobile': Smartphone,
+  'fa-mobile-alt': Smartphone,
+  'fa-tablet': Smartphone,
+  'fa-android': Smartphone,
+  'fa-apple': Smartphone,
+  
+  // Général
+  'fa-lightbulb': Lightbulb,
+  'fa-globe': Globe,
+  'fa-search': Search,
+  'fa-target': Target,
+  'fa-award': Award,
+  'fa-building': Building,
+  'fa-heart': Heart,
+  'fa-leaf': Leaf,
+  'fa-book': BookOpen,
+  'fa-file-text': FileText,
+  'fa-zap': Zap,
+  'fa-users': Users,
+  'fa-cog': Target,
+  'fa-chart-line': Award,
+  'fa-graduation-cap': BookOpen,
+  'fa-industry': Building,
+  'fa-stethoscope': Heart,
+  'fa-seedling': Leaf,
+  'fa-recycle': Leaf,
+  'fa-solar-panel': Zap,
+  'fa-wind': Zap,
+  'fa-atom': Microscope,
+  'fa-dna': Microscope,
+  'fa-microscope': Microscope,
+  'fa-flask': Microscope,
+  'fa-calculator': Computer,
+  'fa-wifi': Globe,
+  'fa-network-wired': Globe,
+  'fa-ethernet': Globe,
+  'fa-satellite': Globe
+};
 
-  // Si l'icône existe dans le mapping, l'utiliser
-  if (iconMap[iconString]) {
-    return iconMap[iconString];
+// Fonction pour obtenir l'icône appropriée
+const getIconComponent = (theme: Theme): React.ComponentType<React.SVGProps<SVGSVGElement>> => {
+  // Si c'est une classe CSS (FontAwesome), utiliser le mapping
+  if (theme.is_icon_class && theme.icon) {
+    const mappedIcon = fontAwesomeToLucideMap[theme.icon];
+    if (mappedIcon) {
+      return mappedIcon;
+    }
   }
-
-  // Sinon, essayer de deviner l'icône basée sur le titre (en minuscules)
-  const lowerTitle = title.toLowerCase();
-
-  if (lowerTitle.includes('technolog') || lowerTitle.includes('informatique') || lowerTitle.includes('digital')) {
+  
+  // Si c'est un fichier image, on ne peut pas l'utiliser avec Lucide
+  // Dans ce cas, essayer de deviner l'icône basée sur le titre
+  const title = theme.title.toLowerCase();
+  
+  if (title.includes('web') || title.includes('technolog') || title.includes('informatique') || title.includes('digital')) {
     return Computer;
-  } else if (lowerTitle.includes('santé') || lowerTitle.includes('health') || lowerTitle.includes('médical')) {
-    return Heart;
-  } else if (lowerTitle.includes('environnement') || lowerTitle.includes('environment') || lowerTitle.includes('écolog')) {
-    return Leaf;
-  } else if (lowerTitle.includes('recherche') || lowerTitle.includes('research') || lowerTitle.includes('science')) {
-    return Microscope;
-  } else if (lowerTitle.includes('innovation') || lowerTitle.includes('créativ')) {
-    return Lightbulb;
-  } else if (lowerTitle.includes('sécurité') || lowerTitle.includes('security')) {
+  } else if (title.includes('intelligence') || title.includes('ai') || title.includes('ia') || title.includes('machine learning')) {
+    return Brain;
+  } else if (title.includes('base') || title.includes('données') || title.includes('database') || title.includes('sql')) {
+    return Database;
+  } else if (title.includes('sécurité') || title.includes('security') || title.includes('cyber')) {
     return Shield;
-  } else if (lowerTitle.includes('business') || lowerTitle.includes('entreprise') || lowerTitle.includes('économie')) {
+  } else if (title.includes('cloud') || title.includes('devops') || title.includes('docker') || title.includes('kubernetes')) {
+    return Cloud;
+  } else if (title.includes('mobile') || title.includes('android') || title.includes('ios') || title.includes('app')) {
+    return Smartphone;
+  } else if (title.includes('santé') || title.includes('health') || title.includes('médical') || title.includes('medical')) {
+    return Heart;
+  } else if (title.includes('environnement') || title.includes('environment') || title.includes('écolog') || title.includes('vert')) {
+    return Leaf;
+  } else if (title.includes('recherche') || title.includes('research') || title.includes('science')) {
+    return Microscope;
+  } else if (title.includes('innovation') || title.includes('créativ') || title.includes('idée')) {
+    return Lightbulb;
+  } else if (title.includes('business') || title.includes('entreprise') || title.includes('économie') || title.includes('finance')) {
     return Building;
-  } else if (lowerTitle.includes('éducation') || lowerTitle.includes('education') || lowerTitle.includes('formation')) {
+  } else if (title.includes('éducation') || title.includes('education') || title.includes('formation') || title.includes('apprentissage')) {
     return BookOpen;
+  } else if (title.includes('réseau') || title.includes('network') || title.includes('internet') || title.includes('web')) {
+    return Globe;
   }
 
   // Icône par défaut
   return FileText;
+};
+
+// Fonction pour afficher l'icône (gestion des fichiers images)
+const IconDisplay: React.FC<{ theme: Theme; className?: string }> = ({ theme, className = "w-7 h-7" }) => {
+  const IconComponent = getIconComponent(theme);
+  
+  // Si c'est un fichier image et qu'on a une URL
+  if (!theme.is_icon_class && theme.icon_url) {
+    return (
+      <img 
+        src={theme.icon_url} 
+        alt={theme.title} 
+        className={className}
+        onError={(e) => {
+          // En cas d'erreur de chargement, remplacer par l'icône par défaut
+          const target = e.target as HTMLImageElement;
+          const parent = target.parentElement;
+          if (parent) {
+            parent.innerHTML = '';
+            const iconElement = document.createElement('div');
+            parent.appendChild(iconElement);
+            // Ici on pourrait utiliser React.render mais c'est plus complexe
+            // On va plutôt fallback sur l'icône component
+          }
+        }}
+      />
+    );
+  }
+  
+  // Sinon utiliser l'icône Lucide
+  return <IconComponent className={className} />;
 };
 
 // Fonction pour extraire la première phrase
@@ -150,7 +260,9 @@ const Themes: React.FC<ThemesProps> = ({
         const data = await response.json();
 
         if (data.success) {
-          setThemes(data.data);
+          // Filtrer seulement les thèmes actifs
+          const activeThemes = data.data.filter((theme: Theme) => theme.is_active);
+          setThemes(activeThemes);
         } else {
           throw new Error('Erreur dans la réponse de l\'API');
         }
@@ -316,7 +428,7 @@ const Themes: React.FC<ThemesProps> = ({
           {/* Grille des thèmes */}
           <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {themes.map((theme, index) => {
-              const IconComponent = getIconComponent(theme.icon, theme.title);
+              const IconComponent = getIconComponent(theme);
 
               return (
                 <Card
@@ -329,7 +441,27 @@ const Themes: React.FC<ThemesProps> = ({
                   <CardHeader className="relative">
                     <div className="flex items-start gap-4 mb-3">
                       <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                        <IconComponent className="w-7 h-7 text-primary-foreground" />
+                        {!theme.is_icon_class && theme.icon_url ? (
+                          <img 
+                            src={theme.icon_url} 
+                            alt={theme.title} 
+                            className="w-7 h-7 object-contain"
+                            onError={(e) => {
+                              // En cas d'erreur, remplacer par l'icône par défaut
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent && !parent.querySelector('.fallback-icon')) {
+                                const fallbackIcon = document.createElement('div');
+                                fallbackIcon.className = 'fallback-icon';
+                                const Component = getIconComponent(theme);
+                                parent.appendChild(fallbackIcon);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <IconComponent className="w-7 h-7 text-primary-foreground" />
+                        )}
                       </div>
                       <div className="flex-1">
                         <CardTitle className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight">
@@ -364,7 +496,19 @@ const Themes: React.FC<ThemesProps> = ({
                       <div className="space-y-6">
                         <div className="flex items-center gap-4">
                           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-                            <IconComponent className="w-8 h-8 text-primary-foreground" />
+                            {!theme.is_icon_class && theme.icon_url ? (
+                              <img 
+                                src={theme.icon_url} 
+                                alt={theme.title} 
+                                className="w-8 h-8 object-contain"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <IconComponent className="w-8 h-8 text-primary-foreground" />
+                            )}
                           </div>
                           <div>
                             <h3 className="text-2xl font-bold text-foreground">{theme.title}</h3>
@@ -416,7 +560,6 @@ const Themes: React.FC<ThemesProps> = ({
                         <Upload className="w-4 h-4 mr-2" />
                         {content[language].deposit}
                       </Button>
-
                     </div>
                   </CardContent>
                 </Card>
