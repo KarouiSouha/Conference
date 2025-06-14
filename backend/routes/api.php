@@ -10,6 +10,7 @@ use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ProgrammeController;
+use App\Http\Controllers\ArchiveController;
 
 
 /*
@@ -66,4 +67,9 @@ Route::prefix('Programme')->controller(ProgrammeController::class)->group(functi
     Route::post('/', 'store');                      // POST /api/Programme
     Route::put('/{id}', 'update');                  // PUT /api/Programme/{id}
     Route::delete('/{id}', 'destroy');              // DELETE /api/Programme/{id}
+});
+
+Route::prefix('Archive')->controller(ArchiveController::class)->group(function () {
+    Route::get('/all', 'displayAll');
+    Route::get('get/{id}', 'displayOne');
 });
