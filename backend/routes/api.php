@@ -8,6 +8,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ComiteController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\PartnerController;
+use App\Http\Controllers\GalleryController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -47,4 +49,11 @@ Route::prefix('Theme')->controller(ThemeController::class)->group(function () {
 Route::prefix('Partners')->controller(PartnerController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
+});
+Route::prefix('Gallery')->controller(GalleryController::class)->group(function () {
+    Route::get('/all', 'displayAll');           // GET /api/Gallery/all
+    Route::get('/photos', 'displayPhotos');     // GET /api/Gallery/photos
+    Route::get('/videos', 'displayVideos');     // GET /api/Gallery/videos
+    Route::get('/{id}', 'displayOne');          // GET /api/Gallery/{id}
+    Route::post('/', 'store');                  // POST /api/Gallery
 });
