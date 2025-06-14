@@ -9,6 +9,7 @@ use App\Http\Controllers\ComiteController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\ProgrammeController;
 
 
 /*
@@ -56,4 +57,13 @@ Route::prefix('Gallery')->controller(GalleryController::class)->group(function (
     Route::get('/videos', 'displayVideos');     // GET /api/Gallery/videos
     Route::get('/{id}', 'displayOne');          // GET /api/Gallery/{id}
     Route::post('/', 'store');                  // POST /api/Gallery
+});
+Route::prefix('Programme')->controller(ProgrammeController::class)->group(function () {
+    Route::get('/all', 'index');                    // GET /api/Programme/all?lang=fr ou ?lang=en
+    Route::get('/daily', 'daily');                  // GET /api/Programme/daily?date=2025-06-14&lang=fr
+    Route::get('/next-three-days', 'nextThreeDays'); // GET /api/Programme/next-three-days?lang=fr
+    Route::get('/current-month', 'currentMonth');    // GET /api/Programme/current-month?lang=fr
+    Route::post('/', 'store');                      // POST /api/Programme
+    Route::put('/{id}', 'update');                  // PUT /api/Programme/{id}
+    Route::delete('/{id}', 'destroy');              // DELETE /api/Programme/{id}
 });
