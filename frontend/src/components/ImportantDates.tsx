@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Download, ExternalLink, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Download, ExternalLink, Loader2, Clock, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ImportantDate {
@@ -19,7 +19,7 @@ interface ImportantDatesProps {
   language: 'fr' | 'en';
 }
 
-// Modal Component Mock (à remplacer par votre composant Modal réel)
+// Modal Component
 const Modal = ({ trigger, title, children }) => {
   const [isOpen, setIsOpen] = useState(false);
   
@@ -43,74 +43,71 @@ const Modal = ({ trigger, title, children }) => {
   );
 };
 
+// Mock data
+const mockDates: ImportantDate[] = [
+  {
+    id: 1,
+    event_fr: "Soumission des résumés",
+    event_en: "Abstract Submission",
+    date: "2024-03-15",
+    end_date: null,
+    description_fr: "Date limite pour soumettre vos résumés de communication",
+    description_en: "Deadline for submitting your paper abstracts",
+    created_at: "2024-01-01",
+    updated_at: "2024-01-01"
+  },
+  {
+    id: 2,
+    event_fr: "Notification d'acceptation",
+    event_en: "Acceptance Notification",
+    date: "2024-04-20",
+    end_date: null,
+    description_fr: "Les auteurs seront notifiés de l'acceptation de leurs soumissions",
+    description_en: "Authors will be notified of their submission acceptance",
+    created_at: "2024-01-01",
+    updated_at: "2024-01-01"
+  },
+  {
+    id: 3,
+    event_fr: "Inscription précoce",
+    event_en: "Early Registration",
+    date: "2024-05-01",
+    end_date: "2024-05-31",
+    description_fr: "Période d'inscription avec tarif réduit",
+    description_en: "Registration period with reduced fees",
+    created_at: "2024-01-01",
+    updated_at: "2024-01-01"
+  },
+  {
+    id: 4,
+    event_fr: "Article complet",
+    event_en: "Full Paper Submission",
+    date: "2024-06-15",
+    end_date: null,
+    description_fr: "Soumission des articles complets pour publication",
+    description_en: "Full paper submission for publication",
+    created_at: "2024-01-01",
+    updated_at: "2024-01-01"
+  },
+  {
+    id: 5,
+    event_fr: "Conférence principale",
+    event_en: "Main Conference",
+    date: "2024-09-15",
+    end_date: "2024-09-17",
+    description_fr: "Événement principal de la conférence",
+    description_en: "Main conference event",
+    created_at: "2024-01-01",
+    updated_at: "2024-01-01"
+  }
+];
+
 const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
   const [dates, setDates] = useState<ImportantDate[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [itemsPerView, setItemsPerView] = useState(2);
-  const carouselRef = useRef<HTMLDivElement>(null);
+  const [openItem, setOpenItem] = useState<number | null>(null);
 
-  // Mock data pour la démonstration
-  const mockDates: ImportantDate[] = React.useMemo(() => [
-    {
-      id: 1,
-      event_fr: "Soumission des résumés",
-      event_en: "Abstract Submission",
-      date: "2024-03-15",
-      end_date: null,
-      description_fr: "Date limite pour soumettre vos résumés de communication",
-      description_en: "Deadline for submitting your paper abstracts",
-      created_at: "2024-01-01",
-      updated_at: "2024-01-01"
-    },
-    {
-      id: 2,
-      event_fr: "Notification d'acceptation",
-      event_en: "Acceptance Notification",
-      date: "2024-04-20",
-      end_date: null,
-      description_fr: "Les auteurs seront notifiés de l'acceptation de leurs soumissions",
-      description_en: "Authors will be notified of their submission acceptance",
-      created_at: "2024-01-01",
-      updated_at: "2024-01-01"
-    },
-    {
-      id: 3,
-      event_fr: "Inscription précoce",
-      event_en: "Early Registration",
-      date: "2024-05-01",
-      end_date: "2024-05-31",
-      description_fr: "Période d'inscription avec tarif réduit",
-      description_en: "Registration period with reduced fees",
-      created_at: "2024-01-01",
-      updated_at: "2024-01-01"
-    },
-    {
-      id: 4,
-      event_fr: "Article complet",
-      event_en: "Full Paper Submission",
-      date: "2024-06-15",
-      end_date: null,
-      description_fr: "Soumission des articles complets pour publication",
-      description_en: "Full paper submission for publication",
-      created_at: "2024-01-01",
-      updated_at: "2024-01-01"
-    },
-    {
-      id: 5,
-      event_fr: "Conférence principale",
-      event_en: "Main Conference",
-      date: "2024-09-15",
-      end_date: "2024-09-17",
-      description_fr: "Événement principal de la conférence",
-      description_en: "Main conference event",
-      created_at: "2024-01-01",
-      updated_at: "2024-01-01"
-    }
-  ], []);
-
-  // Fonction pour formater la date avec support des plages de dates
+  // Format date function
   const formatDate = (startDateString: string, endDateString: string | null, lang: 'fr' | 'en'): string => {
     const startDate = new Date(startDateString);
     
@@ -175,7 +172,19 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
     }
   };
 
-  // Fonction pour déterminer l'action basée sur le contenu de l'événement
+  // Get status based on date
+  const getDateStatus = (dateString: string) => {
+    const eventDate = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'passed';
+    if (diffDays <= 7) return 'urgent';
+    if (diffDays <= 30) return 'upcoming';
+    return 'future';
+  };
+
+  // Get action type
   const getActionType = (eventText: string): string => {
     const lowerEvent = eventText.toLowerCase();
     
@@ -201,61 +210,6 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
   // Mock toast function
   const toast = ({ title, description, variant }) => {
     console.log(`Toast: ${title} - ${description}`);
-  };
-
-  // Simulation du chargement des données
-  useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setDates(mockDates);
-      setLoading(false);
-    }, 1000);
-  }, [language, mockDates]);
-
-  // Gestion du responsive pour le nombre d'éléments affichés
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setItemsPerView(1);
-      } else if (window.innerWidth < 1024) {
-        setItemsPerView(2);
-      } else {
-        setItemsPerView(3);
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const staticContent = {
-    fr: {
-      title: 'Dates Importantes',
-      actions: {
-        submit: 'Soumettre un résumé',
-        register: 'S\'inscrire maintenant',
-        download: 'Télécharger le guide',
-        more: 'En savoir plus',
-        viewProgram: 'Voir le programme'
-      },
-      loading: 'Chargement...',
-      noData: 'Aucune date importante disponible',
-      dateLabel: 'Date:'
-    },
-    en: {
-      title: 'Important Dates',
-      actions: {
-        submit: 'Submit Abstract',
-        register: 'Register Now',
-        download: 'Download Guide',
-        more: 'Learn More',
-        viewProgram: 'View Program'
-      },
-      loading: 'Loading...',
-      noData: 'No important dates available',
-      dateLabel: 'Date:'
-    }
   };
 
   const handleAction = (action: string) => {
@@ -324,20 +278,55 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
     }
   };
 
-  // Navigation du carousel
-  const nextSlide = () => {
-    const maxIndex = Math.max(0, dates.length - itemsPerView);
-    setCurrentIndex(prev => Math.min(prev + 1, maxIndex));
+  useEffect(() => {
+    setLoading(true);
+    setTimeout(() => {
+      setDates(mockDates);
+      setLoading(false);
+    }, 1000);
+  }, [language]);
+
+  const staticContent = {
+    fr: {
+      title: 'Dates Importantes',
+      actions: {
+        submit: 'Soumettre un résumé',
+        register: 'S\'inscrire maintenant',
+        download: 'Télécharger le guide',
+        more: 'En savoir plus',
+        viewProgram: 'Voir le programme'
+      },
+      status: {
+        passed: 'Passé',
+        urgent: 'Urgent',
+        upcoming: 'Prochain',
+        future: 'À venir'
+      },
+      loading: 'Chargement...',
+      noData: 'Aucune date importante disponible',
+      dateLabel: 'Date:'
+    },
+    en: {
+      title: 'Important Dates',
+      actions: {
+        submit: 'Submit Abstract',
+        register: 'Register Now',
+        download: 'Download Guide',
+        more: 'Learn More',
+        viewProgram: 'View Program'
+      },
+      status: {
+        passed: 'Passed',
+        urgent: 'Urgent',
+        upcoming: 'Upcoming',
+        future: 'Future'
+      },
+      loading: 'Loading...',
+      noData: 'No important dates available',
+      dateLabel: 'Date:'
+    }
   };
 
-  const prevSlide = () => {
-    setCurrentIndex(prev => Math.max(prev - 1, 0));
-  };
-
-  const canGoPrev = currentIndex > 0;
-  const canGoNext = currentIndex < dates.length - itemsPerView;
-
-  // Affichage du loader
   if (loading) {
     return (
       <section id="dates" className="py-20 bg-muted/30">
@@ -356,8 +345,7 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
     );
   }
 
-  // Affichage en cas d'erreur ou de données vides
-  if (error || dates.length === 0) {
+  if (dates.length === 0) {
     return (
       <section id="dates" className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
@@ -366,7 +354,7 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
               {staticContent[language].title}
             </h2>
             <p className="text-muted-foreground">
-              {error || staticContent[language].noData}
+              {staticContent[language].noData}
             </p>
           </div>
         </div>
@@ -377,100 +365,122 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
   return (
     <section id="dates" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-primary mb-12">
             {staticContent[language].title}
           </h2>
           
-          <div className="relative">
-            {/* Boutons de navigation */}
-            <div className="absolute -left-4 top-1/2 transform -translate-y-1/2 z-10">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={prevSlide}
-                disabled={!canGoPrev}
-                className="rounded-full shadow-lg bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            <div className="absolute -right-4 top-1/2 transform -translate-y-1/2 z-10">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={nextSlide}
-                disabled={!canGoNext}
-                className="rounded-full shadow-lg bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
+          <div className="space-y-4">
+            {dates.map((item) => {
+              const event = language === 'fr' ? item.event_fr : item.event_en;
+              const description = language === 'fr' ? item.description_fr : item.description_en;
+              const formattedDate = formatDate(item.date, item.end_date, language);
+              const status = getDateStatus(item.date);
+              const actionType = getActionType(event);
+              const isOpen = openItem === item.id;
 
-            {/* Carousel container */}
-            <div className="overflow-hidden" ref={carouselRef}>
-              <div 
-                className="flex transition-transform duration-300 ease-in-out gap-6"
-                style={{
-                  transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
-                  width: `${(dates.length / itemsPerView) * 100}%`
-                }}
-              >
-                {dates.map((item) => {
-                  const event = language === 'fr' ? item.event_fr : item.event_en;
-                  const description = language === 'fr' ? item.description_fr : item.description_en;
-                  const formattedDate = formatDate(item.date, item.end_date, language);
-                  const actionType = getActionType(event);
-                  
-                  return (
-                    <div 
-                      key={item.id} 
-                      className="flex-shrink-0"
-                      style={{ width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 24 / itemsPerView}px)` }}
+              return (
+                <Card key={item.id} className={`overflow-hidden transition-all duration-300 hover:shadow-lg ${
+                  status === 'urgent' ? 'border-red-200 shadow-red-100' :
+                  status === 'upcoming' ? 'border-yellow-200 shadow-yellow-100' :
+                  status === 'passed' ? 'border-gray-200' :
+                  'border-primary/20'
+                }`}>
+                  <CardContent className="p-0">
+                    <button
+                      onClick={() => setOpenItem(isOpen ? null : item.id)}
+                      className="w-full p-6 text-left hover:bg-muted/30 transition-colors"
                     >
-                      <Card className="border-l-4 border-l-primary hover:shadow-lg transition-all duration-300 cursor-pointer group h-full">
-                        <CardContent className="p-6 h-full flex flex-col">
-                          <div className="flex items-center gap-4 mb-3">
-                            <Calendar className="w-8 h-8 text-primary flex-shrink-0" />
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
-                                {event}
-                              </h3>
-                              <p className="text-muted-foreground text-sm">{formattedDate}</p>
-                            </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="relative">
+                            <Calendar className="w-8 h-8 text-primary" />
+                            {status === 'urgent' && (
+                              <AlertCircle className="w-4 h-4 text-red-500 absolute -top-1 -right-1" />
+                            )}
+                            {status === 'upcoming' && (
+                              <Clock className="w-4 h-4 text-yellow-500 absolute -top-1 -right-1" />
+                            )}
+                            {status === 'passed' && (
+                              <CheckCircle className="w-4 h-4 text-gray-400 absolute -top-1 -right-1" />
+                            )}
                           </div>
                           
+                          <div>
+                            <h3 className="font-semibold text-lg mb-1">{event}</h3>
+                            <p className="text-primary font-medium">{formattedDate}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                          <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+                            status === 'passed' ? 'bg-gray-100 text-gray-600' :
+                            status === 'urgent' ? 'bg-red-100 text-red-700' :
+                            status === 'upcoming' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-primary/10 text-primary'
+                          }`}>
+                            {staticContent[language].status[status]}
+                          </span>
+                          
+                          <ChevronDown className={`w-5 h-5 text-muted-foreground transform transition-transform duration-200 ${
+                            isOpen ? 'rotate-180' : ''
+                          }`} />
+                        </div>
+                      </div>
+                    </button>
+                    
+                    {isOpen && (
+                      <div className="px-6 pb-6 border-t bg-muted/20 animate-in slide-in-from-top-2 duration-200">
+                        <div className="pt-4">
                           {description && (
-                            <p className="text-sm text-muted-foreground mb-4 flex-grow">{description}</p>
+                            <p className="text-muted-foreground mb-6 leading-relaxed">{description}</p>
                           )}
                           
-                          <div className="flex gap-2 mt-auto">
+                          <div className="flex flex-wrap gap-3">
                             {actionType === 'register' && (
                               <Button 
-                                size="sm" 
                                 onClick={() => handleAction(actionType)}
-                                className="flex items-center gap-1"
+                                className="flex items-center gap-2"
                               >
-                                <ExternalLink className="w-3 h-3" />
+                                <ExternalLink className="w-4 h-4" />
                                 {staticContent[language].actions.register}
                               </Button>
                             )}
                             
                             {actionType === 'conference' && (
                               <Button 
-                                size="sm" 
                                 onClick={() => handleAction(actionType)}
-                                className="flex items-center gap-1"
+                                className="flex items-center gap-2"
                               >
-                                <ExternalLink className="w-3 h-3" />
+                                <ExternalLink className="w-4 h-4" />
                                 {staticContent[language].actions.viewProgram}
                               </Button>
                             )}
                             
+                            {actionType === 'deadline' && (
+                              <>
+                                <Button 
+                                  onClick={() => handleAction('submit')} 
+                                  className="flex items-center gap-2"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                  {staticContent[language].actions.submit}
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  onClick={downloadGuide}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Download className="w-4 h-4" />
+                                  {staticContent[language].actions.download}
+                                </Button>
+                              </>
+                            )}
+
                             <Modal
                               trigger={
-                                <Button variant="outline" size="sm">
+                                <Button variant="outline" className="flex items-center gap-2">
+                                  <Calendar className="w-4 h-4" />
                                   {staticContent[language].actions.more}
                                 </Button>
                               }
@@ -478,7 +488,7 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
                             >
                               <div className="space-y-4">
                                 <p><strong>{staticContent[language].dateLabel}</strong> {formattedDate}</p>
-                                {description && <p>{description}</p>}
+                                {description && <p className="text-muted-foreground">{description}</p>}
                                 
                                 {actionType === 'deadline' && (
                                   <div className="space-y-2">
@@ -507,28 +517,13 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({ language }) => {
                               </div>
                             </Modal>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Indicateurs de pagination */}
-            <div className="flex justify-center mt-6 gap-2">
-              {Array.from({ length: Math.ceil(dates.length / itemsPerView) }).map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    Math.floor(currentIndex / itemsPerView) === index 
-                      ? 'bg-primary' 
-                      : 'bg-gray-300 hover:bg-gray-400'
-                  }`}
-                />
-              ))}
-            </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </div>
