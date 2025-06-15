@@ -356,39 +356,34 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
               <h2 className="text-2xl font-bold text-gray-900 mb-3">
                 {content[language].success}
               </h2>
-              <p className="text-gray-600 mb-6">
-                {content[language].successMessage}
-              </p>
-<<<<<<< HEAD
-              <Button 
-                onClick={() => {
-                  setIsSubmitted(false);
-                  setCurrentStep(1);
-                  setFormData({
-                    firstName: '',
-                    lastName: '',
-                    establishment: '',
-                    title: '',
-                    email: '',
-                    phone: '',
-                    participationType: '',
-                    hasAccompanying: '',
-                    accompanyingDetails: '',
-                    accommodationType: '',
-                    paymentMethod: '',
-                    paymentProof: null
-                  });
-                  setErrors({});
-                  setSubmitError('');
-                }}
-=======
-              <Button
-                onClick={() => setIsSubmitted(false)}
->>>>>>> dec45a62a039ca93d3e131b4712fdf6fca20155a
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
-              >
-                Nouvelle inscription
-              </Button>
+<p className="text-gray-600 mb-6">
+  {content[language].successMessage}
+</p>
+<Button
+  onClick={() => {
+    setIsSubmitted(false);
+    setCurrentStep(1);
+    setFormData({
+      firstName: '',
+      lastName: '',
+      establishment: '',
+      title: '',
+      email: '',
+      phone: '',
+      participationType: '',
+      hasAccompanying: '',
+      accompanyingDetails: '',
+      accommodationType: '',
+      paymentMethod: '',
+      paymentProof: null
+    });
+    setErrors({});
+    setSubmitError('');
+  }}
+  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+>
+  Nouvelle inscription
+</Button>
             </div>
           </div>
         </div>
@@ -512,17 +507,12 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
               </div>
 
               <div className="flex justify-end mt-6">
-<<<<<<< HEAD
-                <Button 
-                  onClick={nextStep}
-=======
-                <Button
-                  onClick={() => setCurrentStep(2)}
->>>>>>> dec45a62a039ca93d3e131b4712fdf6fca20155a
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
-                >
-                  {content[language].form.next}
-                </Button>
+<Button 
+  onClick={nextStep}
+  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+>
+  {content[language].form.next}
+</Button>
               </div>
             </FormSection>
           )}
@@ -600,31 +590,21 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                 )}
               </div>
 
-              <div className="flex justify-between mt-6">
-<<<<<<< HEAD
-                <Button 
-                  onClick={prevStep}
-=======
-                <Button
-                  onClick={() => setCurrentStep(1)}
->>>>>>> dec45a62a039ca93d3e131b4712fdf6fca20155a
-                  variant="outline"
-                  className="px-6 py-2 rounded-lg border hover:bg-gray-50"
-                >
-                  {content[language].form.previous}
-                </Button>
-<<<<<<< HEAD
-                <Button 
-                  onClick={nextStep}
-=======
-                <Button
-                  onClick={() => setCurrentStep(3)}
->>>>>>> dec45a62a039ca93d3e131b4712fdf6fca20155a
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
-                >
-                  {content[language].form.next}
-                </Button>
-              </div>
+<div className="flex justify-between mt-6">
+  <Button 
+    onClick={prevStep}
+    variant="outline"
+    className="px-6 py-2 rounded-lg border hover:bg-gray-50"
+  >
+    {content[language].form.previous}
+  </Button>
+  <Button 
+    onClick={nextStep}
+    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+  >
+    {content[language].form.next}
+  </Button>
+</div>
             </FormSection>
           )}
 
@@ -714,29 +694,24 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                 </div>
               </div>
 
-              <div className="flex justify-between mt-6">
-<<<<<<< HEAD
-                <Button 
-                  onClick={prevStep}
-=======
-                <Button
-                  onClick={() => setCurrentStep(2)}
->>>>>>> dec45a62a039ca93d3e131b4712fdf6fca20155a
-                  variant="outline"
-                  className="px-6 py-2 rounded-lg border hover:bg-gray-50"
-                  disabled={isLoading}
-                >
-                  {content[language].form.previous}
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isLoading}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center"
-                >
-                  {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {isLoading ? content[language].form.submitting : content[language].form.submit}
-                </Button>
-              </div>
+<div className="flex justify-between mt-6">
+  <Button
+    onClick={() => setCurrentStep(2)}
+    variant="outline"
+    className="px-6 py-2 rounded-lg border hover:bg-gray-50"
+    disabled={isLoading}
+  >
+    {content[language].form.previous}
+  </Button>
+  <Button
+    onClick={handleSubmit}
+    disabled={isLoading}
+    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center"
+  >
+    {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+    {isLoading ? content[language].form.submitting : content[language].form.submit}
+  </Button>
+</div>
             </FormSection>
           )}
         </div>
@@ -746,3 +721,20 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
 };
 
 export default Registration;
+
+// Remove the unused nextStep function below, as the actual nextStep logic is already implemented as a closure in the component above.
+// If you want to keep a named function for nextStep, you can define it as:
+
+// function nextStep(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+//   event.preventDefault();
+//   if (validateStep(currentStep)) {
+//     setCurrentStep(prev => prev + 1);
+//   }
+// }
+
+// function nextStep(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+//   event.preventDefault();
+//   if (validateStep(currentStep)) {
+//     setCurrentStep(prev => prev + 1);
+//   }
+// }
