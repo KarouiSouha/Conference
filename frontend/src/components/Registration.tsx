@@ -721,20 +721,3 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
 };
 
 export default Registration;
-
-// Remove the unused nextStep function below, as the actual nextStep logic is already implemented as a closure in the component above.
-// If you want to keep a named function for nextStep, you can define it as:
-
-// function nextStep(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
-//   event.preventDefault();
-//   if (validateStep(currentStep)) {
-//     setCurrentStep(prev => prev + 1);
-//   }
-// }
-
-// function nextStep(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
-//   event.preventDefault();
-//   if (validateStep(currentStep)) {
-//     setCurrentStep(prev => prev + 1);
-//   }
-// }
