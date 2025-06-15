@@ -12,6 +12,7 @@ use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ProgrammeController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\ArchiveController;
+use App\Http\Controllers\NewsController;
 
 
 /*
@@ -81,6 +82,11 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
 });
 
 Route::prefix('Archive')->controller(ArchiveController::class)->group(function () {
+    Route::get('/all', 'displayAll');
+    Route::get('get/{id}', 'displayOne');
+});
+
+Route::prefix('News')->controller(NewsController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
 });
