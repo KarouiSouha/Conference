@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +25,7 @@ import {
   Leaf,
   Building,
   ChevronRight,
+  ChevronLeft,
   Calendar,
   MapPin,
   Eye,
@@ -242,12 +243,35 @@ const Themes: React.FC<ThemesProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [submitForm, setSubmitForm] = useState({
     nom: '',
     prenom: '',
     email: '',
     fichier: null as File | null
   });
+
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  // Nombre d'éléments visibles selon la taille d'écran
+  const getVisibleItems = () => {
+    if (typeof window === 'undefined') return 3;
+    if (window.innerWidth < 768) return 1; // Mobile
+    if (window.innerWidth < 1024) return 2; // Tablet
+    return 3; // Desktop
+  };
+
+  const [visibleItems, setVisibleItems] = useState(getVisibleItems());
+
+  // Mettre à jour le nombre d'éléments visibles lors du redimensionnement
+  useEffect(() => {
+    const handleResize = () => {
+      setVisibleItems(getVisibleItems());
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Charger les thèmes depuis l'API Laravel
   useEffect(() => {
@@ -310,6 +334,35 @@ const Themes: React.FC<ThemesProps> = ({
     }
   };
 
+  // Navigation du carousel
+  const canGoNext = currentIndex < themes.length - visibleItems;
+  const canGoPrev = currentIndex > 0;
+
+  const goNext = React.useCallback(() => {
+    if (canGoNext) {
+      setCurrentIndex(prev => prev + 1);
+    }
+  }, [canGoNext]);
+
+  const goPrev = () => {
+    if (canGoPrev) {
+      setCurrentIndex(prev => prev - 1);
+    }
+  };
+
+  // Auto-scroll (optionnel)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (canGoNext) {
+        goNext();
+      } else {
+        setCurrentIndex(0); // Retour au début
+      }
+    }, 5000); // Change toutes les 5 secondes
+
+    return () => clearInterval(interval);
+  }, [currentIndex, canGoNext, goNext]);
+
   const content = {
     fr: {
       title: 'Thèmes de la Conférence',
@@ -322,6 +375,10 @@ const Themes: React.FC<ThemesProps> = ({
       email: 'Email',
       fichier: 'Fichier',
       soumettre: 'Soumettre',
+      navigation: {
+        previous: 'Précédent',
+        next: 'Suivant'
+      },
       actions: {
         details: 'Voir les détails'
       },
@@ -343,6 +400,10 @@ const Themes: React.FC<ThemesProps> = ({
       email: 'Email',
       fichier: 'File',
       soumettre: 'Submit',
+      navigation: {
+        previous: 'Previous',
+        next: 'Next'
+      },
       actions: {
         details: 'View details'
       },
@@ -425,146 +486,205 @@ const Themes: React.FC<ThemesProps> = ({
             </p>
           </div>
 
-          {/* Grille des thèmes */}
-          <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {themes.map((theme, index) => {
-              const IconComponent = getIconComponent(theme);
+          {/* Carousel Container */}
+          <div className="relative">
+            {/* Navigation Buttons */}
+            <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between pointer-events-none z-10">
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={goPrev}
+                disabled={!canGoPrev}
+                className={`pointer-events-auto -ml-6 w-12 h-12 rounded-full shadow-lg bg-background/80 backdrop-blur-sm border border-border hover:bg-background hover:shadow-xl transition-all duration-300 ${
+                  !canGoPrev ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'
+                }`}
+                title={content[language].navigation.previous}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={goNext}
+                disabled={!canGoNext}
+                className={`pointer-events-auto -mr-6 w-12 h-12 rounded-full shadow-lg bg-background/80 backdrop-blur-sm border border-border hover:bg-background hover:shadow-xl transition-all duration-300 ${
+                  !canGoNext ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'
+                }`}
+                title={content[language].navigation.next}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </div>
 
-              return (
-                <Card
-                  key={theme.id}
-                  className="group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border-border bg-card/80 backdrop-blur-sm hover:-translate-y-2 relative overflow-hidden"
-                >
-                  {/* Gradient de fond animé */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            {/* Carousel Content */}
+            <div className="overflow-hidden" ref={carouselRef}>
+              <div 
+                className="flex transition-transform duration-500 ease-in-out gap-6"
+                style={{
+                  transform: `translateX(-${currentIndex * (100 / visibleItems)}%)`,
+                }}
+              >
+                {themes.map((theme, index) => {
+                  const IconComponent = getIconComponent(theme);
 
-                  <CardHeader className="relative">
-                    <div className="flex items-start gap-4 mb-3">
-                      <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                        {!theme.is_icon_class && theme.icon_url ? (
-                          <img 
-                            src={theme.icon_url} 
-                            alt={theme.title} 
-                            className="w-7 h-7 object-contain"
-                            onError={(e) => {
-                              // En cas d'erreur, remplacer par l'icône par défaut
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const parent = target.parentElement;
-                              if (parent && !parent.querySelector('.fallback-icon')) {
-                                const fallbackIcon = document.createElement('div');
-                                fallbackIcon.className = 'fallback-icon';
-                                const Component = getIconComponent(theme);
-                                parent.appendChild(fallbackIcon);
-                              }
-                            }}
-                          />
-                        ) : (
-                          <IconComponent className="w-7 h-7 text-primary-foreground" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight">
-                          {theme.title}
-                        </CardTitle>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="relative space-y-6">
-                    <p className="text-muted-foreground leading-relaxed text-sm">
-                      {getFirstSentence(theme.description)}
-                    </p>
-
-                    {/* Bouton voir détails */}
-                    <Modal
-                      trigger={
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-between group/btn hover:bg-primary/10 border border-border hover:border-primary/50 transition-colors duration-300"
-                        >
-                          <span className="flex items-center gap-2">
-                            <Eye className="w-4 h-4" />
-                            {content[language].actions.details}
-                          </span>
-                          <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform duration-200" />
-                        </Button>
-                      }
-                      title={theme.title}
+                  return (
+                    <div 
+                      key={theme.id}
+                      className="flex-shrink-0"
+                      style={{
+                        width: `calc(${100 / visibleItems}% - ${(visibleItems - 1) * 24 / visibleItems}px)`
+                      }}
                     >
-                      <div className="space-y-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-                            {!theme.is_icon_class && theme.icon_url ? (
-                              <img 
-                                src={theme.icon_url} 
-                                alt={theme.title} 
-                                className="w-8 h-8 object-contain"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                }}
-                              />
-                            ) : (
-                              <IconComponent className="w-8 h-8 text-primary-foreground" />
-                            )}
-                          </div>
-                          <div>
-                            <h3 className="text-2xl font-bold text-foreground">{theme.title}</h3>
-                          </div>
-                        </div>
+                      <Card className="group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border-border bg-card/80 backdrop-blur-sm hover:-translate-y-2 relative overflow-hidden h-full">
+                        {/* Gradient de fond animé */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-                        <div className="bg-secondary/50 rounded-lg p-4 border border-border">
-                          <p className="text-muted-foreground leading-relaxed">{theme.description}</p>
-                        </div>
-
-                        {theme.keywords && theme.keywords.length > 0 && (
-                          <div>
-                            <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
-                              <Search className="w-4 h-4" />
-                              {content[language].labels.keywords}
-                            </h4>
-                            <div className="flex flex-wrap gap-2">
-                              {theme.keywords.map((keyword) => (
-                                <span
-                                  key={keyword.id}
-                                  className="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-medium border border-primary/20 hover:bg-primary/20 transition-colors duration-200"
-                                >
-                                  {keyword.keyword}
-                                </span>
-                              ))}
+                        <CardHeader className="relative">
+                          <div className="flex items-start gap-4 mb-3">
+                            <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                              {!theme.is_icon_class && theme.icon_url ? (
+                                <img 
+                                  src={theme.icon_url} 
+                                  alt={theme.title} 
+                                  className="w-7 h-7 object-contain"
+                                  onError={(e) => {
+                                    // En cas d'erreur, remplacer par l'icône par défaut
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent && !parent.querySelector('.fallback-icon')) {
+                                      const fallbackIcon = document.createElement('div');
+                                      fallbackIcon.className = 'fallback-icon';
+                                      const Component = getIconComponent(theme);
+                                      parent.appendChild(fallbackIcon);
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <IconComponent className="w-7 h-7 text-primary-foreground" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <CardTitle className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight">
+                                {theme.title}
+                              </CardTitle>
                             </div>
                           </div>
-                        )}
-                      </div>
-                    </Modal>
+                        </CardHeader>
 
-                    {/* Boutons d'action */}
-                    <div className="flex gap-3 pt-2">
-                      <Button
-                        size="sm"
-                        onClick={() => scrollToSection('registration')}
-                        className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
-                      >
-                        <Users className="w-4 h-4 mr-2" />
-                        {content[language].inscription}
-                      </Button>
+                        <CardContent className="relative space-y-6 flex flex-col">
+                          <p className="text-muted-foreground leading-relaxed text-sm flex-1">
+                            {getFirstSentence(theme.description)}
+                          </p>
 
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => window.location.href = 'https://cmt3.research.microsoft.com/User/Login?ReturnUrl=%2FConference%2FRecent'}
-                        className="flex-1 bg-secondary hover:bg-secondary/80 text-secondary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        {content[language].deposit}
-                      </Button>
+                          {/* Bouton voir détails */}
+                          <Modal
+                            trigger={
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-between group/btn hover:bg-primary/10 border border-border hover:border-primary/50 transition-colors duration-300"
+                              >
+                                <span className="flex items-center gap-2">
+                                  <Eye className="w-4 h-4" />
+                                  {content[language].actions.details}
+                                </span>
+                                <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform duration-200" />
+                              </Button>
+                            }
+                            title={theme.title}
+                          >
+                            <div className="space-y-6">
+                              <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
+                                  {!theme.is_icon_class && theme.icon_url ? (
+                                    <img 
+                                      src={theme.icon_url} 
+                                      alt={theme.title} 
+                                      className="w-8 h-8 object-contain"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <IconComponent className="w-8 h-8 text-primary-foreground" />
+                                  )}
+                                </div>
+                                <div>
+                                  <h3 className="text-2xl font-bold text-foreground">{theme.title}</h3>
+                                </div>
+                              </div>
+
+                              <div className="bg-secondary/50 rounded-lg p-4 border border-border">
+                                <p className="text-muted-foreground leading-relaxed">{theme.description}</p>
+                              </div>
+
+                              {theme.keywords && theme.keywords.length > 0 && (
+                                <div>
+                                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
+                                    <Search className="w-4 h-4" />
+                                    {content[language].labels.keywords}
+                                  </h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {theme.keywords.map((keyword) => (
+                                      <span
+                                        key={keyword.id}
+                                        className="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-medium border border-primary/20 hover:bg-primary/20 transition-colors duration-200"
+                                      >
+                                        {keyword.keyword}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </Modal>
+
+                          {/* Boutons d'action */}
+                          <div className="flex gap-3 pt-2">
+                            <Button
+                              size="sm"
+                              onClick={() => scrollToSection('registration')}
+                              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
+                            >
+                              <Users className="w-4 h-4 mr-2" />
+                              {content[language].inscription}
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => window.location.href = 'https://cmt3.research.microsoft.com/User/Login?ReturnUrl=%2FConference%2FRecent'}
+                              className="flex-1 bg-secondary hover:bg-secondary/80 text-secondary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
+                            >
+                              <Upload className="w-4 h-4 mr-2" />
+                              {content[language].deposit}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Indicators */}
+            <div className="flex justify-center mt-8 gap-2">
+              {Array.from({ length: Math.ceil(themes.length / visibleItems) }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentIndex(index * visibleItems)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    Math.floor(currentIndex / visibleItems) === index
+                      ? 'bg-primary scale-125'
+                      : 'bg-primary/30 hover:bg-primary/50'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
