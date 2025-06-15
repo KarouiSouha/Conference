@@ -40,33 +40,33 @@ class RegistrationController extends Controller
         try {
             // Validation des données
             $validator = Validator::make($request->all(), [
-                'firstName' => 'required|string|max:255',
-                'lastName' => 'required|string|max:255',
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
                 'establishment' => 'required|string|max:255',
                 'title' => 'required|string|max:255',
                 'email' => 'required|email|unique:registrations,email',
                 'phone' => 'required|string|max:20',
-                'participationType' => 'required|in:without-article,with-article',
-                'hasAccompanying' => 'required|in:yes,no',
-                'accompanyingDetails' => 'nullable|string',
-                'accommodationType' => 'required|in:without-accommodation,with-accommodation',
-                'paymentMethod' => 'required|in:bank-transfer,administrative-order,check',
-                'paymentProof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
+                'participation_type' => 'required|in:without-article,with-article',
+                'has_accompanying' => 'required|in:yes,no',
+                'accompanying_details' => 'nullable|string',
+                'accommodation_type' => 'required|in:without-accommodation,with-accommodation',
+                'payment_method' => 'required|in:bank-transfer,administrative-order,check',
+                'payment_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
             ], [
                 'email.unique' => 'Cette adresse email est déjà utilisée pour une inscription.',
-                'firstName.required' => 'Le prénom est requis.',
-                'lastName.required' => 'Le nom est requis.',
+                'first_name.required' => 'Le prénom est requis.',
+                'last_name.required' => 'Le nom est requis.',
                 'establishment.required' => 'L\'établissement est requis.',
                 'title.required' => 'Le titre/fonction est requis.',
                 'email.required' => 'L\'adresse email est requise.',
                 'email.email' => 'L\'adresse email doit être valide.',
                 'phone.required' => 'Le numéro de téléphone est requis.',
-                'participationType.required' => 'Le type de participation est requis.',
-                'hasAccompanying.required' => 'Veuillez indiquer si vous avez des accompagnateurs.',
-                'accommodationType.required' => 'Le type d\'hébergement est requis.',
-                'paymentMethod.required' => 'Le mode de paiement est requis.',
-                'paymentProof.mimes' => 'Le justificatif doit être au format PDF, JPG, JPEG ou PNG.',
-                'paymentProof.max' => 'Le justificatif ne doit pas dépasser 5MB.',
+                'participation_type.required' => 'Le type de participation est requis.',
+                'has_accompanying.required' => 'Veuillez indiquer si vous avez des accompagnateurs.',
+                'accommodation_type.required' => 'Le type d\'hébergement est requis.',
+                'payment_method.required' => 'Le mode de paiement est requis.',
+                'payment_proof.mimes' => 'Le justificatif doit être au format PDF, JPG, JPEG ou PNG.',
+                'payment_proof.max' => 'Le justificatif ne doit pas dépasser 5MB.',
             ]);
 
             if ($validator->fails()) {
@@ -82,26 +82,26 @@ class RegistrationController extends Controller
 
             // Traitement du fichier de justificatif de paiement
             $paymentProofPath = null;
-            if ($request->hasFile('paymentProof')) {
-                $file = $request->file('paymentProof');
-                $filename = time() . '_' . Str::slug($request->lastName . '_' . $request->firstName) . '.' . $file->getClientOriginalExtension();
+            if ($request->hasFile('payment_proof')) {
+                $file = $request->file('payment_proof');
+                $filename = time() . '_' . Str::slug($request->last_name . '_' . $request->first_name) . '.' . $file->getClientOriginalExtension();
                 $paymentProofPath = $file->storeAs('payment-proofs', $filename, 'public');
             }
 
             // Création de l'inscription
             $registration = Registration::create([
-                'first_name' => $request->firstName,
-                'last_name' => $request->lastName,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
                 'establishment' => $request->establishment,
                 'title' => $request->title,
                 'email' => $request->email,
                 'password' => $temporaryPassword, // Sera hashé automatiquement par le mutateur
                 'phone' => $request->phone,
-                'participation_type' => $request->participationType,
-                'has_accompanying' => $request->hasAccompanying,
-                'accompanying_details' => $request->hasAccompanying === 'yes' ? $request->accompanyingDetails : null,
-                'accommodation_type' => $request->accommodationType,
-                'payment_method' => $request->paymentMethod,
+                'participation_type' => $request->participation_type,
+                'has_accompanying' => $request->has_accompanying,
+                'accompanying_details' => $request->has_accompanying === 'yes' ? $request->accompanying_details : null,
+                'accommodation_type' => $request->accommodation_type,
+                'payment_method' => $request->payment_method,
                 'payment_proof' => $paymentProofPath,
                 'status' => 'pending',
             ]);
