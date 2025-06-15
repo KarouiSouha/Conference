@@ -25,9 +25,9 @@ interface ProgramProps {
   apiUrl?: string;
 }
 
-const Program: React.FC<ProgramProps> = ({ 
-  language = 'fr', 
-  apiUrl = 'http://localhost:8000/api' 
+const Program: React.FC<ProgramProps> = ({
+  language = 'fr',
+  apiUrl = 'http://localhost:8000/api'
 }) => {
   const [programData, setProgramData] = useState<GroupedSessions>({});
   const [loading, setLoading] = useState(true);
@@ -65,13 +65,13 @@ const Program: React.FC<ProgramProps> = ({
         setError(null);
 
         const response = await fetch(`${apiUrl}/Programme/all?lang=${language}`);
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const result = await response.json();
-        
+
         if (result.success && result.data) {
           setProgramData(result.data);
         } else {
@@ -105,7 +105,7 @@ const Program: React.FC<ProgramProps> = ({
       month: 'long',
       day: 'numeric'
     };
-    
+
     return date.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', options);
   };
 
@@ -194,24 +194,23 @@ const Program: React.FC<ProgramProps> = ({
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
               {currentContent.title}
             </h2>
-            <p className="text-slate-600 text-sm">
+            <p className="text-lg text-muted-foreground">
               {currentContent.subtitle}
             </p>
           </div>
-          
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className={`grid w-full mb-6 bg-slate-100 h-10 ${
-              daysArray.length === 1 ? 'grid-cols-1' : 
-              daysArray.length === 2 ? 'grid-cols-2' : 
-              daysArray.length === 3 ? 'grid-cols-3' : 
-              'grid-cols-4'
-            }`}>
+            <TabsList className={`grid w-full mb-6 bg-slate-100 h-10 ${daysArray.length === 1 ? 'grid-cols-1' :
+                daysArray.length === 2 ? 'grid-cols-2' :
+                  daysArray.length === 3 ? 'grid-cols-3' :
+                    'grid-cols-4'
+              }`}>
               {daysArray.map((day, index) => (
-                <TabsTrigger 
-                  key={day.date} 
+                <TabsTrigger
+                  key={day.date}
                   value={index.toString()}
                   className="text-sm font-medium text-slate-700 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
                 >
@@ -219,7 +218,7 @@ const Program: React.FC<ProgramProps> = ({
                 </TabsTrigger>
               ))}
             </TabsList>
-            
+
             {daysArray.map((day, dayIndex) => (
               <TabsContent key={day.date} value={dayIndex.toString()}>
                 <Card className="shadow-sm border border-slate-200 bg-white">
@@ -232,7 +231,7 @@ const Program: React.FC<ProgramProps> = ({
                     <div className="relative">
                       {/* Ligne centrale verticale */}
                       <div className="absolute left-1/2 transform -translate-x-1/2 w-0.5 bg-slate-300 h-full"></div>
-                      
+
                       <div className="space-y-8">
                         {day.sessions.map((session, sessionIndex) => (
                           <div key={session.id} className="relative flex items-center">
@@ -265,12 +264,12 @@ const Program: React.FC<ProgramProps> = ({
                                     )}
                                   </div>
                                 </div>
-                                
+
                                 {/* Cercle central */}
                                 <div className={`w-10 h-10 ${getEventColor(session.type_evenement)} rounded-full flex items-center justify-center text-white shadow-md relative z-10 shrink-0`}>
                                   {getEventIcon(session.type_evenement)}
                                 </div>
-                                
+
                                 {/* Espace à droite */}
                                 <div className="flex-1 pl-8"></div>
                               </>
@@ -279,12 +278,12 @@ const Program: React.FC<ProgramProps> = ({
                               <>
                                 {/* Espace à gauche */}
                                 <div className="flex-1 pr-8"></div>
-                                
+
                                 {/* Cercle central */}
                                 <div className={`w-10 h-10 ${getEventColor(session.type_evenement)} rounded-full flex items-center justify-center text-white shadow-md relative z-10 shrink-0`}>
                                   {getEventIcon(session.type_evenement)}
                                 </div>
-                                
+
                                 <div className="flex-1 pl-8 text-left">
                                   <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200">
                                     <div className="text-xs font-mono text-slate-600 mb-1">

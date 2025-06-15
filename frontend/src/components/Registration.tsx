@@ -359,6 +359,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
               <p className="text-gray-600 mb-6">
                 {content[language].successMessage}
               </p>
+<<<<<<< HEAD
               <Button 
                 onClick={() => {
                   setIsSubmitted(false);
@@ -380,6 +381,10 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                   setErrors({});
                   setSubmitError('');
                 }}
+=======
+              <Button
+                onClick={() => setIsSubmitted(false)}
+>>>>>>> dec45a62a039ca93d3e131b4712fdf6fca20155a
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
               >
                 Nouvelle inscription
@@ -397,10 +402,10 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         <div key={index} className="flex items-center">
           <div className={`
             w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300
-            ${currentStep > index + 1 
-              ? 'bg-green-500 text-white' 
-              : currentStep === index + 1 
-                ? 'bg-blue-600 text-white shadow-lg' 
+            ${currentStep > index + 1
+              ? 'bg-green-500 text-white'
+              : currentStep === index + 1
+                ? 'bg-blue-600 text-white shadow-lg'
                 : 'bg-gray-200 text-gray-500'
             }
           `}>
@@ -421,13 +426,13 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     <section className="min-h-screen bg-white py-12" id="registration">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto">
-          
+
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
               {content[language].title}
-            </h1>
-            <p className="text-sm text-gray-600">
+            </h2>
+            <p className="text-lg text-muted-foreground">
               {content[language].subtitle}
             </p>
           </div>
@@ -461,7 +466,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                     error={errors.firstName}
                   />
                 </div>
-                
+
                 <InputField
                   id="establishment"
                   label={content[language].form.establishment}
@@ -471,7 +476,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                   onChange={(e) => updateFormData('establishment', e.target.value)}
                   error={errors.establishment}
                 />
-                
+
                 <InputField
                   id="title"
                   label={content[language].form.title}
@@ -481,7 +486,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                   onChange={(e) => updateFormData('title', e.target.value)}
                   error={errors.title}
                 />
-                
+
                 <div className="grid md:grid-cols-2 gap-4">
                   <InputField
                     id="email"
@@ -507,8 +512,13 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
               </div>
 
               <div className="flex justify-end mt-6">
+<<<<<<< HEAD
                 <Button 
                   onClick={nextStep}
+=======
+                <Button
+                  onClick={() => setCurrentStep(2)}
+>>>>>>> dec45a62a039ca93d3e131b4712fdf6fca20155a
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
                 >
                   {content[language].form.next}
@@ -525,8 +535,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                   <Label className="text-base font-medium text-gray-900 mb-3 block">
                     Type de participation {errors.participationType && <span className="text-red-500 text-sm">*</span>}
                   </Label>
-                  <RadioGroup 
-                    value={formData.participationType} 
+                  <RadioGroup
+                    value={formData.participationType}
                     onValueChange={(value) => updateFormData('participationType', value)}
                     className="space-y-2"
                   >
@@ -550,8 +560,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                   <Label className="text-base font-medium text-gray-900 mb-3 block">
                     {content[language].form.withAccompanying} {errors.hasAccompanying && <span className="text-red-500 text-sm">*</span>}
                   </Label>
-                  <RadioGroup 
-                    value={formData.hasAccompanying} 
+                  <RadioGroup
+                    value={formData.hasAccompanying}
                     onValueChange={(value) => updateFormData('hasAccompanying', value)}
                     className="space-y-2"
                   >
@@ -591,15 +601,25 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
               </div>
 
               <div className="flex justify-between mt-6">
+<<<<<<< HEAD
                 <Button 
                   onClick={prevStep}
+=======
+                <Button
+                  onClick={() => setCurrentStep(1)}
+>>>>>>> dec45a62a039ca93d3e131b4712fdf6fca20155a
                   variant="outline"
                   className="px-6 py-2 rounded-lg border hover:bg-gray-50"
                 >
                   {content[language].form.previous}
                 </Button>
+<<<<<<< HEAD
                 <Button 
                   onClick={nextStep}
+=======
+                <Button
+                  onClick={() => setCurrentStep(3)}
+>>>>>>> dec45a62a039ca93d3e131b4712fdf6fca20155a
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
                 >
                   {content[language].form.next}
@@ -616,8 +636,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                   <Label className="text-base font-medium text-gray-900 mb-3 block">
                     {content[language].form.registrationFees} {errors.accommodationType && <span className="text-red-500 text-sm">*</span>}
                   </Label>
-                  <RadioGroup 
-                    value={formData.accommodationType} 
+                  <RadioGroup
+                    value={formData.accommodationType}
                     onValueChange={(value) => updateFormData('accommodationType', value)}
                     className="space-y-2"
                   >
@@ -641,8 +661,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                   <Label className="text-base font-medium text-gray-900 mb-3 block">
                     Mode de paiement {errors.paymentMethod && <span className="text-red-500 text-sm">*</span>}
                   </Label>
-                  <RadioGroup 
-                    value={formData.paymentMethod} 
+                  <RadioGroup
+                    value={formData.paymentMethod}
                     onValueChange={(value) => updateFormData('paymentMethod', value)}
                     className="space-y-2"
                   >
@@ -681,8 +701,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                     className="border border-gray-300 rounded-lg"
                   />
                   <p className="text-xs text-gray-600 mt-2">
-                    {language === 'fr' 
-                      ? 'Formats acceptés: PDF, JPG, PNG (max 5MB)' 
+                    {language === 'fr'
+                      ? 'Formats acceptés: PDF, JPG, PNG (max 5MB)'
                       : 'Accepted formats: PDF, JPG, PNG (max 5MB)'
                     }
                   </p>
@@ -695,15 +715,20 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
               </div>
 
               <div className="flex justify-between mt-6">
+<<<<<<< HEAD
                 <Button 
                   onClick={prevStep}
+=======
+                <Button
+                  onClick={() => setCurrentStep(2)}
+>>>>>>> dec45a62a039ca93d3e131b4712fdf6fca20155a
                   variant="outline"
                   className="px-6 py-2 rounded-lg border hover:bg-gray-50"
                   disabled={isLoading}
                 >
                   {content[language].form.previous}
                 </Button>
-                <Button 
+                <Button
                   onClick={handleSubmit}
                   disabled={isLoading}
                   className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center"

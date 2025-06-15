@@ -11,6 +11,7 @@ use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ProgrammeController;
 use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\ArchiveController;
 
 
 /*
@@ -77,4 +78,9 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
     Route::put('/{id}', 'update');                 // PUT /api/Registration/{id}
     Route::delete('/{id}', 'destroy');             // DELETE /api/Registration/{id}
     Route::patch('/{id}/mark-as-paid', 'markAsPaid'); // PATCH /api/Registration/{id}/mark-as-paid
+});
+
+Route::prefix('Archive')->controller(ArchiveController::class)->group(function () {
+    Route::get('/all', 'displayAll');
+    Route::get('get/{id}', 'displayOne');
 });
