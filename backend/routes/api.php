@@ -10,6 +10,7 @@ use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ProgrammeController;
+use App\Http\Controllers\RegistrationController;
 
 
 /*
@@ -66,4 +67,14 @@ Route::prefix('Programme')->controller(ProgrammeController::class)->group(functi
     Route::post('/', 'store');                      // POST /api/Programme
     Route::put('/{id}', 'update');                  // PUT /api/Programme/{id}
     Route::delete('/{id}', 'destroy');              // DELETE /api/Programme/{id}
+});
+// Routes pour les inscriptions
+Route::prefix('Registration')->controller(RegistrationController::class)->group(function () {
+    Route::get('/all', 'index');                    // GET /api/Registration/all
+    Route::get('/statistics', 'statistics');        // GET /api/Registration/statistics
+    Route::get('/{id}', 'show');                   // GET /api/Registration/{id}
+    Route::post('/', 'store');                     // POST /api/Registration
+    Route::put('/{id}', 'update');                 // PUT /api/Registration/{id}
+    Route::delete('/{id}', 'destroy');             // DELETE /api/Registration/{id}
+    Route::patch('/{id}/mark-as-paid', 'markAsPaid'); // PATCH /api/Registration/{id}/mark-as-paid
 });

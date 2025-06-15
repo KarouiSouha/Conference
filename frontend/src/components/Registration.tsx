@@ -6,11 +6,20 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { User, Building, Mail, Phone, FileText, CreditCard, Upload, CheckCircle } from 'lucide-react';
+import { User, Building, Mail, Phone, FileText, CreditCard, Upload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 interface RegistrationProps {
   language: 'fr' | 'en';
+  apiBaseUrl?: string;
 }
+
+// Configuration de l'API
+const API_CONFIG = {
+  baseUrl: 'http://localhost:8000/api', // Ajustez selon votre configuration
+  endpoints: {
+    registration: '/Registration'
+  }
+};
 
 // Composants définis en dehors pour éviter la re-création
 const FormSection = ({ icon: Icon, title, children }: { icon: React.ElementType, title: string, children: React.ReactNode }) => (
@@ -25,6 +34,15 @@ const FormSection = ({ icon: Icon, title, children }: { icon: React.ElementType,
   </div>
 );
 
+const ErrorAlert = ({ message }: { message: string }) => (
+  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-start">
+    <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
+    <div>
+      <p className="text-red-800 text-sm">{message}</p>
+    </div>
+  </div>
+);
+
 interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
@@ -33,9 +51,12 @@ interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   required?: boolean;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  error?: string;
 }
 
-const InputField: React.FC<InputFieldProps> = ({ id, label, type = "text", icon: Icon, required = false, value, onChange, ...props }) => (
+const InputField: React.FC<InputFieldProps> = ({ 
+  id, label, type = "text", icon: Icon, required = false, value, onChange, error, ...props 
+}) => (
   <div className="space-y-1">
     <Label htmlFor={id} className="text-sm font-medium text-gray-700 flex items-center">
       {Icon && <Icon className="w-4 h-4 mr-2 text-gray-400" />}
@@ -47,10 +68,13 @@ const InputField: React.FC<InputFieldProps> = ({ id, label, type = "text", icon:
       type={type}
       value={value}
       onChange={onChange}
-      className="h-10 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+      className={`h-10 border rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-200 ${
+        error ? 'border-red-500' : 'border-gray-300'
+      }`}
       required={required}
       {...props}
     />
+    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
 );
 
@@ -83,7 +107,7 @@ const RadioOption: React.FC<RadioOptionProps> = ({ value, id, label, description
   </div>
 );
 
-const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
+const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -101,8 +125,13 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string>('');
 
-  const content = {
+  const baseUrl = apiBaseUrl || API_CONFIG.baseUrl;
+
+  const content = React.useMemo(() => ({
     fr: {
       title: 'Inscription SITE 2025',
       subtitle: 'Rejoignez la communauté scientifique internationale',
@@ -132,10 +161,17 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
         paymentProof: 'Justificatif de paiement',
         submit: 'Finaliser l\'inscription',
         next: 'Suivant',
-        previous: 'Précédent'
+        previous: 'Précédent',
+        submitting: 'Inscription en cours...'
       },
       success: 'Inscription envoyée avec succès!',
-      successMessage: 'Votre inscription a été enregistrée. Nous vous contacterons prochainement.'
+      successMessage: 'Votre inscription a été enregistrée. Nous vous contacterons prochainement.',
+      errors: {
+        submitError: 'Erreur lors de l\'inscription. Veuillez réessayer.',
+        networkError: 'Erreur de connexion. Vérifiez votre connexion internet.',
+        validationError: 'Veuillez corriger les erreurs dans le formulaire.',
+        emailExists: 'Cette adresse e-mail est déjà utilisée.'
+      }
     },
     en: {
       title: 'SITE 2025 Registration',
@@ -166,27 +202,147 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
         paymentProof: 'Payment Proof',
         submit: 'Complete Registration',
         next: 'Next',
-        previous: 'Previous'
+        previous: 'Previous',
+        submitting: 'Submitting...'
       },
       success: 'Registration submitted successfully!',
-      successMessage: 'Your registration has been recorded. We will contact you soon.'
+      successMessage: 'Your registration has been recorded. We will contact you soon.',
+      errors: {
+        submitError: 'Error during registration. Please try again.',
+        networkError: 'Connection error. Check your internet connection.',
+        validationError: 'Please correct the errors in the form.',
+        emailExists: 'This email address is already in use.'
+      }
     }
-  };
+  }), []);
 
   // Fonctions de mise à jour mémorisées
   const updateFormData = useCallback((field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  }, []);
-
-  const handleSubmit = useCallback(() => {
-    console.log('Registration form submitted:', formData);
-    setIsSubmitted(true);
-  }, [formData]);
+    // Effacer l'erreur pour ce champ
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  }, [errors]);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData(prev => ({ ...prev, paymentProof: file }));
-  }, []);
+    if (errors.paymentProof) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.paymentProof;
+        return newErrors;
+      });
+    }
+  }, [errors]);
+
+  const validateStep = React.useCallback((step: number): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (step === 1) {
+      if (!formData.firstName.trim()) newErrors.firstName = 'Prénom requis';
+      if (!formData.lastName.trim()) newErrors.lastName = 'Nom requis';
+      if (!formData.establishment.trim()) newErrors.establishment = 'Établissement requis';
+      if (!formData.title.trim()) newErrors.title = 'Titre requis';
+      if (!formData.email.trim()) newErrors.email = 'Email requis';
+      else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email invalide';
+      if (!formData.phone.trim()) newErrors.phone = 'Téléphone requis';
+    } else if (step === 2) {
+      if (!formData.participationType) newErrors.participationType = 'Type de participation requis';
+      if (!formData.hasAccompanying) newErrors.hasAccompanying = 'Réponse requise';
+      if (formData.hasAccompanying === 'yes' && !formData.accompanyingDetails.trim()) {
+        newErrors.accompanyingDetails = 'Détails des accompagnateurs requis';
+      }
+    } else if (step === 3) {
+      if (!formData.accommodationType) newErrors.accommodationType = 'Type d\'hébergement requis';
+      if (!formData.paymentMethod) newErrors.paymentMethod = 'Mode de paiement requis';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [formData]);
+
+  const handleSubmit = useCallback(async () => {
+    if (!validateStep(3)) return;
+
+    setIsLoading(true);
+    setSubmitError('');
+
+    try {
+      // Préparer les données pour l'API
+      const submitData = new FormData();
+      submitData.append('first_name', formData.firstName);
+      submitData.append('last_name', formData.lastName);
+      submitData.append('establishment', formData.establishment);
+      submitData.append('title', formData.title);
+      submitData.append('email', formData.email);
+      submitData.append('phone', formData.phone);
+      submitData.append('participation_type', formData.participationType);
+      submitData.append('has_accompanying', formData.hasAccompanying);
+      submitData.append('accompanying_details', formData.accompanyingDetails);
+      submitData.append('accommodation_type', formData.accommodationType);
+      submitData.append('payment_method', formData.paymentMethod);
+      
+      if (formData.paymentProof) {
+        submitData.append('payment_proof', formData.paymentProof);
+      }
+
+      const response = await fetch(`${baseUrl}${API_CONFIG.endpoints.registration}`, {
+        method: 'POST',
+        body: submitData,
+        headers: {
+          'Accept': 'application/json',
+          // Ne pas définir Content-Type pour FormData, le browser le fera automatiquement
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 422) {
+          // Erreurs de validation
+          const validationErrors: Record<string, string> = {};
+          if (data.errors) {
+            Object.keys(data.errors).forEach(key => {
+              validationErrors[key] = data.errors[key][0]; // Premier message d'erreur
+            });
+          }
+          setErrors(validationErrors);
+          setSubmitError(content[language].errors.validationError);
+        } else if (data.message?.includes('email')) {
+          setSubmitError(content[language].errors.emailExists);
+        } else {
+          setSubmitError(data.message || content[language].errors.submitError);
+        }
+        return;
+      }
+
+      // Succès
+      console.log('Registration successful:', data);
+      setIsSubmitted(true);
+
+    } catch (error) {
+      console.error('Error submitting registration:', error);
+      setSubmitError(content[language].errors.networkError);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [formData, baseUrl, language, content, validateStep]);
+
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+
+  const prevStep = () => {
+    setCurrentStep(prev => prev - 1);
+  };
 
   if (isSubmitted) {
     return (
@@ -204,7 +360,26 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                 {content[language].successMessage}
               </p>
               <Button 
-                onClick={() => setIsSubmitted(false)}
+                onClick={() => {
+                  setIsSubmitted(false);
+                  setCurrentStep(1);
+                  setFormData({
+                    firstName: '',
+                    lastName: '',
+                    establishment: '',
+                    title: '',
+                    email: '',
+                    phone: '',
+                    participationType: '',
+                    hasAccompanying: '',
+                    accompanyingDetails: '',
+                    accommodationType: '',
+                    paymentMethod: '',
+                    paymentProof: null
+                  });
+                  setErrors({});
+                  setSubmitError('');
+                }}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
               >
                 Nouvelle inscription
@@ -259,6 +434,9 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
 
           <StepIndicator />
 
+          {/* Error global */}
+          {submitError && <ErrorAlert message={submitError} />}
+
           {/* Step 1: Personal Information */}
           {currentStep === 1 && (
             <FormSection icon={User} title={content[language].personalInfo}>
@@ -270,7 +448,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                     icon={User}
                     required
                     value={formData.lastName}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFormData('lastName', e.target.value)}
+                    onChange={(e) => updateFormData('lastName', e.target.value)}
+                    error={errors.lastName}
                   />
                   <InputField
                     id="firstName"
@@ -278,7 +457,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                     icon={User}
                     required
                     value={formData.firstName}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFormData('firstName', e.target.value)}
+                    onChange={(e) => updateFormData('firstName', e.target.value)}
+                    error={errors.firstName}
                   />
                 </div>
                 
@@ -288,7 +468,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                   icon={Building}
                   required
                   value={formData.establishment}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFormData('establishment', e.target.value)}
+                  onChange={(e) => updateFormData('establishment', e.target.value)}
+                  error={errors.establishment}
                 />
                 
                 <InputField
@@ -297,7 +478,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                   icon={FileText}
                   required
                   value={formData.title}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFormData('title', e.target.value)}
+                  onChange={(e) => updateFormData('title', e.target.value)}
+                  error={errors.title}
                 />
                 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -308,7 +490,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                     icon={Mail}
                     required
                     value={formData.email}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFormData('email', e.target.value)}
+                    onChange={(e) => updateFormData('email', e.target.value)}
+                    error={errors.email}
                   />
                   <InputField
                     id="phone"
@@ -317,14 +500,15 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                     icon={Phone}
                     required
                     value={formData.phone}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFormData('phone', e.target.value)}
+                    onChange={(e) => updateFormData('phone', e.target.value)}
+                    error={errors.phone}
                   />
                 </div>
               </div>
 
               <div className="flex justify-end mt-6">
                 <Button 
-                  onClick={() => setCurrentStep(2)}
+                  onClick={nextStep}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
                 >
                   {content[language].form.next}
@@ -339,7 +523,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
               <div className="space-y-6">
                 <div>
                   <Label className="text-base font-medium text-gray-900 mb-3 block">
-                    Type de participation
+                    Type de participation {errors.participationType && <span className="text-red-500 text-sm">*</span>}
                   </Label>
                   <RadioGroup 
                     value={formData.participationType} 
@@ -359,11 +543,12 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                       isSelected={formData.participationType === 'with-article'}
                     />
                   </RadioGroup>
+                  {errors.participationType && <p className="text-red-500 text-xs mt-1">{errors.participationType}</p>}
                 </div>
 
                 <div>
                   <Label className="text-base font-medium text-gray-900 mb-3 block">
-                    {content[language].form.withAccompanying}
+                    {content[language].form.withAccompanying} {errors.hasAccompanying && <span className="text-red-500 text-sm">*</span>}
                   </Label>
                   <RadioGroup 
                     value={formData.hasAccompanying} 
@@ -383,12 +568,14 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                       isSelected={formData.hasAccompanying === 'no'}
                     />
                   </RadioGroup>
+                  {errors.hasAccompanying && <p className="text-red-500 text-xs mt-1">{errors.hasAccompanying}</p>}
                 </div>
 
                 {formData.hasAccompanying === 'yes' && (
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <Label htmlFor="accompanyingDetails" className="text-sm font-medium text-gray-700 mb-2 block">
                       {content[language].form.accompanyingDetails}
+                      {errors.accompanyingDetails && <span className="text-red-500 ml-1">*</span>}
                     </Label>
                     <Textarea
                       id="accompanyingDetails"
@@ -396,22 +583,23 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                       onChange={(e) => updateFormData('accompanyingDetails', e.target.value)}
                       placeholder={language === 'fr' ? 'Ex: Marie Dupont (35 ans), Jean Dupont (8 ans)' : 'Ex: Marie Dupont (35 years), Jean Dupont (8 years)'}
                       rows={3}
-                      className="border border-gray-300 rounded-lg"
+                      className={`border rounded-lg ${errors.accompanyingDetails ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    {errors.accompanyingDetails && <p className="text-red-500 text-xs mt-1">{errors.accompanyingDetails}</p>}
                   </div>
                 )}
               </div>
 
               <div className="flex justify-between mt-6">
                 <Button 
-                  onClick={() => setCurrentStep(1)}
+                  onClick={prevStep}
                   variant="outline"
                   className="px-6 py-2 rounded-lg border hover:bg-gray-50"
                 >
                   {content[language].form.previous}
                 </Button>
                 <Button 
-                  onClick={() => setCurrentStep(3)}
+                  onClick={nextStep}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
                 >
                   {content[language].form.next}
@@ -426,7 +614,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
               <div className="space-y-6">
                 <div>
                   <Label className="text-base font-medium text-gray-900 mb-3 block">
-                    {content[language].form.registrationFees}
+                    {content[language].form.registrationFees} {errors.accommodationType && <span className="text-red-500 text-sm">*</span>}
                   </Label>
                   <RadioGroup 
                     value={formData.accommodationType} 
@@ -446,11 +634,12 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                       isSelected={formData.accommodationType === 'with-accommodation'}
                     />
                   </RadioGroup>
+                  {errors.accommodationType && <p className="text-red-500 text-xs mt-1">{errors.accommodationType}</p>}
                 </div>
 
                 <div>
                   <Label className="text-base font-medium text-gray-900 mb-3 block">
-                    Mode de paiement
+                    Mode de paiement {errors.paymentMethod && <span className="text-red-500 text-sm">*</span>}
                   </Label>
                   <RadioGroup 
                     value={formData.paymentMethod} 
@@ -476,6 +665,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                       isSelected={formData.paymentMethod === 'check'}
                     />
                   </RadioGroup>
+                  {errors.paymentMethod && <p className="text-red-500 text-xs mt-1">{errors.paymentMethod}</p>}
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -496,22 +686,30 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr' }) => {
                       : 'Accepted formats: PDF, JPG, PNG (max 5MB)'
                     }
                   </p>
+                  {formData.paymentProof && (
+                    <p className="text-xs text-green-600 mt-1">
+                      Fichier sélectionné: {formData.paymentProof.name}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className="flex justify-between mt-6">
                 <Button 
-                  onClick={() => setCurrentStep(2)}
+                  onClick={prevStep}
                   variant="outline"
                   className="px-6 py-2 rounded-lg border hover:bg-gray-50"
+                  disabled={isLoading}
                 >
                   {content[language].form.previous}
                 </Button>
                 <Button 
                   onClick={handleSubmit}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+                  disabled={isLoading}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center"
                 >
-                  {content[language].form.submit}
+                  {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {isLoading ? content[language].form.submitting : content[language].form.submit}
                 </Button>
               </div>
             </FormSection>
