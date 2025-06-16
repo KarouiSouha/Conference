@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { User, Building, Mail, Phone, FileText, CreditCard, Upload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface RegistrationProps {
   language: 'fr' | 'en';
@@ -54,12 +55,12 @@ interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-const InputField: React.FC<InputFieldProps> = ({ 
-  id, label, type = "text", icon: Icon, required = false, value, onChange, error, ...props 
+const InputField: React.FC<InputFieldProps> = ({
+  id, label, type = "text", icon: Icon, required = false, value, onChange, error, ...props
 }) => (
   <div className="space-y-1">
     <Label htmlFor={id} className="text-sm font-medium text-gray-700 flex items-center">
-      {Icon && <Icon className="w-4 h-4 mr-2 text-gray-400" />}
+      {Icon && <Icon className="w-4 h-4 mr-2 text-blue-500" />}
       {label}
       {required && <span className="text-red-500 ml-1">*</span>}
     </Label>
@@ -68,15 +69,89 @@ const InputField: React.FC<InputFieldProps> = ({
       type={type}
       value={value}
       onChange={onChange}
-      className={`h-10 border rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-200 ${
-        error ? 'border-red-500' : 'border-gray-300'
-      }`}
+      className={`h-10 border rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-200 ${error ? 'border-red-500' : 'border-gray-300'
+        }`}
       required={required}
       {...props}
     />
     {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
 );
+interface SelectFieldProps {
+  id: string;
+  label: string;
+  icon?: React.ElementType;
+  required?: boolean;
+  value: string;
+  onValueChange: (value: string) => void;
+  error?: string;
+  placeholder?: string;
+  options: { value: string; label: string }[];
+}
+
+const SelectField: React.FC<SelectFieldProps> = ({ 
+  id, label, icon: Icon, required = false, value, onValueChange, error, placeholder, options 
+}) => {
+  const getIconForOption = (optionValue: string) => {
+    switch(optionValue) {
+      case 'student': return <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">E</div>;
+      case 'teacher': return <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white text-xs font-bold">P</div>;
+      case 'engineer': return <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold">I</div>;
+      case 'other': return <div className="w-6 h-6 bg-gradient-to-br from-gray-500 to-slate-600 rounded-full flex items-center justify-center text-white text-xs font-bold">A</div>;
+      default: return <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">?</div>;
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id} className="text-sm font-semibold text-gray-800 flex items-center">
+        {Icon && <Icon className="w-4 h-4 mr-2 text-blue-500" />}
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </Label>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger className={`h-12 border-2 rounded-xl transition-all duration-200 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-gradient-to-r from-white to-gray-50 ${
+          error ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-300'
+        } ${value ? 'bg-blue-50/30' : ''}`}>
+          <SelectValue 
+            placeholder={
+              <span className="text-gray-500 font-medium">
+                {placeholder}
+              </span>
+            } 
+            className="font-medium"
+          />
+        </SelectTrigger>
+        <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-xl backdrop-blur-sm">
+          <div className="p-1">
+            {options.map((option, index) => (
+              <SelectItem 
+                key={option.value} 
+                value={option.value}
+                className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 focus:bg-gradient-to-r focus:from-blue-50 focus:to-indigo-50 cursor-pointer hover:scale-[1.02] focus:scale-[1.02] my-1"
+              >
+                <div className="flex items-center group">
+                  <div className="mr-3 group-hover:scale-110 transition-transform duration-200">
+                    {getIconForOption(option.value)}
+                  </div>
+                  <span className="font-medium text-gray-800 group-hover:text-blue-700 transition-colors duration-200">
+                    {option.label}
+                  </span>
+                </div>
+              </SelectItem>
+            ))}
+          </div>
+        </SelectContent>
+      </Select>
+      {error && (
+        <div className="flex items-center mt-2">
+          <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold mr-2">!</div>
+          <p className="text-red-500 text-xs font-medium">{error}</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface RadioOptionProps {
   value: string;
@@ -144,6 +219,12 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         firstName: 'Prénom',
         establishment: 'Établissement / Organisation',
         title: 'Fonction / Titre',
+        titleOptions: {
+          student: 'Étudiant',
+          teacher: 'Enseignant',
+          engineer: 'Ingénieur',
+          other: 'Autre'
+        },
         email: 'Adresse e-mail',
         phone: 'Numéro de téléphone',
         participationWithoutArticle: 'Participation sans soumission d\'article',
@@ -185,6 +266,12 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         firstName: 'First Name',
         establishment: 'Institution / Organization',
         title: 'Position / Title',
+        titleOptions: {
+          student: 'Student',
+          teacher: 'Teacher',
+          engineer: 'Engineer',
+          other: 'Other'
+        },
         email: 'Email Address',
         phone: 'Phone Number',
         participationWithoutArticle: 'Participation without article submission',
@@ -288,7 +375,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
       submitData.append('accommodation_type', formData.accommodationType);
       submitData.append('payment_method', formData.paymentMethod);
       submitData.append('language', language);
-      
+
       if (formData.paymentProof) {
         submitData.append('payment_proof', formData.paymentProof);
       }
@@ -357,34 +444,34 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
               <h2 className="text-2xl font-bold text-gray-900 mb-3">
                 {content[language].success}
               </h2>
-<p className="text-gray-600 mb-6">
-  {content[language].successMessage}
-</p>
-<Button
-  onClick={() => {
-    setIsSubmitted(false);
-    setCurrentStep(1);
-    setFormData({
-      firstName: '',
-      lastName: '',
-      establishment: '',
-      title: '',
-      email: '',
-      phone: '',
-      participationType: '',
-      hasAccompanying: '',
-      accompanyingDetails: '',
-      accommodationType: '',
-      paymentMethod: '',
-      paymentProof: null
-    });
-    setErrors({});
-    setSubmitError('');
-  }}
-  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
->
-  Nouvelle inscription
-</Button>
+              <p className="text-gray-600 mb-6">
+                {content[language].successMessage}
+              </p>
+              <Button
+                onClick={() => {
+                  setIsSubmitted(false);
+                  setCurrentStep(1);
+                  setFormData({
+                    firstName: '',
+                    lastName: '',
+                    establishment: '',
+                    title: '',
+                    email: '',
+                    phone: '',
+                    participationType: '',
+                    hasAccompanying: '',
+                    accompanyingDetails: '',
+                    accommodationType: '',
+                    paymentMethod: '',
+                    paymentProof: null
+                  });
+                  setErrors({});
+                  setSubmitError('');
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+              >
+                Nouvelle inscription
+              </Button>
             </div>
           </div>
         </div>
@@ -473,15 +560,22 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                   error={errors.establishment}
                 />
 
-                <InputField
-                  id="title"
-                  label={content[language].form.title}
-                  icon={FileText}
-                  required
-                  value={formData.title}
-                  onChange={(e) => updateFormData('title', e.target.value)}
-                  error={errors.title}
-                />
+                <SelectField
+  id="title"
+  label={content[language].form.title}
+  icon={FileText}
+  required
+  value={formData.title}
+  onValueChange={(value) => updateFormData('title', value)}
+  error={errors.title}
+  placeholder={language === 'fr' ? 'Sélectionnez votre fonction' : 'Select your position'}
+  options={[
+    { value: 'student', label: content[language].form.titleOptions.student },
+    { value: 'teacher', label: content[language].form.titleOptions.teacher },
+    { value: 'engineer', label: content[language].form.titleOptions.engineer },
+    { value: 'other', label: content[language].form.titleOptions.other }
+  ]}
+/>
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <InputField
@@ -508,12 +602,12 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
               </div>
 
               <div className="flex justify-end mt-6">
-<Button 
-  onClick={nextStep}
-  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
->
-  {content[language].form.next}
-</Button>
+                <Button
+                  onClick={nextStep}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+                >
+                  {content[language].form.next}
+                </Button>
               </div>
             </FormSection>
           )}
@@ -591,21 +685,21 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                 )}
               </div>
 
-<div className="flex justify-between mt-6">
-  <Button 
-    onClick={prevStep}
-    variant="outline"
-    className="px-6 py-2 rounded-lg border hover:bg-gray-50"
-  >
-    {content[language].form.previous}
-  </Button>
-  <Button 
-    onClick={nextStep}
-    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
-  >
-    {content[language].form.next}
-  </Button>
-</div>
+              <div className="flex justify-between mt-6">
+                <Button
+                  onClick={prevStep}
+                  variant="outline"
+                  className="px-6 py-2 rounded-lg border hover:bg-gray-50"
+                >
+                  {content[language].form.previous}
+                </Button>
+                <Button
+                  onClick={nextStep}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+                >
+                  {content[language].form.next}
+                </Button>
+              </div>
             </FormSection>
           )}
 
@@ -695,24 +789,24 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                 </div>
               </div>
 
-<div className="flex justify-between mt-6">
-  <Button
-    onClick={() => setCurrentStep(2)}
-    variant="outline"
-    className="px-6 py-2 rounded-lg border hover:bg-gray-50"
-    disabled={isLoading}
-  >
-    {content[language].form.previous}
-  </Button>
-  <Button
-    onClick={handleSubmit}
-    disabled={isLoading}
-    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center"
-  >
-    {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-    {isLoading ? content[language].form.submitting : content[language].form.submit}
-  </Button>
-</div>
+              <div className="flex justify-between mt-6">
+                <Button
+                  onClick={() => setCurrentStep(2)}
+                  variant="outline"
+                  className="px-6 py-2 rounded-lg border hover:bg-gray-50"
+                  disabled={isLoading}
+                >
+                  {content[language].form.previous}
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center"
+                >
+                  {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {isLoading ? content[language].form.submitting : content[language].form.submit}
+                </Button>
+              </div>
             </FormSection>
           )}
         </div>
