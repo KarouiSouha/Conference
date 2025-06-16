@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Partners from '@/components/Partners';
 import HeroSection from '@/components/HeroSection';
@@ -21,7 +20,31 @@ import Footer from '@/components/Footer';
 const Index = () => {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const [showAdmin, setShowAdmin] = useState(false);
+  const [keySequence, setKeySequence] = useState('');
 
+  // Effet pour détecter la séquence de touches secrète
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      const newSequence = keySequence + event.key.toLowerCase();
+      
+      // Séquence secrète : "admin123"
+      if (newSequence.includes('admin')) {
+        setShowAdmin(true);
+        setKeySequence('');
+        console.log('Mode admin activé'); // Pour debug (à retirer en production)
+      } else if (newSequence.length > 10) {
+        // Reset si trop long
+        setKeySequence('');
+      } else {
+        setKeySequence(newSequence);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [keySequence]);
+
+  // Affichage de l'interface admin
   if (showAdmin) {
     return (
       <div className="min-h-screen bg-white">
@@ -37,6 +60,7 @@ const Index = () => {
     );
   }
 
+  // Affichage normal du site
   return (
     <div className="min-h-screen bg-white">
       <Header language={language} setLanguage={setLanguage} />
@@ -56,13 +80,7 @@ const Index = () => {
       <Contact language={language} />
       <Footer language={language} />
       
-      {/* Admin Access Button (hidden in production) */}
-      <button 
-        onClick={() => setShowAdmin(true)}
-        className="fixed bottom-4 left-4 bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-xs hover:bg-blue-200 transition-colors"
-      >
-        Admin
-      </button>
+      {/* Plus de bouton admin visible ! */}
     </div>
   );
 };
