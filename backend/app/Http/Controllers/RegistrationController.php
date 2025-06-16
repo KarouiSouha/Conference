@@ -8,6 +8,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\RegistrationConfirmation;
 
 class RegistrationController extends Controller
 {
@@ -111,7 +113,7 @@ class RegistrationController extends Controller
             $registration->update(['amount' => $amount]);
 
             // TODO: Envoyer un email de confirmation avec le mot de passe temporaire
-            // Mail::to($registration->email)->send(new RegistrationConfirmation($registration, $temporaryPassword));
+            Mail::to($registration->email)->send(new RegistrationConfirmation($registration->first_name.' '.$registration->last_name,'http://localhost:8080',$request->language));
 
             return response()->json([
                 'success' => true,

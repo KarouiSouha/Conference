@@ -287,6 +287,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
       submitData.append('accompanying_details', formData.accompanyingDetails);
       submitData.append('accommodation_type', formData.accommodationType);
       submitData.append('payment_method', formData.paymentMethod);
+      submitData.append('language', language);
       
       if (formData.paymentProof) {
         submitData.append('payment_proof', formData.paymentProof);
