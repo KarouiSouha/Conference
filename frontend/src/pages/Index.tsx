@@ -16,6 +16,7 @@ import PracticalInfo from '@/components/PracticalInfo';
 import Contact from '@/components/Contact';
 import AdminDashboard from '@/components/AdminDashboard';
 import Footer from '@/components/Footer';
+import Admin from '@/pages/Admin';
 
 const Index = () => {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -27,7 +28,7 @@ const Index = () => {
     const handleKeyPress = (event: KeyboardEvent) => {
       const newSequence = keySequence + event.key.toLowerCase();
       
-      // Séquence secrète : "admin123"
+      // Séquence secrète : "admin"
       if (newSequence.includes('admin')) {
         setShowAdmin(true);
         setKeySequence('');
@@ -48,8 +49,7 @@ const Index = () => {
   if (showAdmin) {
     return (
       <div className="min-h-screen bg-white">
-        <Header language={language} setLanguage={setLanguage} />
-        <AdminDashboard language={language} />
+        <Admin />
         <button 
           onClick={() => setShowAdmin(false)}
           className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors"
