@@ -208,13 +208,6 @@ const Partners: React.FC<PartnersProps> = ({ language = 'fr' }) => {
 
   return (
     <section className="py-24 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50" id='partners'>
-      {/* Éléments décoratifs de fond */}
-      <div className="absolute inset-0 opacity-40">
-        <div className="absolute top-0 left-0 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
-        <div className="absolute top-0 right-0 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-      </div>
-
       <div className="container mx-auto px-6 relative">
         <div className="max-w-7xl mx-auto">
           {/* En-tête de section amélioré */}
@@ -397,19 +390,6 @@ const Partners: React.FC<PartnersProps> = ({ language = 'fr' }) => {
           )}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </section>
   );
 };
