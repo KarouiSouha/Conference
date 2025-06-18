@@ -153,12 +153,10 @@ export function AdminSidebar({
             <X className="h-4 w-4 text-slate-300" />
           </button>
         </div>
-
-     
       </div>
 
-      {/* Navigation */}
-      <div className="flex-1 overflow-y-auto py-4">
+      {/* Navigation - Ajout des classes de scrollbar personnalisées */}
+      <div className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600 hover:scrollbar-thumb-slate-500">
         <div className="px-4 space-y-2">
           {!collapsed && searchTerm === "" && (
             <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider px-3 mb-4">
@@ -281,6 +279,58 @@ export function AdminSidebar({
 
   return (
     <>
+      {/* Ajout des styles globaux pour la scrollbar */}
+      <style jsx global>{`
+        /* Styles pour Webkit (Chrome, Safari, Edge) */
+        .scrollbar-thin::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .scrollbar-track-slate-800::-webkit-scrollbar-track {
+          background: rgb(30 41 59);
+          border-radius: 3px;
+        }
+        
+        .scrollbar-thumb-slate-600::-webkit-scrollbar-thumb {
+          background: rgb(71 85 105);
+          border-radius: 3px;
+        }
+        
+        .hover\\:scrollbar-thumb-slate-500::-webkit-scrollbar-thumb:hover {
+          background: rgb(100 116 139);
+        }
+        
+        /* Styles pour Firefox */
+        .scrollbar-thin {
+          scrollbar-width: thin;
+          scrollbar-color: rgb(71 85 105) rgb(30 41 59);
+        }
+        
+        /* Styles supplémentaires pour une meilleure compatibilité */
+        * {
+          scrollbar-width: thin;
+          scrollbar-color: rgb(71 85 105) rgb(30 41 59);
+        }
+        
+        *::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        
+        *::-webkit-scrollbar-track {
+          background: rgb(30 41 59);
+        }
+        
+        *::-webkit-scrollbar-thumb {
+          background: rgb(71 85 105);
+          border-radius: 3px;
+        }
+        
+        *::-webkit-scrollbar-thumb:hover {
+          background: rgb(100 116 139);
+        }
+      `}</style>
+
       {/* Mobile Trigger */}
       <button
         onClick={() => setMobileOpen(true)}

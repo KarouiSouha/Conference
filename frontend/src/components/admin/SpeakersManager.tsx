@@ -95,7 +95,7 @@ export default function SpeakersManager() {
 
   const handleDeleteSpeaker = (speakerId) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cet intervenant ?")) {
-      setSpeakers(prevSpeakers => 
+      setSpeakers(prevSpeakers =>
         prevSpeakers.filter(speaker => speaker.id !== speakerId)
       );
     }
@@ -108,16 +108,16 @@ export default function SpeakersManager() {
         prevSpeakers.map(speaker =>
           speaker.id === selectedSpeaker.id
             ? {
-                ...speaker,
-                name: speakerData.name,
-                email: speakerData.email,
-                jobFr: speakerData.job_fr,
-                jobEn: speakerData.job_en,
-                countryFr: speakerData.country_fr,
-                countryEn: speakerData.country_en,
-                themeId: parseInt(speakerData.theme_id) || null,
-                themeName: getThemeName(speakerData.theme_id)
-              }
+              ...speaker,
+              name: speakerData.name,
+              email: speakerData.email,
+              jobFr: speakerData.job_fr,
+              jobEn: speakerData.job_en,
+              countryFr: speakerData.country_fr,
+              countryEn: speakerData.country_en,
+              themeId: parseInt(speakerData.theme_id) || null,
+              themeName: getThemeName(speakerData.theme_id)
+            }
             : speaker
         )
       );
@@ -163,7 +163,7 @@ export default function SpeakersManager() {
       "Énergie": "bg-amber-50 text-amber-700 border-amber-200",
       "Économie": "bg-indigo-50 text-indigo-700 border-indigo-200",
     };
-    
+
     const colorClass = themeColors[themeName] || "bg-gray-50 text-gray-700 border-gray-200";
     return (
       <div className="flex items-center gap-2">
@@ -214,29 +214,19 @@ export default function SpeakersManager() {
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* En-tête élégant */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
-              Gestion des Intervenants
-            </h1>
-            <p className="text-lg text-gray-600">
-              Organisez et gérez vos conférenciers experts
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm">
-              <Download className="w-4 h-4 mr-2" />
-              Exporter la Liste
-            </Button>
-            <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm">
-              <Mail className="w-4 h-4 mr-2" />
-              Email Groupé
-            </Button>
-            <Button 
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent mb-2">
+                Gestion des Intervenants
+              </h1>
+              <p className="text-gray-600 text-lg">Organisez et gérez vos conférenciers experts</p>
+            </div>
+            <Button
               onClick={handleNewSpeaker}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-sm"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-5 h-5 mr-2" />
               Nouvel Intervenant
             </Button>
           </div>
@@ -255,7 +245,7 @@ export default function SpeakersManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-amber-50">
             <div className="flex items-center justify-between">
               <div>
@@ -267,7 +257,7 @@ export default function SpeakersManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-emerald-50">
             <div className="flex items-center justify-between">
               <div>
@@ -279,7 +269,7 @@ export default function SpeakersManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-purple-50">
             <div className="flex items-center justify-between">
               <div>
@@ -324,7 +314,7 @@ export default function SpeakersManager() {
               </Badge>
             </div>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -351,11 +341,10 @@ export default function SpeakersManager() {
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {filteredSpeakers.map((speaker, index) => (
-                  <tr 
-                    key={speaker.id} 
-                    className={`hover:bg-gray-50 transition-colors duration-150 ${
-                      index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
-                    } ${speaker.isKeynote ? 'border-l-4 border-l-amber-400' : ''}`}
+                  <tr
+                    key={speaker.id}
+                    className={`hover:bg-gray-50 transition-colors duration-150 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
+                      } ${speaker.isKeynote ? 'border-l-4 border-l-amber-400' : ''}`}
                   >
                     <td className="py-6 px-6">
                       <div className="flex items-center space-x-4">
@@ -382,9 +371,9 @@ export default function SpeakersManager() {
                         <div>
                           <div className="text-sm text-gray-900">{speaker.email}</div>
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           className="h-8 w-8 p-0 hover:bg-blue-50 transition-colors"
                           onClick={() => window.location.href = `mailto:${speaker.email}`}
                           title="Envoyer un email"
@@ -413,26 +402,18 @@ export default function SpeakersManager() {
                     </td>
                     <td className="py-6 px-6">
                       <div className="flex items-center space-x-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="h-9 w-9 p-0 border-gray-300 hover:bg-blue-50 hover:border-blue-300 text-gray-600 hover:text-blue-600 transition-colors"
-                          title="Envoyer un message"
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => handleEditSpeaker(speaker)}
                           className="h-9 w-9 p-0 border-gray-300 hover:bg-gray-50 text-gray-600 transition-colors"
                           title="Modifier"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => handleDeleteSpeaker(speaker.id)}
                           className="h-9 w-9 p-0 border-red-300 hover:bg-red-50 hover:border-red-400 text-red-600 hover:text-red-700 transition-colors"
                           title="Supprimer"
@@ -446,7 +427,7 @@ export default function SpeakersManager() {
               </tbody>
             </table>
           </div>
-          
+
           {filteredSpeakers.length === 0 && (
             <div className="text-center py-16">
               <div className="mx-auto h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -456,7 +437,7 @@ export default function SpeakersManager() {
               <p className="text-gray-500 mb-6">
                 Essayez de modifier vos critères de recherche ou ajoutez un nouvel intervenant
               </p>
-              <Button 
+              <Button
                 onClick={handleNewSpeaker}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >

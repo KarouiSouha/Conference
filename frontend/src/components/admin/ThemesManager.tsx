@@ -110,7 +110,7 @@ export default function ThemesManager() {
   ]);
 
   const toggleTheme = (id: number) => {
-    setThemes(themes.map(theme => 
+    setThemes(themes.map(theme =>
       theme.id === id ? { ...theme, isActive: !theme.isActive } : theme
     ));
   };
@@ -126,8 +126,8 @@ export default function ThemesManager() {
   };
 
   const toggleSelectTheme = (id: number) => {
-    setSelectedThemes(prev => 
-      prev.includes(id) 
+    setSelectedThemes(prev =>
+      prev.includes(id)
         ? prev.filter(themeId => themeId !== id)
         : [...prev, id]
     );
@@ -171,16 +171,16 @@ export default function ThemesManager() {
 
   const filteredThemes = themes.filter(theme => {
     const matchesSearch = theme.titleFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         theme.titleEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         theme.keywords.some(k => 
-                           k.keywordFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           k.keywordEn.toLowerCase().includes(searchTerm.toLowerCase())
-                         );
-    
-    const matchesFilter = filterStatus === "all" || 
-                         (filterStatus === "active" && theme.isActive) ||
-                         (filterStatus === "inactive" && !theme.isActive);
-    
+      theme.titleEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      theme.keywords.some(k =>
+        k.keywordFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        k.keywordEn.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+    const matchesFilter = filterStatus === "all" ||
+      (filterStatus === "active" && theme.isActive) ||
+      (filterStatus === "inactive" && !theme.isActive);
+
     return matchesSearch && matchesFilter;
   });
 
@@ -206,32 +206,19 @@ export default function ThemesManager() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header moderne */}
         <div className="mb-12">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <div className="w-14 h-14 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
-                  <Tag className="w-7 h-7 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
-              </div>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
+            <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent mb-2">
                   Gestionnaire de Thèmes
                 </h1>
-                <p className="text-gray-600">Organisez et gérez vos thèmes de recherche</p>
+                <p className="text-gray-600 text-lg">Organisez et gérez vos thèmes de recherche</p>
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <button className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all duration-200 flex items-center space-x-2">
-                <Settings className="w-4 h-4" />
-                <span>Paramètres</span>
-              </button>
-              <button 
+              <button
                 onClick={() => handleOpenForm()}
-                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg rounded-lg flex items-center space-x-2"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
                 <span>Nouveau Thème</span>
               </button>
             </div>
@@ -241,37 +228,37 @@ export default function ThemesManager() {
         {/* Statistiques élégantes */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
-            { 
-              label: "Total Thèmes", 
-              value: stats.total, 
-              icon: Target, 
+            {
+              label: "Total Thèmes",
+              value: stats.total,
+              icon: Target,
               gradient: "from-indigo-500 to-indigo-600",
               iconBg: "bg-indigo-100",
               iconColor: "text-indigo-600",
               change: "+2 ce mois"
             },
-            { 
-              label: "Thèmes Actifs", 
-              value: stats.active, 
-              icon: Activity, 
+            {
+              label: "Thèmes Actifs",
+              value: stats.active,
+              icon: Activity,
               gradient: "from-emerald-500 to-emerald-600",
               iconBg: "bg-emerald-100",
               iconColor: "text-emerald-600",
               change: "+1 cette semaine"
             },
-            { 
-              label: "Mots-clés", 
-              value: stats.keywords, 
-              icon: Star, 
+            {
+              label: "Mots-clés",
+              value: stats.keywords,
+              icon: Star,
               gradient: "from-amber-500 to-amber-600",
               iconBg: "bg-amber-100",
               iconColor: "text-amber-600",
               change: "+5 nouveaux"
             },
-            { 
-              label: "Sessions", 
-              value: stats.sessions, 
-              icon: Zap, 
+            {
+              label: "Sessions",
+              value: stats.sessions,
+              icon: Zap,
               gradient: "from-rose-500 to-rose-600",
               iconBg: "bg-rose-100",
               iconColor: "text-rose-600",
@@ -290,8 +277,8 @@ export default function ThemesManager() {
               </div>
               <div className="text-sm font-medium text-gray-700">{stat.label}</div>
               <div className="mt-3 h-1 bg-gray-100 rounded-full overflow-hidden">
-                <div className={`h-full bg-gradient-to-r ${stat.gradient} rounded-full transition-all duration-1000 ease-out`} 
-                     style={{ width: `${(stat.value / Math.max(...[stats.total, stats.active, stats.keywords, stats.sessions])) * 100}%` }}></div>
+                <div className={`h-full bg-gradient-to-r ${stat.gradient} rounded-full transition-all duration-1000 ease-out`}
+                  style={{ width: `${(stat.value / Math.max(...[stats.total, stats.active, stats.keywords, stats.sessions])) * 100}%` }}></div>
               </div>
             </div>
           ))}
@@ -311,14 +298,13 @@ export default function ThemesManager() {
                   className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 hover:bg-white transition-colors"
                 />
               </div>
-              
+
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`px-4 py-3 rounded-xl border transition-all duration-200 flex items-center space-x-2 ${
-                  showFilters 
-                    ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
+                className={`px-4 py-3 rounded-xl border transition-all duration-200 flex items-center space-x-2 ${showFilters
+                    ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
                     : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300'
-                }`}
+                  }`}
               >
                 <Filter className="w-4 h-4" />
                 <span>Filtres</span>
@@ -356,18 +342,16 @@ export default function ThemesManager() {
                   <button
                     key={filter.key}
                     onClick={() => setFilterStatus(filter.key)}
-                    className={`px-4 py-2 rounded-xl transition-all duration-200 flex items-center space-x-2 ${
-                      filterStatus === filter.key
+                    className={`px-4 py-2 rounded-xl transition-all duration-200 flex items-center space-x-2 ${filterStatus === filter.key
                         ? 'bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-sm'
                         : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent'
-                    }`}
+                      }`}
                   >
                     <span>{filter.label}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      filterStatus === filter.key
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${filterStatus === filter.key
                         ? 'bg-indigo-200 text-indigo-800'
                         : 'bg-gray-200 text-gray-600'
-                    }`}>
+                      }`}>
                       {filter.count}
                     </span>
                   </button>
@@ -390,9 +374,9 @@ export default function ThemesManager() {
                 </span>
               </div>
               <div className="flex space-x-2">
-                <button 
+                <button
                   onClick={() => {
-                    setThemes(themes.map(t => 
+                    setThemes(themes.map(t =>
                       selectedThemes.includes(t.id) ? { ...t, isActive: true } : t
                     ));
                     setSelectedThemes([]);
@@ -401,9 +385,9 @@ export default function ThemesManager() {
                 >
                   Activer
                 </button>
-                <button 
+                <button
                   onClick={() => {
-                    setThemes(themes.map(t => 
+                    setThemes(themes.map(t =>
                       selectedThemes.includes(t.id) ? { ...t, isActive: false } : t
                     ));
                     setSelectedThemes([]);
@@ -412,7 +396,7 @@ export default function ThemesManager() {
                 >
                   Désactiver
                 </button>
-                <button 
+                <button
                   onClick={deleteSelectedThemes}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
                 >
@@ -443,19 +427,19 @@ export default function ThemesManager() {
                         className="w-4 h-4 text-indigo-600 bg-white border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
                       />
                     </div>
-                    
+
                     {/* Icône améliorée */}
                     <div className="relative flex-shrink-0">
-                      <div 
+                      <div
                         className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-lg group-hover:shadow-xl transition-shadow duration-300"
-                        style={{ 
-                          backgroundColor: theme.color + '15', 
+                        style={{
+                          backgroundColor: theme.color + '15',
                           border: `2px solid ${theme.color}40`,
                         }}
                       >
                         {theme.icon}
                       </div>
-                      <div 
+                      <div
                         className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white shadow-lg"
                         style={{ backgroundColor: theme.color }}
                       >
@@ -469,11 +453,10 @@ export default function ThemesManager() {
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             <h3 className="text-xl font-bold text-gray-900">{theme.titleFr}</h3>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${
-                              theme.isActive 
-                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${theme.isActive
+                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                                 : 'bg-gray-100 text-gray-600 border border-gray-200'
-                            }`}>
+                              }`}>
                               {theme.isActive ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                               <span>{theme.isActive ? 'Actif' : 'Inactif'}</span>
                             </span>
@@ -482,19 +465,17 @@ export default function ThemesManager() {
                           <p className="text-gray-700 mb-2">{theme.descriptionFr}</p>
                           <p className="text-sm text-gray-500 italic">{theme.descriptionEn}</p>
                         </div>
-                        
+
                         {/* Toggle switch */}
                         <div className="flex items-center ml-4">
                           <button
                             onClick={() => toggleTheme(theme.id)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-                              theme.isActive ? 'bg-indigo-600' : 'bg-gray-300'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${theme.isActive ? 'bg-indigo-600' : 'bg-gray-300'
+                              }`}
                           >
                             <span
-                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 shadow-lg ${
-                                theme.isActive ? 'translate-x-6' : 'translate-x-1'
-                              }`}
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 shadow-lg ${theme.isActive ? 'translate-x-6' : 'translate-x-1'
+                                }`}
                             />
                           </button>
                         </div>
@@ -533,9 +514,9 @@ export default function ThemesManager() {
                         <div className="flex flex-wrap gap-2">
                           {theme.keywords.map((keyword) => (
                             <div key={keyword.id} className="group relative">
-                              <span 
+                              <span
                                 className="inline-flex items-center px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer hover:shadow-md hover:-translate-y-0.5"
-                                style={{ 
+                                style={{
                                   backgroundColor: theme.color + '15',
                                   color: theme.color,
                                   border: `1px solid ${theme.color}30`
@@ -557,13 +538,13 @@ export default function ThemesManager() {
                   {/* Actions */}
                   <div className="flex flex-col items-center space-y-2 ml-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <div className="flex space-x-2">
-                      <button 
+                      <button
                         onClick={() => handleOpenForm(theme)}
                         className="w-9 h-9 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors flex items-center justify-center hover:scale-110 duration-200"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => deleteTheme(theme.id)}
                         className="w-9 h-9 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center hover:scale-110 duration-200"
                       >
@@ -579,9 +560,9 @@ export default function ThemesManager() {
 
               {/* Barre de popularité */}
               <div className="h-1 bg-gray-100">
-                <div 
+                <div
                   className="h-full transition-all duration-1000 ease-out"
-                  style={{ 
+                  style={{
                     width: `${theme.popularity}%`,
                     backgroundColor: theme.color
                   }}
@@ -599,7 +580,7 @@ export default function ThemesManager() {
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucun thème trouvé</h3>
             <p className="text-gray-600 mb-6">Essayez de modifier vos critères de recherche ou créez un nouveau thème</p>
-            <button 
+            <button
               onClick={() => handleOpenForm()}
               className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-lg hover:shadow-xl"
             >

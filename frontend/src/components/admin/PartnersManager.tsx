@@ -3,15 +3,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash, 
-  Upload, 
-  Building2, 
-  GraduationCap, 
-  Handshake, 
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash,
+  Upload,
+  Building2,
+  GraduationCap,
+  Handshake,
   TrendingUp,
   X,
   Save,
@@ -21,12 +21,12 @@ import {
 } from "lucide-react";
 
 // Composant du formulaire de nouveau partenaire
-function NewPartnerForm({ onClose, onSave }) {
+function NewPartnerForm({ onClose, onSave, partnerToEdit = null }) {
   const [formData, setFormData] = useState({
-    name_fr: "",
-    name_en: "",
+    name_fr: partnerToEdit?.nameFr || "",
+    name_en: partnerToEdit?.nameEn || "",
     image: null,
-    type: "Partenaire"
+    type: partnerToEdit?.type || "Partenaire"
   });
 
   type FormErrors = {
@@ -40,27 +40,27 @@ function NewPartnerForm({ onClose, onSave }) {
   const [imagePreview, setImagePreview] = useState(null);
 
   const partnerTypes = [
-    { 
-      value: "Académique", 
-      label: "Académique", 
+    {
+      value: "Académique",
+      label: "Académique",
       icon: <GraduationCap className="w-4 h-4" />,
       color: "from-blue-500 to-blue-600"
     },
-    { 
-      value: "Sponsor", 
-      label: "Sponsor", 
+    {
+      value: "Sponsor",
+      label: "Sponsor",
       icon: <TrendingUp className="w-4 h-4" />,
       color: "from-green-500 to-green-600"
     },
-    { 
-      value: "Partenaire", 
-      label: "Partenaire", 
+    {
+      value: "Partenaire",
+      label: "Partenaire",
       icon: <Handshake className="w-4 h-4" />,
       color: "from-purple-500 to-purple-600"
     },
-    { 
-      value: "Entreprise", 
-      label: "Entreprise", 
+    {
+      value: "Entreprise",
+      label: "Entreprise",
       icon: <Building2 className="w-4 h-4" />,
       color: "from-orange-500 to-orange-600"
     }
@@ -80,18 +80,18 @@ function NewPartnerForm({ onClose, onSave }) {
         setErrors(prev => ({ ...prev, image: "Veuillez sélectionner un fichier image valide" }));
         return;
       }
-      
+
       if (file.size > 5 * 1024 * 1024) {
         setErrors(prev => ({ ...prev, image: "La taille du fichier ne doit pas dépasser 5MB" }));
         return;
       }
 
       setFormData(prev => ({ ...prev, image: file }));
-      
+
       const reader = new FileReader();
       reader.onload = (e) => setImagePreview(e.target.result);
       reader.readAsDataURL(file);
-      
+
       if (errors.image) {
         setErrors(prev => ({ ...prev, image: "" }));
       }
@@ -100,15 +100,15 @@ function NewPartnerForm({ onClose, onSave }) {
 
   const validateForm = () => {
     const newErrors: FormErrors = {};
-    
+
     if (!formData.name_fr.trim()) {
       newErrors.name_fr = "Le nom en français est requis";
     }
-    
+
     if (!formData.name_en.trim()) {
       newErrors.name_en = "Le nom en anglais est requis";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -117,9 +117,9 @@ function NewPartnerForm({ onClose, onSave }) {
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       if (onSave) onSave(formData);
@@ -149,9 +149,11 @@ function NewPartnerForm({ onClose, onSave }) {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
-                    Nouveau Partenaire
+                    {partnerToEdit ? 'Modifier Partenaire' : 'Nouveau Partenaire'}
                   </h2>
-                  <p className="text-gray-600">Ajoutez un nouveau partenaire à votre réseau</p>
+                  <p className="text-gray-600">
+                    {partnerToEdit ? 'Modifiez les informations du partenaire' : 'Ajoutez un nouveau partenaire à votre réseau'}
+                  </p>
                 </div>
               </div>
               <Button
@@ -178,11 +180,10 @@ function NewPartnerForm({ onClose, onSave }) {
                     key={type.value}
                     type="button"
                     onClick={() => handleInputChange('type', type.value)}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center space-x-3 ${
-                      formData.type === type.value
-                        ? 'border-blue-400 bg-blue-50 shadow-md'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center space-x-3 ${formData.type === type.value
+                      ? 'border-blue-400 bg-blue-50 shadow-md'
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
                   >
                     <div className={`p-2 rounded-lg bg-gradient-to-r ${type.color} text-white`}>
                       {type.icon}
@@ -361,7 +362,7 @@ function NewPartnerForm({ onClose, onSave }) {
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-2" />
-                    Enregistrer
+                    {partnerToEdit ? 'Modifier' : 'Enregistrer'}
                   </>
                 )}
               </Button>
@@ -376,6 +377,7 @@ function NewPartnerForm({ onClose, onSave }) {
 // Composant principal du gestionnaire de partenaires
 export default function PartnersManager() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingPartner, setEditingPartner] = useState(null);
   const [showNewPartnerForm, setShowNewPartnerForm] = useState(false);
   const [partners, setPartners] = useState([
     {
@@ -422,44 +424,68 @@ export default function PartnersManager() {
     },
   ]);
 
-  const handleSaveNewPartner = (formData) => {
-    const newPartner = {
-      id: Date.now(),
-      nameFr: formData.name_fr,
-      nameEn: formData.name_en,
-      image: formData.image ? URL.createObjectURL(formData.image) : "/placeholder.svg",
-      type: formData.type,
-    };
-    
-    setPartners(prev => [...prev, newPartner]);
+  const handleSavePartner = (formData) => {
+    if (editingPartner) {
+      // Mode édition
+      const updatedPartner = {
+        ...editingPartner,
+        nameFr: formData.name_fr,
+        nameEn: formData.name_en,
+        image: formData.image ? URL.createObjectURL(formData.image) : editingPartner.image,
+        type: formData.type,
+      };
+
+      setPartners(prev => prev.map(p => p.id === editingPartner.id ? updatedPartner : p));
+    } else {
+      // Mode ajout (code existant)
+      const newPartner = {
+        id: Date.now(),
+        nameFr: formData.name_fr,
+        nameEn: formData.name_en,
+        image: formData.image ? URL.createObjectURL(formData.image) : "/placeholder.svg",
+        type: formData.type,
+      };
+
+      setPartners(prev => [...prev, newPartner]);
+    }
+
     setShowNewPartnerForm(false);
+    setEditingPartner(null);
+  };
+  const handleEditPartner = (partner) => {
+    setEditingPartner(partner);
+    setShowNewPartnerForm(true);
+  };
+  const handleCloseForm = () => {
+    setShowNewPartnerForm(false);
+    setEditingPartner(null);
   };
 
   const getTypeBadge = (type) => {
     const badgeConfig = {
-      "Académique": { 
-        className: "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md", 
+      "Académique": {
+        className: "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md",
         icon: <GraduationCap className="w-3 h-3 mr-1" />
       },
-      "Sponsor": { 
-        className: "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md", 
+      "Sponsor": {
+        className: "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md",
         icon: <TrendingUp className="w-3 h-3 mr-1" />
       },
-      "Partenaire": { 
-        className: "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md", 
+      "Partenaire": {
+        className: "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md",
         icon: <Handshake className="w-3 h-3 mr-1" />
       },
-      "Entreprise": { 
-        className: "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md", 
+      "Entreprise": {
+        className: "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md",
         icon: <Building2 className="w-3 h-3 mr-1" />
       },
     };
-    
-    const config = badgeConfig[type] || { 
-      className: "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md", 
+
+    const config = badgeConfig[type] || {
+      className: "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md",
       icon: <Building2 className="w-3 h-3 mr-1" />
     };
-    
+
     return (
       <Badge className={`${config.className} px-3 py-1 flex items-center justify-center font-medium`}>
         {config.icon}
@@ -469,7 +495,7 @@ export default function PartnersManager() {
   };
 
   const getTypeIcon = (type) => {
-    switch(type) {
+    switch (type) {
       case "Académique":
         return <GraduationCap className="w-10 h-10 text-blue-500" />;
       case "Sponsor":
@@ -508,7 +534,7 @@ export default function PartnersManager() {
               </h1>
               <p className="text-gray-600 text-lg">Gérez et organisez vos partenariats stratégiques</p>
             </div>
-            <Button 
+            <Button
               onClick={() => setShowNewPartnerForm(true)}
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg"
             >
@@ -531,7 +557,7 @@ export default function PartnersManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 bg-white border-2 border-gray-100 hover:border-green-200 transition-all duration-300 hover:shadow-lg group">
             <div className="flex items-center justify-between">
               <div>
@@ -543,7 +569,7 @@ export default function PartnersManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 bg-white border-2 border-gray-100 hover:border-purple-200 transition-all duration-300 hover:shadow-lg group">
             <div className="flex items-center justify-between">
               <div>
@@ -592,7 +618,7 @@ export default function PartnersManager() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <h3 className="font-bold text-lg text-gray-800 group-hover:text-blue-700 transition-colors duration-200">
                     {partner.nameFr}
@@ -601,22 +627,23 @@ export default function PartnersManager() {
                     {partner.nameEn}
                   </p>
                 </div>
-                
+
                 <div className="flex justify-center">
                   {getTypeBadge(partner.type)}
                 </div>
-                
+
                 <div className="flex justify-center space-x-2 pt-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEditPartner(partner)}
                     className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     className="border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:text-red-700 transition-all duration-200 shadow-sm hover:shadow-md"
                   >
                     <Trash className="w-4 h-4" />
@@ -640,8 +667,9 @@ export default function PartnersManager() {
       {/* Modal du formulaire */}
       {showNewPartnerForm && (
         <NewPartnerForm
-          onClose={() => setShowNewPartnerForm(false)}
-          onSave={handleSaveNewPartner}
+          onClose={handleCloseForm}
+          onSave={handleSavePartner}
+          partnerToEdit={editingPartner}
         />
       )}
     </div>

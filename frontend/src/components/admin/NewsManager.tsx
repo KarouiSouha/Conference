@@ -74,7 +74,7 @@ export default function NewsManager() {
     return <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>;
   };
 
-  const filteredNews = news.filter(item => 
+  const filteredNews = news.filter(item =>
     item.titleFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.descriptionFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.typeFr.toLowerCase().includes(searchTerm.toLowerCase())
@@ -110,23 +110,27 @@ export default function NewsManager() {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* En-tête */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Gestion des Actualités</h1>
-            <p className="text-gray-600">Gérez et publiez vos actualités en toute simplicité</p>
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent mb-2">
+                Gestion des Actualités
+              </h1>
+              <p className="text-gray-600 text-lg">Gérez et publiez vos actualités en toute simplicité</p>
+            </div>
+            <Button
+              onClick={() => handleOpenForm()}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Nouvelle actualité
+            </Button>
           </div>
-          <Button 
-            onClick={() => handleOpenForm()}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Nouvelle actualité
-          </Button>
         </div>
 
         {/* Formulaire (conditionnel) */}
         {isFormOpen && (
-          <NewsForm 
+          <NewsForm
             isOpen={isFormOpen}
             newsItem={currentNews}
             onClose={handleCloseForm}
@@ -147,7 +151,7 @@ export default function NewsManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <div className="flex items-center justify-between">
               <div>
@@ -161,7 +165,7 @@ export default function NewsManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <div className="flex items-center justify-between">
               <div>
@@ -175,7 +179,7 @@ export default function NewsManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <div className="flex items-center justify-between">
               <div>
@@ -248,7 +252,7 @@ export default function NewsManager() {
                         </h3>
                         <p className="text-sm text-gray-500 font-medium italic mb-3">{item.titleEn}</p>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <p className="text-gray-700 leading-relaxed">{item.descriptionFr}</p>
                         <p className="text-sm text-gray-500 italic leading-relaxed">{item.descriptionEn}</p>
@@ -258,8 +262,8 @@ export default function NewsManager() {
                     {/* Lien externe */}
                     {item.link && (
                       <div className="pt-2">
-                        <a 
-                          href={item.link} 
+                        <a
+                          href={item.link}
                           className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors group/link"
                         >
                           <ExternalLink className="w-4 h-4 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
@@ -273,17 +277,17 @@ export default function NewsManager() {
 
                   {/* Actions */}
                   <div className="flex lg:flex-col gap-3 lg:ml-6">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => handleOpenForm(item)}
                       className="border-gray-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all duration-200 shadow-sm"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => handleDeleteNews(item.id)}
                       className="border-gray-300 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200 shadow-sm"
                     >

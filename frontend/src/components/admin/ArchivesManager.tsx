@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,13 +47,38 @@ function ArchiveForm({
 
   const [errors, setErrors] = useState<ArchiveFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  useEffect(() => {
+    if (archiveItem) {
+      setFormData({
+        event_name: archiveItem.event_name || "",
+        subject_fr: archiveItem.subject_fr || "",
+        subject_en: archiveItem.subject_en || "",
+        organizer: archiveItem.organizer || "",
+        participants: archiveItem.participants || "",
+        articles: archiveItem.articles || "",
+        countries: archiveItem.countries || "",
+        photoGalleryLink: archiveItem.photoGalleryLink || "",
+      });
+    } else {
+      setFormData({
+        event_name: "",
+        subject_fr: "",
+        subject_en: "",
+        organizer: "",
+        participants: "",
+        articles: "",
+        countries: "",
+        photoGalleryLink: "",
+      });
+    }
+  }, [archiveItem]);
 
   const handleInputChange = (field: keyof ArchiveFormData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-    
+
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -115,7 +140,7 @@ function ArchiveForm({
     }
 
     setIsSubmitting(true);
-    
+
     try {
       await onSave(formData);
     } catch (error) {
@@ -173,11 +198,10 @@ function ArchiveForm({
                     value={formData.event_name}
                     onChange={(e) => handleInputChange("event_name", e.target.value)}
                     placeholder="Ex: Conférence Internationale sur l'IA"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.event_name 
-                        ? "border-red-300 focus:border-red-500" 
+                    className={`border-2 transition-all duration-200 ${errors.event_name
+                        ? "border-red-300 focus:border-red-500"
                         : "border-gray-200 focus:border-blue-500"
-                    }`}
+                      }`}
                   />
                   {errors.event_name && (
                     <p className="text-red-500 text-sm mt-1">{errors.event_name}</p>
@@ -195,11 +219,10 @@ function ArchiveForm({
                     value={formData.organizer}
                     onChange={(e) => handleInputChange("organizer", e.target.value)}
                     placeholder="Ex: Université de Tunis"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.organizer 
-                        ? "border-red-300 focus:border-red-500" 
+                    className={`border-2 transition-all duration-200 ${errors.organizer
+                        ? "border-red-300 focus:border-red-500"
                         : "border-gray-200 focus:border-blue-500"
-                    }`}
+                      }`}
                   />
                   {errors.organizer && (
                     <p className="text-red-500 text-sm mt-1">{errors.organizer}</p>
@@ -217,11 +240,10 @@ function ArchiveForm({
                     value={formData.photoGalleryLink}
                     onChange={(e) => handleInputChange("photoGalleryLink", e.target.value)}
                     placeholder="https://example.com/gallery"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.photoGalleryLink 
-                        ? "border-red-300 focus:border-red-500" 
+                    className={`border-2 transition-all duration-200 ${errors.photoGalleryLink
+                        ? "border-red-300 focus:border-red-500"
                         : "border-gray-200 focus:border-blue-500"
-                    }`}
+                      }`}
                   />
                   {errors.photoGalleryLink && (
                     <p className="text-red-500 text-sm mt-1">{errors.photoGalleryLink}</p>
@@ -245,11 +267,10 @@ function ArchiveForm({
                     value={formData.subject_fr}
                     onChange={(e) => handleInputChange("subject_fr", e.target.value)}
                     placeholder="Ex: Intelligence Artificielle et Société"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.subject_fr 
-                        ? "border-red-300 focus:border-red-500" 
+                    className={`border-2 transition-all duration-200 ${errors.subject_fr
+                        ? "border-red-300 focus:border-red-500"
                         : "border-gray-200 focus:border-emerald-500"
-                    }`}
+                      }`}
                   />
                   {errors.subject_fr && (
                     <p className="text-red-500 text-sm mt-1">{errors.subject_fr}</p>
@@ -264,11 +285,10 @@ function ArchiveForm({
                     value={formData.subject_en}
                     onChange={(e) => handleInputChange("subject_en", e.target.value)}
                     placeholder="Ex: Artificial Intelligence and Society"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.subject_en 
-                        ? "border-red-300 focus:border-red-500" 
+                    className={`border-2 transition-all duration-200 ${errors.subject_en
+                        ? "border-red-300 focus:border-red-500"
                         : "border-gray-200 focus:border-emerald-500"
-                    }`}
+                      }`}
                   />
                   {errors.subject_en && (
                     <p className="text-red-500 text-sm mt-1">{errors.subject_en}</p>
@@ -297,11 +317,10 @@ function ArchiveForm({
                     value={formData.participants}
                     onChange={(e) => handleInputChange("participants", e.target.value)}
                     placeholder="0"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.participants 
-                        ? "border-red-300 focus:border-red-500" 
+                    className={`border-2 transition-all duration-200 ${errors.participants
+                        ? "border-red-300 focus:border-red-500"
                         : "border-gray-200 focus:border-purple-500"
-                    }`}
+                      }`}
                   />
                   {errors.participants && (
                     <p className="text-red-500 text-sm mt-1">{errors.participants}</p>
@@ -321,11 +340,10 @@ function ArchiveForm({
                     value={formData.articles}
                     onChange={(e) => handleInputChange("articles", e.target.value)}
                     placeholder="0"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.articles 
-                        ? "border-red-300 focus:border-red-500" 
+                    className={`border-2 transition-all duration-200 ${errors.articles
+                        ? "border-red-300 focus:border-red-500"
                         : "border-gray-200 focus:border-purple-500"
-                    }`}
+                      }`}
                   />
                   {errors.articles && (
                     <p className="text-red-500 text-sm mt-1">{errors.articles}</p>
@@ -345,11 +363,10 @@ function ArchiveForm({
                     value={formData.countries}
                     onChange={(e) => handleInputChange("countries", e.target.value)}
                     placeholder="0"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.countries 
-                        ? "border-red-300 focus:border-red-500" 
+                    className={`border-2 transition-all duration-200 ${errors.countries
+                        ? "border-red-300 focus:border-red-500"
                         : "border-gray-200 focus:border-purple-500"
-                    }`}
+                      }`}
                   />
                   {errors.countries && (
                     <p className="text-red-500 text-sm mt-1">{errors.countries}</p>
@@ -473,7 +490,7 @@ export default function ArchivesManager() {
   const handleSaveArchive = async (data: ArchiveFormData) => {
     if (currentArchive && currentArchive.id) {
       // Mise à jour d'une archive existante
-      setArchives(archives.map(archive => 
+      setArchives(archives.map(archive =>
         archive.id === currentArchive.id ? { ...data, id: currentArchive.id } : archive
       ));
     } else {
@@ -499,20 +516,23 @@ export default function ArchivesManager() {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* En-tête */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Gestion des Archives</h1>
-            <p className="text-gray-600">Consultez et gérez l'historique de vos événements</p>
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent mb-2">
+                Gestion des Archives
+              </h1>
+              <p className="text-gray-600 text-lg">Consultez et gérez l'historique de vos événements</p>
+            </div>
+            <Button
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg"
+              onClick={handleNewArchive}
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Nouvelle Archive
+            </Button>
           </div>
-          <Button 
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3"
-            onClick={handleNewArchive}
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Nouvelle Archive
-          </Button>
         </div>
-
         {/* Statistiques globales */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
@@ -526,7 +546,7 @@ export default function ArchivesManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <div className="flex items-center justify-between">
               <div>
@@ -540,7 +560,7 @@ export default function ArchivesManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <div className="flex items-center justify-between">
               <div>
@@ -554,7 +574,7 @@ export default function ArchivesManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <div className="flex items-center justify-between">
               <div>
@@ -617,7 +637,7 @@ export default function ArchivesManager() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors leading-tight">
                       {archive.event_name}
@@ -626,7 +646,7 @@ export default function ArchivesManager() {
                       <p className="text-gray-800 font-semibold">{archive.subject_fr}</p>
                       <p className="text-sm text-gray-600 italic">{archive.subject_en}</p>
                     </div>
-                    
+
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <MapPin className="w-4 h-4" />
@@ -672,8 +692,8 @@ export default function ArchivesManager() {
                           <p className="text-xs text-gray-600">Moments marquants de l'événement</p>
                         </div>
                       </div>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
                         onClick={() => window.open(archive.photoGalleryLink, '_blank')}
                       >
@@ -685,18 +705,18 @@ export default function ArchivesManager() {
 
                   {/* Actions */}
                   <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="border-gray-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all duration-200 shadow-sm"
                       title="Modifier l'archive"
                       onClick={() => handleEditArchive(archive)}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="border-gray-300 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200 shadow-sm"
                       title="Supprimer l'archive"
                       onClick={() => archive.id && handleDeleteArchive(archive.id)}

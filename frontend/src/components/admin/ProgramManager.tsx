@@ -191,7 +191,7 @@ export default function ProgramManager() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (editingEvent) {
       // Mise à jour d'un événement existant
       setProgramData(prevData =>
@@ -209,7 +209,7 @@ export default function ProgramManager() {
         { ...formData, id: newId, participants: formData.participants ? Number(formData.participants) : 0 }
       ]);
     }
-    
+
     setShowForm(false);
   };
 
@@ -232,16 +232,16 @@ export default function ProgramManager() {
           <h2 className="text-xl font-bold">
             {editingEvent ? "Modifier l'événement" : "Nouvel événement"}
           </h2>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setShowForm(false)}
             className="text-white hover:bg-white hover:bg-opacity-10"
           >
             <X className="w-5 h-5" />
           </Button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
@@ -255,7 +255,7 @@ export default function ProgramManager() {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="heure">Heure</Label>
               <Input
@@ -267,7 +267,7 @@ export default function ProgramManager() {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="evenementFr">Événement (FR)</Label>
               <Input
@@ -278,7 +278,7 @@ export default function ProgramManager() {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="evenementEn">Événement (EN)</Label>
               <Input
@@ -288,12 +288,12 @@ export default function ProgramManager() {
                 onChange={handleInputChange}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="typeEvenement">Type d'événement</Label>
-              <Select 
-                value={formData.typeEvenement} 
-                onValueChange={(value) => setFormData({...formData, typeEvenement: value})}
+              <Select
+                value={formData.typeEvenement}
+                onValueChange={(value) => setFormData({ ...formData, typeEvenement: value })}
                 required
               >
                 <SelectTrigger>
@@ -311,7 +311,7 @@ export default function ProgramManager() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="participants">Nombre de participants</Label>
               <Input
@@ -322,7 +322,7 @@ export default function ProgramManager() {
                 onChange={handleInputChange}
               />
             </div>
-            
+
             <div className="space-y-2 col-span-2">
               <Label htmlFor="descriptionFr">Description (FR)</Label>
               <Textarea
@@ -333,7 +333,7 @@ export default function ProgramManager() {
                 rows={3}
               />
             </div>
-            
+
             <div className="space-y-2 col-span-2">
               <Label htmlFor="descriptionEn">Description (EN)</Label>
               <Textarea
@@ -344,7 +344,7 @@ export default function ProgramManager() {
                 rows={3}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="intervenantFr">Intervenant (FR)</Label>
               <Input
@@ -354,7 +354,7 @@ export default function ProgramManager() {
                 onChange={handleInputChange}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="intervenantEn">Intervenant (EN)</Label>
               <Input
@@ -364,7 +364,7 @@ export default function ProgramManager() {
                 onChange={handleInputChange}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="lieuFr">Lieu (FR)</Label>
               <Input
@@ -374,7 +374,7 @@ export default function ProgramManager() {
                 onChange={handleInputChange}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="lieuEn">Lieu (EN)</Label>
               <Input
@@ -384,7 +384,7 @@ export default function ProgramManager() {
                 onChange={handleInputChange}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="duree">Durée</Label>
               <Input
@@ -396,18 +396,18 @@ export default function ProgramManager() {
               />
             </div>
           </div>
-          
+
           <div className="flex justify-end space-x-3 pt-4">
-            <Button 
-              variant="outline" 
-              type="button" 
+            <Button
+              variant="outline"
+              type="button"
               onClick={() => setShowForm(false)}
               className="border-gray-300"
             >
               Annuler
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
             >
               {editingEvent ? "Mettre à jour" : "Créer"}
@@ -428,13 +428,13 @@ export default function ProgramManager() {
           {new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </h3>
       </div>
-      
+
       <div className="p-6">
         <div className="space-y-4">
           {events.map((event) => (
             <div key={event.id} className="group relative border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-lg transition-all duration-300 bg-gradient-to-r from-white to-gray-50">
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 to-indigo-600 rounded-l-xl"></div>
-              
+
               <div className="flex items-start justify-between">
                 <div className="flex-1 space-y-3 pl-4">
                   <div className="flex items-center space-x-4">
@@ -489,17 +489,17 @@ export default function ProgramManager() {
                 </div>
 
                 <div className="flex space-x-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     className="border-blue-300 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-400 transition-all duration-200"
                     onClick={() => handleEdit(event)}
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     className="border-red-300 hover:bg-red-50 hover:text-red-600 hover:border-red-400 transition-all duration-200"
                     onClick={() => handleDelete(event.id)}
                   >
@@ -517,24 +517,20 @@ export default function ProgramManager() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-              Gestion du Programme
-            </h1>
-            <p className="text-gray-600 mt-2">Organisez et gérez votre programme d'événements</p>
-          </div>
-          <div className="flex space-x-3">
-            <Button 
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent mb-2">
+                Gestion du Programme
+              </h1>
+              <p className="text-gray-600 text-lg">Organisez et gérez votre programme d'événements</p>
+            </div>
+            <Button
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg"
               onClick={handleNewProgram}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-5 h-5 mr-2" />
               Nouveau Programme
-            </Button>
-            <Button variant="outline" className="border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
-              <Filter className="w-4 h-4 mr-2" />
-              Filtres
             </Button>
           </div>
         </div>

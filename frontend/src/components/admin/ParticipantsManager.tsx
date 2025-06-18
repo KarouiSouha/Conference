@@ -34,7 +34,7 @@ export default function ParticipantsManager() {
       id: 2,
       firstName: "Ahmed",
       lastName: "Ben Ali",
-      email: "ahmed.benali@example.com", 
+      email: "ahmed.benali@example.com",
       establishment: "Institut Polytechnique",
       title: "Docteur",
       phone: "+33 6 12 34 56 78",
@@ -79,11 +79,11 @@ export default function ParticipantsManager() {
   const handleSaveParticipant = (data) => {
     // Ici vous devrez implémenter la logique pour sauvegarder dans votre API
     console.log("Participant à sauvegarder:", data);
-    
+
     // Exemple de mise à jour locale (à remplacer par un appel API)
     if (data.id) {
       // Mise à jour d'un participant existant
-      const updatedParticipants = participants.map(p => 
+      const updatedParticipants = participants.map(p =>
         p.id === data.id ? { ...p, ...data } : p
       );
       // Dans une vraie application, vous mettriez à jour l'état ici
@@ -95,7 +95,7 @@ export default function ParticipantsManager() {
       };
       // Dans une vraie application, vous ajouteriez au state ici
     }
-    
+
     handleCloseForm();
   };
 
@@ -119,13 +119,13 @@ export default function ParticipantsManager() {
   };
 
   const getPaymentBadge = (isPaid) => {
-    return isPaid 
+    return isPaid
       ? <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-emerald-200 font-medium">Payé</Badge>
       : <Badge className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200 font-medium">Non payé</Badge>;
   };
 
   const getTypeBadge = (participationType) => {
-    return participationType === 'with-article' 
+    return participationType === 'with-article'
       ? <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200 font-medium">Avec article</Badge>
       : <Badge className="bg-slate-100 text-slate-800 hover:bg-slate-100 border-slate-200 font-medium">Sans article</Badge>;
   };
@@ -142,21 +142,19 @@ export default function ParticipantsManager() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Gestion des Participants</h1>
-              <p className="mt-2 text-gray-600">Gérez et suivez tous vos participants à la conférence</p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 font-medium">
-                <Download className="w-4 h-4 mr-2" />
-                Exporter
-              </Button>
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm"
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent mb-2">
+                  Gestion des Participants
+                </h1>
+                <p className="text-gray-600 text-lg">Gérez et suivez tous vos participants à la conférence</p>
+              </div>
+              <Button
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg"
                 onClick={() => handleOpenForm()}
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-5 h-5 mr-2" />
                 Nouveau Participant
               </Button>
             </div>
@@ -176,7 +174,7 @@ export default function ParticipantsManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center">
               <div className="p-2 bg-emerald-100 rounded-lg">
@@ -190,7 +188,7 @@ export default function ParticipantsManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center">
               <div className="p-2 bg-amber-100 rounded-lg">
@@ -204,7 +202,7 @@ export default function ParticipantsManager() {
               </div>
             </div>
           </Card>
-          
+
           <Card className="p-6 bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
@@ -247,7 +245,7 @@ export default function ParticipantsManager() {
             <h3 className="text-lg font-semibold text-gray-900">Liste des Participants</h3>
             <p className="text-sm text-gray-600 mt-1">{filteredParticipants.length} participant(s) trouvé(s)</p>
           </div>
-          
+
           <div className="overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -299,24 +297,17 @@ export default function ParticipantsManager() {
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 h-8 w-8 p-0"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 h-8 w-8 p-0"
                             onClick={() => handleOpenForm(participant)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                             onClick={() => handleDeleteParticipant(participant.id)}
                           >
@@ -329,7 +320,7 @@ export default function ParticipantsManager() {
                 </tbody>
               </table>
             </div>
-            
+
             {filteredParticipants.length === 0 && (
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
