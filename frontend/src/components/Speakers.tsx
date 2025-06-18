@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Mail, Globe, Award, Loader2 } from 'lucide-react';
+import { ExternalLink, Mail, Globe, Award, Loader2, QrCode } from 'lucide-react';
 import Modal from './Modal';
 import { useToast } from '@/hooks/use-toast';
 import 'keen-slider/keen-slider.min.css';
 import { useKeenSlider } from 'keen-slider/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import QRCode from 'qrcode';
 
 interface Realisation {
   id: number;
@@ -37,13 +38,13 @@ interface Speaker {
   theme_id: number;
   theme?: Theme;
   realisations: Realisation[];
-  email?: string; // Si vous voulez ajouter un champ email
-  website?: string; // Si vous voulez ajouter un champ website
+  email?: string;
+  website?: string;
 }
 
 interface SpeakersProps {
   language: 'fr' | 'en';
-  apiBaseUrl?: string; // URL de base de votre API Laravel
+  apiBaseUrl?: string;
 }
 
 const Speakers: React.FC<SpeakersProps> = ({ 
@@ -54,6 +55,7 @@ const Speakers: React.FC<SpeakersProps> = ({
   const [speakers, setSpeakers] = useState<Speaker[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [qrCodes, setQrCodes] = useState<{ [key: number]: string }>({});
 
   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
     loop: true,
@@ -72,6 +74,26 @@ const Speakers: React.FC<SpeakersProps> = ({
     },
   });
 
+  // Générer le QR code pour un speaker
+  const generateQRCode = async (speakerId: number) => {
+    try {
+      const url = `https://site-conf.com/proceedings?speaker=${speakerId}`;
+      const qrDataUrl = await QRCode.toDataURL(url, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#1f2937', // Couleur sombre
+          light: '#ffffff', // Fond blanc
+        },
+        errorCorrectionLevel: 'M',
+      });
+      return qrDataUrl;
+    } catch (error) {
+      console.error('Erreur génération QR code:', error);
+      return null;
+    }
+  };
+
   // Charger les speakers depuis l'API Laravel
   useEffect(() => {
     const fetchSpeakers = async () => {
@@ -82,6 +104,22 @@ const Speakers: React.FC<SpeakersProps> = ({
         }
         const data = await response.json();
         setSpeakers(data);
+
+        // Générer les QR codes pour tous les speakers
+        const qrPromises = data.map(async (speaker: Speaker) => {
+          const qrCode = await generateQRCode(speaker.id);
+          return { id: speaker.id, qrCode };
+        });
+
+        const qrResults = await Promise.all(qrPromises);
+        const qrCodesMap: { [key: number]: string } = {};
+        qrResults.forEach(({ id, qrCode }) => {
+          if (qrCode) {
+            qrCodesMap[id] = qrCode;
+          }
+        });
+        setQrCodes(qrCodesMap);
+
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur inconnue');
         toast({
@@ -103,7 +141,7 @@ const Speakers: React.FC<SpeakersProps> = ({
       subtitle: 'Des experts reconnus internationalement',
       actions: {
         contact: 'Contacter',
-        website: 'Site web',
+        qrCode: 'QR Code',
         bio: 'Biographie complète'
       },
       labels: {
@@ -111,7 +149,9 @@ const Speakers: React.FC<SpeakersProps> = ({
         achievements: 'Réalisations',
         talk: 'Domaine d\'expertise',
         loading: 'Chargement des speakers...',
-        error: 'Erreur lors du chargement'
+        error: 'Erreur lors du chargement',
+        qrCodeTitle: 'Accès aux publications',
+        qrCodeDesc: 'Scannez pour accéder aux publications de ce conférencier'
       }
     },
     en: {
@@ -119,7 +159,7 @@ const Speakers: React.FC<SpeakersProps> = ({
       subtitle: 'Internationally recognized experts',
       actions: {
         contact: 'Contact',
-        website: 'Website',
+        qrCode: 'QR Code',
         bio: 'Full Biography'
       },
       labels: {
@@ -127,7 +167,9 @@ const Speakers: React.FC<SpeakersProps> = ({
         achievements: 'Achievements',
         talk: 'Area of Expertise',
         loading: 'Loading speakers...',
-        error: 'Error loading speakers'
+        error: 'Error loading speakers',
+        qrCodeTitle: 'Access to Publications',
+        qrCodeDesc: 'Scan to access this speaker\'s publications'
       }
     }
   };
@@ -144,16 +186,9 @@ const Speakers: React.FC<SpeakersProps> = ({
     }
   };
 
-  const handleWebsite = (speaker: Speaker) => {
-    if (speaker.website) {
-      window.open(speaker.website, '_blank');
-    } else {
-      toast({
-        title: "Information",
-        description: "Site web non disponible pour ce speaker",
-        variant: "default",
-      });
-    }
+  const handleQRCodeClick = (speakerId: number) => {
+    const url = `https://site-conf.com/proceedings?speaker=${speakerId}`;
+    window.open(url, '_blank');
   };
 
   const getSpeakerJob = (speaker: Speaker) => {
@@ -174,7 +209,6 @@ const Speakers: React.FC<SpeakersProps> = ({
   };
 
   const getRealisationTitle = (realisation: Realisation) => {
-    // Utiliser le titre du pivot si disponible, sinon le titre par défaut
     if (realisation.pivot?.title_fr && language === 'fr') {
       return realisation.pivot.title_fr;
     }
@@ -310,6 +344,26 @@ const Speakers: React.FC<SpeakersProps> = ({
                               </div>
                             )}
 
+                            {/* QR Code dans la modal */}
+                            {qrCodes[speaker.id] && (
+                              <div className="text-center border-t pt-4">
+                                <h4 className="font-semibold mb-2">
+                                  {content[language].labels.qrCodeTitle}
+                                </h4>
+                                <p className="text-xs text-muted-foreground mb-3">
+                                  {content[language].labels.qrCodeDesc}
+                                </p>
+                                <div className="flex justify-center">
+                                  <img 
+                                    src={qrCodes[speaker.id]} 
+                                    alt={`QR Code pour ${speaker.name}`}
+                                    className="w-32 h-32 border rounded cursor-pointer hover:scale-105 transition-transform"
+                                    onClick={() => handleQRCodeClick(speaker.id)}
+                                  />
+                                </div>
+                              </div>
+                            )}
+
                             <div className="flex gap-2 pt-4">
                               <Button 
                                 onClick={() => handleContact(speaker)} 
@@ -321,12 +375,11 @@ const Speakers: React.FC<SpeakersProps> = ({
                               </Button>
                               <Button 
                                 variant="outline" 
-                                onClick={() => handleWebsite(speaker)} 
+                                onClick={() => handleQRCodeClick(speaker.id)} 
                                 className="flex-1"
-                                disabled={!speaker.website}
                               >
-                                <Globe className="w-4 h-4 mr-2" />
-                                {content[language].actions.website}
+                                <ExternalLink className="w-4 h-4 mr-2" />
+                                Publications
                               </Button>
                             </div>
                           </div>
@@ -343,16 +396,44 @@ const Speakers: React.FC<SpeakersProps> = ({
                             <Mail className="w-3 h-3 mr-1" />
                             {content[language].actions.contact}
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleWebsite(speaker)}
-                            className="flex-1"
-                            disabled={!speaker.website}
+                          
+                          {/* Modal QR Code compacte */}
+                          <Modal
+                            trigger={
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1"
+                              >
+                                <QrCode className="w-3 h-3 mr-1" />
+                                {content[language].actions.qrCode}
+                              </Button>
+                            }
+                            title={content[language].labels.qrCodeTitle}
                           >
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            {content[language].actions.website}
-                          </Button>
+                            <div className="text-center space-y-4">
+                              <p className="text-sm text-muted-foreground">
+                                {content[language].labels.qrCodeDesc}
+                              </p>
+                              {qrCodes[speaker.id] ? (
+                                <div className="flex justify-center">
+                                  <img 
+                                    src={qrCodes[speaker.id]} 
+                                    alt={`QR Code pour ${speaker.name}`}
+                                    className="w-48 h-48 border rounded cursor-pointer hover:scale-105 transition-transform"
+                                    onClick={() => handleQRCodeClick(speaker.id)}
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-48 h-48 bg-muted flex items-center justify-center mx-auto">
+                                  <Loader2 className="w-8 h-8 animate-spin" />
+                                </div>
+                              )}
+                              <p className="text-xs text-muted-foreground">
+                                Cliquez sur le QR code pour ouvrir le lien
+                              </p>
+                            </div>
+                          </Modal>
                         </div>
                       </div>
                     </CardContent>
