@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { AdminStats } from "@/components/admin/AdminStats";
-import { PartnersManager } from "@/components/admin/PartnersManager";
-import { SpeakersManager } from "@/components/admin/SpeakersManager";
-import { ComiteeManager } from "@/components/admin/ComiteeManager";
-import { NewsManager } from "@/components/admin/NewsManager";
-import { ArchivesManager } from "@/components/admin/ArchivesManager";
-import { ProgramManager } from "@/components/admin/ProgramManager";
-import { ThemesManager } from "@/components/admin/ThemesManager";
-import { ParticipantsManager } from "@/components/admin/ParticipantsManager";
+import AdminStats from "@/components/admin/AdminStats";
+import PartnersManager from "@/components/admin/PartnersManager";
+import SpeakersManager from "@/components/admin/SpeakersManager";
+import ComiteeManager from "@/components/admin/ComiteeManager";
+import NewsManager from "@/components/admin/NewsManager";
+import ArchivesManager from "@/components/admin/ArchivesManager";
+import ProgramManager from "@/components/admin/ProgramManager";
+import ThemesManager from "@/components/admin/ThemesManager";
+import ParticipantsManager from "@/components/admin/ParticipantsManager";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -26,7 +26,13 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [authToken, setAuthToken] = useState('');
-  const [user, setUser] = useState<any>(null);
+  interface User {
+    id: number;
+    name: string;
+    email: string;
+    // Add other user properties as needed
+  }
+  const [user, setUser] = useState<User | null>(null);
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
 
   const { toast } = useToast();

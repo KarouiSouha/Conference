@@ -15,10 +15,40 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ language }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [authToken, setAuthToken] = useState('');
-  const [user, setUser] = useState<any>(null);
+  interface User {
+    id: number;
+    name: string;
+    email: string;
+    // Add other user properties as needed
+  }
+  const [user, setUser] = useState<User | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  type Registration = {
+    id: number;
+    name: string;
+    email: string;
+    status: string;
+    date: string;
+  };
+
+  type Submission = {
+    id: number;
+    title: string;
+    author: string;
+    theme: string;
+    status: string;
+  };
+
+  type News = {
+    id: number;
+    title: string;
+    content: string;
+    status: string;
+    date: string;
+  };
+
+  const [editingItem, setEditingItem] = useState<Registration | Submission | News | null>(null);
   const [editingType, setEditingType] = useState('');
   const [newItemTitle, setNewItemTitle] = useState('');
   const [newItemContent, setNewItemContent] = useState('');
@@ -256,34 +286,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ language }) => {
     });
   };
 
-  const handleView = (item: any, type: string) => {
+  const handleView = (item: Registration | Submission | News, type: string) => {
     toast({
       title: `${content[language].actions.view} ${type}`,
-      description: `Affichage des détails de: ${item.name || item.title}`,
+      description: `Affichage des détails de: ${'name' in item ? item.name : item.title}`,
     });
   };
 
-  const handleEdit = (item: any, type: string) => {
+  const handleEdit = (item: Registration | Submission | News, type: string) => {
     setEditingItem(item);
     setEditingType(type);
     setShowEditForm(true);
     
     if (type === 'news') {
-      setNewItemTitle(item.title);
-      setNewItemContent(item.content);
+      setNewItemTitle((item as News).title);
+      setNewItemContent((item as News).content);
     } else if (type === 'registration') {
       setNewRegistration({
-        name: item.name,
-        email: item.email,
-        status: item.status,
-        date: item.date
+        name: (item as Registration).name,
+        email: (item as Registration).email,
+        status: (item as Registration).status,
+        date: (item as Registration).date
       });
     } else if (type === 'submission') {
       setNewSubmission({
-        title: item.title,
-        author: item.author,
-        theme: item.theme,
-        status: item.status
+        title: (item as Submission).title,
+        author: (item as Submission).author,
+        theme: (item as Submission).theme,
+        status: (item as Submission).status
       });
     }
   };
