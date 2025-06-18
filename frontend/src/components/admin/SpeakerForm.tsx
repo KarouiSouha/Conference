@@ -14,9 +14,8 @@ import {
   Tag,
   Languages,
   MapPin,
-  Award,
-  AlertCircle,
-  CheckCircle
+  Check,
+  AlertCircle
 } from "lucide-react";
 
 export default function SpeakerForm({ 
@@ -43,12 +42,12 @@ export default function SpeakerForm({
 
   // Thèmes disponibles (normalement récupérés depuis l'API)
   const themes = [
-    { id: 1, name: "IA et Technologies" },
-    { id: 2, name: "Sciences Médicales" },
-    { id: 3, name: "Nanotechnologies" },
-    { id: 4, name: "Environnement" },
-    { id: 5, name: "Énergie" },
-    { id: 6, name: "Économie" }
+    { id: 1, name: "IA et Technologies", color: "from-blue-500 to-blue-600" },
+    { id: 2, name: "Sciences Médicales", color: "from-green-500 to-green-600" },
+    { id: 3, name: "Nanotechnologies", color: "from-purple-500 to-purple-600" },
+    { id: 4, name: "Environnement", color: "from-teal-500 to-teal-600" },
+    { id: 5, name: "Énergie", color: "from-orange-500 to-orange-600" },
+    { id: 6, name: "Économie", color: "from-indigo-500 to-indigo-600" }
   ];
 
   // Pays populaires pour l'auto-complétion
@@ -118,6 +117,13 @@ export default function SpeakerForm({
       country_fr: country.fr,
       country_en: country.en
     }));
+    if (errors.country_fr || errors.country_en) {
+      setErrors(prev => ({
+        ...prev,
+        country_fr: "",
+        country_en: ""
+      }));
+    }
   };
 
   const validateForm = () => {
@@ -164,12 +170,13 @@ export default function SpeakerForm({
       
       setShowSuccess(true);
       setTimeout(() => {
-        onSave();
+        onSave(formData);
         onClose();
       }, 1500);
       
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
+      setErrors({ submit: "Une erreur est survenue lors de l'enregistrement" });
     } finally {
       setIsSubmitting(false);
     }
@@ -177,24 +184,27 @@ export default function SpeakerForm({
 
   if (!isOpen) return null;
 
+  const getSelectedThemeConfig = () => {
+    return themes.find(theme => theme.id.toString() === formData.theme_id) || themes[0];
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <Card className="border-0 shadow-2xl bg-white">
-          {/* En-tête élégant */}
-          <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 p-6 text-white relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/90 to-indigo-700/90"></div>
-            <div className="relative flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <User className="w-8 h-8" />
+        <Card className="bg-white shadow-2xl border-0 rounded-2xl">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-t-2xl border-b border-blue-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <User className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
                     {speaker ? "Modifier l'Intervenant" : "Nouvel Intervenant"}
                   </h2>
-                  <p className="text-blue-100 mt-1">
-                    {speaker ? "Mettez à jour les informations" : "Ajoutez un nouvel expert à votre conférence"}
+                  <p className="text-gray-600">
+                    {speaker ? "Modifiez les informations de l'intervenant" : "Ajoutez un nouvel expert à votre conférence"}
                   </p>
                 </div>
               </div>
@@ -202,36 +212,35 @@ export default function SpeakerForm({
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="text-white/80 hover:text-white hover:bg-white/20 h-10 w-10 p-0"
+                className="hover:bg-red-50 hover:text-red-600 rounded-full p-2"
               >
                 <X className="w-5 h-5" />
               </Button>
             </div>
           </div>
 
-          {/* Message de succès */}
-          {showSuccess && (
-            <div className="mx-6 mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="text-green-800 font-medium">
-                Intervenant {speaker ? "modifié" : "créé"} avec succès !
-              </span>
-            </div>
-          )}
-
-          <div className="p-6 space-y-8">
-            {/* Informations personnelles */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <User className="w-5 h-5 text-blue-600" />
+          {/* Form */}
+          <div className="p-6 space-y-6">
+            {/* Success Message */}
+            {showSuccess && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                <div className="flex items-center space-x-2 text-green-600">
+                  <Check className="w-5 h-5" />
+                  <span className="font-medium">
+                    Intervenant {speaker ? "modifié" : "créé"} avec succès !
+                  </span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Informations Personnelles</h3>
               </div>
+            )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Informations personnelles */}
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-700">
+                Informations Personnelles
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <User className="w-4 h-4" />
                     Nom complet *
                   </label>
@@ -239,10 +248,10 @@ export default function SpeakerForm({
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     placeholder="Dr. Sophie Martin"
-                    className={`h-12 ${errors.name ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                    className={`border-2 ${errors.name ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                   />
                   {errors.name && (
-                    <div className="flex items-center space-x-1 text-red-600 text-sm">
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
                       <AlertCircle className="w-4 h-4" />
                       <span>{errors.name}</span>
                     </div>
@@ -250,7 +259,7 @@ export default function SpeakerForm({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <Mail className="w-4 h-4" />
                     Email professionnel *
                   </label>
@@ -259,10 +268,10 @@ export default function SpeakerForm({
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     placeholder="sophie.martin@research.fr"
-                    className={`h-12 ${errors.email ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                    className={`border-2 ${errors.email ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                   />
                   {errors.email && (
-                    <div className="flex items-center space-x-1 text-red-600 text-sm">
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
                       <AlertCircle className="w-4 h-4" />
                       <span>{errors.email}</span>
                     </div>
@@ -272,31 +281,29 @@ export default function SpeakerForm({
             </div>
 
             {/* Fonctions professionnelles */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
-                <div className="p-2 bg-emerald-100 rounded-lg">
-                  <Briefcase className="w-5 h-5 text-emerald-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900">Fonction Professionnelle</h3>
-                <Badge variant="outline" className="text-xs">
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Fonction Professionnelle
+                </label>
+                <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1">
                   <Languages className="w-3 h-3 mr-1" />
                   Bilingue
                 </Badge>
               </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Fonction (Français) *
                   </label>
                   <Input
                     value={formData.job_fr}
                     onChange={(e) => handleInputChange("job_fr", e.target.value)}
                     placeholder="Professeure en Intelligence Artificielle"
-                    className={`h-12 ${errors.job_fr ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                    className={`border-2 ${errors.job_fr ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                   />
                   {errors.job_fr && (
-                    <div className="flex items-center space-x-1 text-red-600 text-sm">
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
                       <AlertCircle className="w-4 h-4" />
                       <span>{errors.job_fr}</span>
                     </div>
@@ -304,17 +311,17 @@ export default function SpeakerForm({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Fonction (Anglais) *
                   </label>
                   <Input
                     value={formData.job_en}
                     onChange={(e) => handleInputChange("job_en", e.target.value)}
                     placeholder="Professor in Artificial Intelligence"
-                    className={`h-12 ${errors.job_en ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                    className={`border-2 ${errors.job_en ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                   />
                   {errors.job_en && (
-                    <div className="flex items-center space-x-1 text-red-600 text-sm">
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
                       <AlertCircle className="w-4 h-4" />
                       <span>{errors.job_en}</span>
                     </div>
@@ -324,17 +331,13 @@ export default function SpeakerForm({
             </div>
 
             {/* Origine géographique */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Globe className="w-5 h-5 text-purple-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900">Origine Géographique</h3>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-700">
+                Origine Géographique
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Pays (Français) *
                   </label>
                   <div className="relative">
@@ -342,18 +345,16 @@ export default function SpeakerForm({
                       value={formData.country_fr}
                       onChange={(e) => handleInputChange("country_fr", e.target.value)}
                       placeholder="France"
-                      className={`h-12 ${errors.country_fr ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                      className={`border-2 ${errors.country_fr ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                     />
                     <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   </div>
                   {errors.country_fr && (
-                    <div className="flex items-center space-x-1 text-red-600 text-sm">
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
                       <AlertCircle className="w-4 h-4" />
                       <span>{errors.country_fr}</span>
                     </div>
                   )}
-                  
-                  {/* Suggestions de pays */}
                   <div className="flex flex-wrap gap-2 mt-2">
                     {countries.slice(0, 5).map((country, index) => (
                       <Button
@@ -362,7 +363,7 @@ export default function SpeakerForm({
                         variant="outline"
                         size="sm"
                         onClick={() => handleCountrySelect(country)}
-                        className="text-xs h-7 px-2 hover:bg-blue-50 hover:border-blue-300"
+                        className="text-xs h-7 px-2 border-2 border-gray-200 hover:bg-blue-50 hover:border-blue-300"
                       >
                         {country.fr}
                       </Button>
@@ -371,7 +372,7 @@ export default function SpeakerForm({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Pays (Anglais) *
                   </label>
                   <div className="relative">
@@ -379,12 +380,12 @@ export default function SpeakerForm({
                       value={formData.country_en}
                       onChange={(e) => handleInputChange("country_en", e.target.value)}
                       placeholder="France"
-                      className={`h-12 ${errors.country_en ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                      className={`border-2 ${errors.country_en ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                     />
                     <Globe className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   </div>
                   {errors.country_en && (
-                    <div className="flex items-center space-x-1 text-red-600 text-sm">
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
                       <AlertCircle className="w-4 h-4" />
                       <span>{errors.country_en}</span>
                     </div>
@@ -394,45 +395,41 @@ export default function SpeakerForm({
             </div>
 
             {/* Thème et spécialisation */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
-                <div className="p-2 bg-indigo-100 rounded-lg">
-                  <Tag className="w-5 h-5 text-indigo-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900">Thème de Spécialisation</h3>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">
-                  Thème principal
-                </label>
-                <select
-                  value={formData.theme_id}
-                  onChange={(e) => handleInputChange("theme_id", e.target.value)}
-                  className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                >
-                  <option value="">Sélectionner un thème</option>
-                  {themes.map((theme) => (
-                    <option key={theme.id} value={theme.id}>
-                      {theme.name}
-                    </option>
-                  ))}
-                </select>
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-700">
+                Thème de Spécialisation
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {themes.map((theme) => (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => handleInputChange('theme_id', theme.id.toString())}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center space-x-3 ${formData.theme_id === theme.id.toString()
+                      ? 'border-blue-400 bg-blue-50 shadow-md'
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                  >
+                    <div className={`p-2 rounded-lg bg-gradient-to-r ${theme.color} text-white`}>
+                      <Tag className="w-4 h-4" />
+                    </div>
+                    <span className="font-medium text-gray-700">{theme.name}</span>
+                    {formData.theme_id === theme.id.toString() && (
+                      <Check className="w-4 h-4 text-blue-600 ml-auto" />
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Descriptions */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <FileText className="w-5 h-5 text-amber-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900">Descriptions (Optionnel)</h3>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-700">
+                Descriptions (Optionnel)
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Description (Français)
                   </label>
                   <textarea
@@ -440,51 +437,89 @@ export default function SpeakerForm({
                     onChange={(e) => handleInputChange("description_fr", e.target.value)}
                     placeholder="Expertise et parcours professionnel en français..."
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 resize-none transition-all duration-200"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Description (Anglais)
-                  </label>
+                  </ label>
                   <textarea
                     value={formData.description_en}
                     onChange={(e) => handleInputChange("description_en", e.target.value)}
                     placeholder="Professional expertise and background in English..."
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 resize-none transition-all duration-200"
                   />
                 </div>
               </div>
             </div>
 
+            {/* Preview Card */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Aperçu</h3>
+              <Card className="p-4 bg-white border-2 border-gray-200">
+                <div className="text-center space-y-3">
+                  <div className="w-12 h-12 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+                    <User className="w-6 h-6 text-gray-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-800">
+                      {formData.name || "Nom de l'intervenant"}
+                    </h4>
+                    <p className="text-sm text-gray-500 italic">
+                      {formData.job_en || "Profession"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {formData.country_en || "Pays"}
+                    </p>
+                  </div>
+                  <Badge className={`bg-gradient-to-r ${getSelectedThemeConfig().color} text-white px-3 py-1 flex items-center justify-center w-fit mx-auto`}>
+                    <Tag className="w-3 h-3 mr-1" />
+                    <span>{getSelectedThemeConfig().name}</span>
+                  </Badge>
+                </div>
+              </Card>
+            </div>
+
+            {/* Error Message */}
+            {errors.submit && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <div className="flex items-center space-x-2 text-red-600">
+                  <AlertCircle className="w-5 h-5" />
+                  <span className="font-medium">{errors.submit}</span>
+                </div>
+              </div>
+            )}
+
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="flex-1 h-12 border-gray-300 text-gray-700 hover:bg-gray-50"
                 disabled={isSubmitting}
+                className="px-6 py-2 border-2 border-gray-300 hover:bg-gray-50"
               >
                 Annuler
               </Button>
               <Button
+                type="button"
                 onClick={handleSubmit}
-                className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg"
                 disabled={isSubmitting}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 {isSubmitting ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>Enregistrement...</span>
-                  </div>
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Enregistrement...
+                  </>
                 ) : (
-                  <div className="flex items-center space-x-2">
-                    <Save className="w-4 h-4" />
-                    <span>{speaker ? "Modifier" : "Créer"} l'Intervenant</span>
-                  </div>
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    {speaker ? "Modifier" : "Enregistrer"}
+                  </>
                 )}
               </Button>
             </div>

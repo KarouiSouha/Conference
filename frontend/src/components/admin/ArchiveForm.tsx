@@ -1,22 +1,12 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  X, 
-  Save, 
-  Calendar, 
-  Users, 
-  FileText, 
-  Globe, 
-  Camera,
-  Building2,
-  Hash,
-  Languages
-} from "lucide-react";
+import { FileText, X, Save, Building2, Camera, Users, Globe, AlertCircle, Languages, Hash, Calendar } from "lucide-react";
 
 type ArchiveFormData = {
+  id?: number;
   event_name: string;
   subject_fr: string;
   subject_en: string;
@@ -25,11 +15,15 @@ type ArchiveFormData = {
   articles: string;
   countries: string;
   photoGalleryLink: string;
+  year?: string;
+  duration?: string;
+  location?: string;
+  status?: string;
 };
 
-type ArchiveFormErrors = Partial<Record<keyof ArchiveFormData, string | null>>;
+type ArchiveFormErrors = Partial<Record<keyof ArchiveFormData, string | undefined>>;
 
-export default function ArchiveForm({
+function ArchiveForm({
   isOpen,
   archiveItem,
   onClose,
@@ -61,10 +55,10 @@ export default function ArchiveForm({
         subject_fr: archiveItem.subject_fr || "",
         subject_en: archiveItem.subject_en || "",
         organizer: archiveItem.organizer || "",
-        participants: archiveItem.participants?.toString() || "",
-        articles: archiveItem.articles?.toString() || "",
-        countries: archiveItem.countries?.toString() || "",
-        photoGalleryLink: archiveItem.photoGalleryLink || ""
+        participants: archiveItem.participants || "",
+        articles: archiveItem.articles || "",
+        countries: archiveItem.countries || "",
+        photoGalleryLink: archiveItem.photoGalleryLink || "",
       });
     } else {
       setFormData({
@@ -75,23 +69,21 @@ export default function ArchiveForm({
         participants: "",
         articles: "",
         countries: "",
-        photoGalleryLink: ""
+        photoGalleryLink: "",
       });
     }
-    setErrors({});
-  }, [archiveItem, isOpen]);
+  }, [archiveItem]);
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: keyof ArchiveFormData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-    
-    // Clear error when user starts typing
+
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
-        [field]: null
+        [field]: undefined
       }));
     }
   };
@@ -115,8 +107,10 @@ export default function ArchiveForm({
       newErrors.organizer = "L'organisateur est requis";
     }
 
-    // Validation des nombres
-    if (formData.participants && (isNaN(Number(formData.participants)) || parseInt(formData.participants) < 0)) {
+    if (
+      formData.participants &&
+      (isNaN(Number(formData.participants)) || parseInt(formData.participants) < 0)
+    ) {
       newErrors.participants = "Le nombre de participants doit être un nombre positif";
     }
 
@@ -128,7 +122,6 @@ export default function ArchiveForm({
       newErrors.countries = "Le nombre de pays doit être un nombre positif";
     }
 
-    // Validation URL
     if (formData.photoGalleryLink && formData.photoGalleryLink.trim()) {
       try {
         new URL(formData.photoGalleryLink);
@@ -137,27 +130,23 @@ export default function ArchiveForm({
       }
     }
 
-    return newErrors;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
-    
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+    if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
-    
-    try {
-      const dataToSave = {
-        ...formData
-      };
 
-      await onSave(dataToSave);
+    try {
+      await onSave(formData);
+      onClose();
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
+      setErrors(prev => ({ ...prev, submit: "Une erreur est survenue lors de l'enregistrement" }));
     } finally {
       setIsSubmitting(false);
     }
@@ -166,173 +155,167 @@ export default function ArchiveForm({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-white shadow-2xl animate-in slide-in-from-bottom-4 duration-500">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <FileText className="w-6 h-6" />
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <Card className="bg-white shadow-2xl border-0 rounded-2xl">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-t-2xl border-b border-blue-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FileText className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
+                    {archiveItem ? 'Modifier Archive' : 'Nouvelle Archive'}
+                  </h2>
+                  <p className="text-gray-600">
+                    {archiveItem ? 'Modifiez les informations de l\'archive' : 'Ajoutez une nouvelle archive d\'événement'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold">
-                  {archiveItem ? "Modifier l'Archive" : "Nouvelle Archive"}
-                </h2>
-                <p className="text-blue-100 mt-1">
-                  {archiveItem ? "Modifiez les informations de l'archive" : "Créez une nouvelle archive d'événement"}
-                </p>
-              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="hover:bg-red-50 hover:text-red-600 rounded-full p-2"
+              >
+                <X className="w-5 h-5" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="text-white hover:bg-white/20 p-2"
-            >
-              <X className="w-5 h-5" />
-            </Button>
           </div>
-        </div>
 
-        {/* Form Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          <div className="space-y-8">
-            {/* Informations générales */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                <Calendar className="w-5 h-5 text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Informations générales</h3>
+          {/* Form */}
+          <div className="p-6 space-y-6">
+            {/* General Information */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Calendar className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-700">Informations générales</h3>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Nom de l'événement *
                   </label>
                   <Input
                     value={formData.event_name}
                     onChange={(e) => handleInputChange("event_name", e.target.value)}
                     placeholder="Ex: Conférence Internationale sur l'IA"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.event_name 
-                        ? "border-red-300 focus:border-red-500" 
-                        : "border-gray-200 focus:border-blue-500"
-                    }`}
+                    className={`border-2 ${errors.event_name ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                   />
                   {errors.event_name && (
-                    <p className="text-red-500 text-sm mt-1">{errors.event_name}</p>
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.event_name}</span>
+                    </div>
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
                       Organisateur *
-                    </div>
-                  </label>
-                  <Input
-                    value={formData.organizer}
-                    onChange={(e) => handleInputChange("organizer", e.target.value)}
-                    placeholder="Ex: Université de Tunis"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.organizer 
-                        ? "border-red-300 focus:border-red-500" 
-                        : "border-gray-200 focus:border-blue-500"
-                    }`}
-                  />
-                  {errors.organizer && (
-                    <p className="text-red-500 text-sm mt-1">{errors.organizer}</p>
-                  )}
-                </div>
+                    </label>
+                    <Input
+                      value={formData.organizer}
+                      onChange={(e) => handleInputChange("organizer", e.target.value)}
+                      placeholder="Ex: Université de Tunis"
+                      className={`border-2 ${errors.organizer ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                    />
+                    {errors.organizer && (
+                      <div className="flex items-center space-x-2 text-red-600 text-sm">
+                        <AlertCircle className="w-4 h-4" />
+                        <span>{errors.organizer}</span>
+                      </div>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <div className="flex items-center gap-2">
-                      <Camera className="w-4 h-4" />
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
                       Lien Galerie Photo
-                    </div>
-                  </label>
-                  <Input
-                    value={formData.photoGalleryLink}
-                    onChange={(e) => handleInputChange("photoGalleryLink", e.target.value)}
-                    placeholder="https://example.com/gallery"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.photoGalleryLink 
-                        ? "border-red-300 focus:border-red-500" 
-                        : "border-gray-200 focus:border-blue-500"
-                    }`}
-                  />
-                  {errors.photoGalleryLink && (
-                    <p className="text-red-500 text-sm mt-1">{errors.photoGalleryLink}</p>
-                  )}
+                    </label>
+                    <Input
+                      value={formData.photoGalleryLink}
+                      onChange={(e) => handleInputChange("photoGalleryLink", e.target.value)}
+                      placeholder="https://example.com/gallery"
+                      className={`border-2 ${errors.photoGalleryLink ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                    />
+                    {errors.photoGalleryLink && (
+                      <div className="flex items-center space-x-2 text-red-600 text-sm">
+                        <AlertCircle className="w-4 h-4" />
+                        <span>{errors.photoGalleryLink}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Sujets multilingues */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                <Languages className="w-5 h-5 text-emerald-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Sujets</h3>
+            {/* Subjects */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Languages className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-700">Sujets</h3>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Sujet (Français) *
                   </label>
                   <Input
                     value={formData.subject_fr}
                     onChange={(e) => handleInputChange("subject_fr", e.target.value)}
                     placeholder="Ex: Intelligence Artificielle et Société"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.subject_fr 
-                        ? "border-red-300 focus:border-red-500" 
-                        : "border-gray-200 focus:border-emerald-500"
-                    }`}
+                    className={`border-2 ${errors.subject_fr ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                   />
                   {errors.subject_fr && (
-                    <p className="text-red-500 text-sm mt-1">{errors.subject_fr}</p>
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.subject_fr}</span>
+                    </div>
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
                     Sujet (Anglais) *
                   </label>
                   <Input
                     value={formData.subject_en}
                     onChange={(e) => handleInputChange("subject_en", e.target.value)}
                     placeholder="Ex: Artificial Intelligence and Society"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.subject_en 
-                        ? "border-red-300 focus:border-red-500" 
-                        : "border-gray-200 focus:border-emerald-500"
-                    }`}
+                    className={`border-2 ${errors.subject_en ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                   />
                   {errors.subject_en && (
-                    <p className="text-red-500 text-sm mt-1">{errors.subject_en}</p>
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.subject_en}</span>
+                    </div>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Statistiques */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                <Hash className="w-5 h-5 text-purple-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Statistiques</h3>
+            {/* Statistics */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Hash className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-700">Statistiques</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4" />
-                      Participants
-                    </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Participants
                   </label>
                   <Input
                     type="number"
@@ -340,23 +323,19 @@ export default function ArchiveForm({
                     value={formData.participants}
                     onChange={(e) => handleInputChange("participants", e.target.value)}
                     placeholder="0"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.participants 
-                        ? "border-red-300 focus:border-red-500" 
-                        : "border-gray-200 focus:border-purple-500"
-                    }`}
+                    className={`border-2 ${errors.participants ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                   />
                   {errors.participants && (
-                    <p className="text-red-500 text-sm mt-1">{errors.participants}</p>
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.participants}</span>
+                    </div>
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4" />
-                      Articles
-                    </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Articles
                   </label>
                   <Input
                     type="number"
@@ -364,23 +343,19 @@ export default function ArchiveForm({
                     value={formData.articles}
                     onChange={(e) => handleInputChange("articles", e.target.value)}
                     placeholder="0"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.articles 
-                        ? "border-red-300 focus:border-red-500" 
-                        : "border-gray-200 focus:border-purple-500"
-                    }`}
+                    className={`border-2 ${errors.articles ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                   />
                   {errors.articles && (
-                    <p className="text-red-500 text-sm mt-1">{errors.articles}</p>
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.articles}</span>
+                    </div>
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4" />
-                      Pays
-                    </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Pays
                   </label>
                   <Input
                     type="number"
@@ -388,50 +363,87 @@ export default function ArchiveForm({
                     value={formData.countries}
                     onChange={(e) => handleInputChange("countries", e.target.value)}
                     placeholder="0"
-                    className={`border-2 transition-all duration-200 ${
-                      errors.countries 
-                        ? "border-red-300 focus:border-red-500" 
-                        : "border-gray-200 focus:border-purple-500"
-                    }`}
+                    className={`border-2 ${errors.countries ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                   />
                   {errors.countries && (
-                    <p className="text-red-500 text-sm mt-1">{errors.countries}</p>
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.countries}</span>
+                    </div>
                   )}
                 </div>
               </div>
             </div>
 
+            {/* Preview Card */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Aperçu</h3>
+              <Card className="p-4 bg-white border-2 border-gray-200">
+                <div className="text-center space-y-3">
+                  <div className="w-12 h-12 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-gray-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-800">
+                      {formData.event_name || "Nom de l'événement"}
+                    </h4>
+                    <p className="text-sm text-gray-500 italic">
+                      {formData.subject_en || "Event subject"}
+                    </p>
+                  </div>
+                  <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1 flex items-center justify-center w-fit mx-auto">
+                    <FileText className="w-4 h-4 mr-1" />
+                    <span>Archive</span>
+                  </Badge>
+                </div>
+              </Card>
+            </div>
+
+            {/* Error Message */}
+            {errors.submit && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <div className="flex items-center space-x-2 text-red-600">
+                  <AlertCircle className="w-5 h-5" />
+                  <span className="font-medium">{errors.submit}</span>
+                </div>
+              </div>
+            )}
+
             {/* Actions */}
-            <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="px-6 py-2 border-2 border-gray-300 hover:bg-gray-50 transition-all duration-200"
+                disabled={isSubmitting}
+                className="px-6 py-2 border-2 border-gray-300 hover:bg-gray-50"
               >
                 Annuler
               </Button>
               <Button
+                type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="px-8 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 {isSubmitting ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Sauvegarde...
-                  </div>
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Enregistrement...
+                  </>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <Save className="w-4 h-4" />
-                    {archiveItem ? "Mettre à jour" : "Créer l'archive"}
-                  </div>
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    {archiveItem ? 'Modifier' : 'Enregistrer'}
+                  </>
                 )}
               </Button>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
+
+export default ArchiveForm;
