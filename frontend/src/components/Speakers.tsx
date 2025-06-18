@@ -187,7 +187,7 @@ const Speakers: React.FC<SpeakersProps> = ({
   };
 
   const handleQRCodeClick = (speakerId: number) => {
-    const url = `https://site-conf.com/proceedings?speaker=${speakerId}`;
+    const url = `https://site-conf.com/`;
     window.open(url, '_blank');
   };
 
