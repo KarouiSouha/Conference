@@ -93,13 +93,17 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
                   <div className="text-xs font-medium opacity-80 uppercase tracking-wide">
                     {language === 'fr' ? 'Soumission' : 'Submission'}
                   </div>
-                  <div className="text-sm font-semibold">15 Février 2025</div>
+                  <div className="text-sm font-semibold">
+                    {language === 'fr' ? '30 Juillet 2025' : 'July 30, 2025'}
+                  </div>
                 </div>
                 <div className="bg-primary-foreground/10 backdrop-blur-sm rounded-lg p-3 border-l-2 border-primary-foreground/30">
                   <div className="text-xs font-medium opacity-80 uppercase tracking-wide">
                     {language === 'fr' ? 'Conférence' : 'Conference'}
                   </div>
-                  <div className="text-sm font-semibold">15-17 Mai 2025</div>
+                  <div className="text-sm font-semibold">
+                    {language === 'fr' ? '24-26 Octobre 2025' : 'October 24-26, 2025'}
+                  </div>
                 </div>
               </div>
             </div>

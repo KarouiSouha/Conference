@@ -77,7 +77,8 @@ const Speakers: React.FC<SpeakersProps> = ({
   // Générer le QR code pour un speaker
   const generateQRCode = async (speakerId: number) => {
     try {
-      const url = `https://site-conf.com/proceedings?speaker=${speakerId}`;
+      // const url = `https://site-conf.com/proceedings?speaker=${speakerId}`;
+      const url = "https://site-conf.com/";
       const qrDataUrl = await QRCode.toDataURL(url, {
         width: 200,
         margin: 2,
