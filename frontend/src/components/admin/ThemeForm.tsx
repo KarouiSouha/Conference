@@ -1,9 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tag, X, Save, AlertCircle, Globe, Palette, ChevronDown, Plus } from "lucide-react";
+import { X, Save, Tag, Globe, Info, List, Palette, ChevronDown, Plus, Eye, Sparkles, Edit } from "lucide-react";
 
 interface Keyword {
   id: number;
@@ -50,10 +46,16 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
   const [showKeywordForm, setShowKeywordForm] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof Theme | 'submit' | 'keywords', string>>>({});
 
-  const icons = ["📚", "🔬", "💡", "🌐", "🧪", "⚙️", "🧠", "🔍", "📊", "🤖", "🧬", "🌱", "🔒"];
-  const colors = ["#6366F1", "#10B981", "#059669", "#EF4444", "#F59E0B", "#EC4899", "#14B8A6", "#3B82F6", "#F97316"];
+  const icons = ["📚", "🔬", "💡", "🌐", "🧪", "⚙️", "🧠", "🔍", "📊", "🤖", "🧬", "🌱", "🔒", "🎨", "🚀", "💻"];
+  const colors = [
+    "#6366F1", "#8B5CF6", "#EC4899", "#EF4444", "#F59E0B", 
+    "#10B981", "#06B6D4", "#3B82F6", "#F97316", "#84CC16",
+    "#6B7280", "#1F2937"
+  ];
+
+  // Détermine si c'est un mode édition ou création
+  const isEditMode = Boolean(theme && theme.id);
 
   useEffect(() => {
     if (theme) {
@@ -72,69 +74,30 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
       ...prev,
       [name]: value
     }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors: Partial<Record<keyof Theme | 'submit' | 'keywords', string>> = {};
-
-    if (!formData.titleFr.trim()) {
-      newErrors.titleFr = "Le titre en français est requis";
-    }
-    if (!formData.titleEn.trim()) {
-      newErrors.titleEn = "Le titre en anglais est requis";
-    }
-    if (!formData.descriptionFr.trim()) {
-      newErrors.descriptionFr = "La description en français est requise";
-    }
-    if (!formData.descriptionEn.trim()) {
-      newErrors.descriptionEn = "La description en anglais est requise";
-    }
-    if (formData.order < 1) {
-      newErrors.order = "L'ordre doit être un nombre positif";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) {
-      return;
-    }
-    try {
-      onSave(formData);
-      onClose();
-    } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
-      setErrors(prev => ({ ...prev, submit: "Une erreur est survenue lors de l'enregistrement" }));
-    }
+    onSave(formData);
   };
 
   const addKeyword = () => {
-    if (!newKeywordFr.trim() || !newKeywordEn.trim()) {
-      setErrors(prev => ({ ...prev, keywords: "Les deux mots-clés (français et anglais) sont requis" }));
-      return;
+    if (newKeywordFr.trim() && newKeywordEn.trim()) {
+      const newKeyword = {
+        id: Date.now(),
+        keywordFr: newKeywordFr.trim(),
+        keywordEn: newKeywordEn.trim()
+      };
+      
+      setFormData(prev => ({
+        ...prev,
+        keywords: [...prev.keywords, newKeyword]
+      }));
+      
+      setNewKeywordFr("");
+      setNewKeywordEn("");
+      setShowKeywordForm(false);
     }
-
-    const newKeyword = {
-      id: Date.now(),
-      keywordFr: newKeywordFr.trim(),
-      keywordEn: newKeywordEn.trim()
-    };
-
-    setFormData(prev => ({
-      ...prev,
-      keywords: [...prev.keywords, newKeyword]
-    }));
-
-    setNewKeywordFr("");
-    setNewKeywordEn("");
-    setShowKeywordForm(false);
-    setErrors(prev => ({ ...prev, keywords: undefined }));
   };
 
   const removeKeyword = (id: number) => {
@@ -145,157 +108,142 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <Card className="bg-white shadow-2xl border-0 rounded-2xl">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-t-2xl border-b border-blue-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Tag className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
-                    {theme ? "Modifier Thème" : "Nouveau Thème"}
-                  </h2>
-                  <p className="text-gray-600">
-                    {theme ? "Modifiez les informations du thème" : "Ajoutez un nouveau thème"}
-                  </p>
-                </div>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[95vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+        {/* Header avec gradient */}
+        <div className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 p-8 text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                {isEditMode ? (
+                  <Edit className="w-7 h-7 text-white" />
+                ) : (
+                  <Sparkles className="w-7 h-7 text-white" />
+                )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="hover:bg-red-50 hover:text-red-600 rounded-full p-2"
-              >
-                <X className="w-5 h-5" />
-              </Button>
+              <div>
+                <h2 className="text-2xl font-bold">
+                  {isEditMode ? "Modifier le thème" : "Nouveau thème"}
+                </h2>
+                <p className="text-white/70 text-sm mt-1">
+                  {isEditMode ? "Modifiez les informations de votre thème" : "Créez et personnalisez vos thèmes avec style"}
+                </p>
+              </div>
             </div>
+            <button 
+              onClick={onClose}
+              className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-200 flex items-center justify-center border border-white/20 hover:border-white/40"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
           </div>
+        </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* Titles */}
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Globe className="w-5 h-5 text-blue-600" />
+        {/* Form avec scrolling */}
+        <div className="max-h-[calc(95vh-200px)] overflow-y-auto">
+          <div className="p-8 space-y-8">
+            {/* Section Informations générales */}
+            <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-200/50">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                <Info className="w-5 h-5 mr-2 text-indigo-600" />
+                Informations générales
+              </h3>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="titleFr" className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
+                      <span className="mr-2">🇫🇷</span> Titre (Français)
+                    </label>
+                    <input
+                      type="text"
+                      id="titleFr"
+                      name="titleFr"
+                      value={formData.titleFr}
+                      onChange={handleChange}
+                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                      placeholder="Entrez le titre en français..."
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="descriptionFr" className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
+                      <span className="mr-2">🇫🇷</span> Description (Français)
+                    </label>
+                    <textarea
+                      id="descriptionFr"
+                      name="descriptionFr"
+                      value={formData.descriptionFr}
+                      onChange={handleChange}
+                      rows={4}
+                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 bg-white/50 backdrop-blur-sm resize-none"
+                      placeholder="Décrivez le thème en français..."
+                      required
+                    />
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-700">Titres</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">Titre (Français) *</label>
-                  <Input
-                    type="text"
-                    id="titleFr"
-                    name="titleFr"
-                    value={formData.titleFr}
-                    onChange={handleChange}
-                    placeholder="Titre en français"
-                    className={`border-2 ${errors.titleFr ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
-                  />
-                  {errors.titleFr && (
-                    <div className="flex items-center space-x-2 text-red-600 text-sm">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{errors.titleFr}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">Titre (Anglais) *</label>
-                  <Input
-                    type="text"
-                    id="titleEn"
-                    name="titleEn"
-                    value={formData.titleEn}
-                    onChange={handleChange}
-                    placeholder="Title in English"
-                    className={`border-2 ${errors.titleEn ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
-                  />
-                  {errors.titleEn && (
-                    <div className="flex items-center space-x-2 text-red-600 text-sm">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{errors.titleEn}</span>
-                    </div>
-                  )}
+                
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="titleEn" className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
+                      <span className="mr-2">🇬🇧</span> Titre (Anglais)
+                    </label>
+                    <input
+                      type="text"
+                      id="titleEn"
+                      name="titleEn"
+                      value={formData.titleEn}
+                      onChange={handleChange}
+                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                      placeholder="Enter title in English..."
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="descriptionEn" className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
+                      <span className="mr-2">🇬🇧</span> Description (Anglais)
+                    </label>
+                    <textarea
+                      id="descriptionEn"
+                      name="descriptionEn"
+                      value={formData.descriptionEn}
+                      onChange={handleChange}
+                      rows={4}
+                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 bg-white/50 backdrop-blur-sm resize-none"
+                      placeholder="Describe the theme in English..."
+                      required
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Descriptions */}
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Globe className="w-5 h-5 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-700">Descriptions</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">Description (Français) *</label>
-                  <textarea
-                    id="descriptionFr"
-                    name="descriptionFr"
-                    value={formData.descriptionFr}
-                    onChange={handleChange}
-                    rows={3}
-                    placeholder="Description en français"
-                    className={`w-full px-4 py-3 border-2 ${errors.descriptionFr ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200`}
-                  />
-                  {errors.descriptionFr && (
-                    <div className="flex items-center space-x-2 text-red-600 text-sm">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{errors.descriptionFr}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">Description (Anglais) *</label>
-                  <textarea
-                    id="descriptionEn"
-                    name="descriptionEn"
-                    value={formData.descriptionEn}
-                    onChange={handleChange}
-                    rows={3}
-                    placeholder="Description in English"
-                    className={`w-full px-4 py-3 border-2 ${errors.descriptionEn ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200`}
-                  />
-                  {errors.descriptionEn && (
-                    <div className="flex items-center space-x-2 text-red-600 text-sm">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{errors.descriptionEn}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Icon, Color, Order */}
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Palette className="w-5 h-5 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-700">Apparence et Ordre</h3>
-              </div>
+            {/* Section Apparence */}
+            <div className="bg-gradient-to-br from-purple-50 to-white p-6 rounded-2xl border border-purple-200/50">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                <Palette className="w-5 h-5 mr-2 text-purple-600" />
+                Apparence et style
+              </h3>
+              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Icon */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">Icône</label>
+                {/* Icône */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="mr-2">🎭</span> Icône
+                  </label>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setShowIconPicker(!showIconPicker)}
-                      className={`w-full px-4 py-3 border-2 ${errors.icon ? 'border-red-300' : 'border-gray-200'} rounded-xl flex items-center justify-between bg-white hover:bg-gray-50 transition-colors`}
+                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl flex items-center justify-between bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 hover:border-purple-300 hover:shadow-lg"
                     >
-                      <span className="text-2xl">{formData.icon}</span>
-                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showIconPicker ? "rotate-180" : ""}`} />
+                      <span className="text-3xl">{formData.icon}</span>
+                      <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showIconPicker ? "rotate-180" : ""}`} />
                     </button>
+                    
                     {showIconPicker && (
-                      <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg p-3 grid grid-cols-6 gap-2">
+                      <div className="absolute z-20 mt-2 w-full bg-white/95 backdrop-blur-md border-2 border-gray-200 rounded-2xl shadow-2xl p-4 grid grid-cols-4 gap-3 animate-in fade-in zoom-in-95 duration-200">
                         {icons.map((icon) => (
                           <button
                             key={icon}
@@ -304,7 +252,7 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                               setFormData(prev => ({ ...prev, icon }));
                               setShowIconPicker(false);
                             }}
-                            className="text-2xl p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="text-2xl p-3 hover:bg-purple-100 rounded-xl transition-all duration-200 hover:scale-110"
                           >
                             {icon}
                           </button>
@@ -314,26 +262,29 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                   </div>
                 </div>
 
-                {/* Color */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">Couleur</label>
+                {/* Couleur */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="mr-2">🎨</span> Couleur
+                  </label>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setShowColorPicker(!showColorPicker)}
-                      className={`w-full px-4 py-3 border-2 ${errors.color ? 'border-red-300' : 'border-gray-200'} rounded-xl flex items-center justify-between bg-white hover:bg-gray-50 transition-colors`}
+                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl flex items-center justify-between bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 hover:border-purple-300 hover:shadow-lg"
                     >
                       <div className="flex items-center">
-                        <div
-                          className="w-5 h-5 rounded-full mr-2 border border-gray-200"
+                        <div 
+                          className="w-7 h-7 rounded-full mr-3 border-2 border-white shadow-lg"
                           style={{ backgroundColor: formData.color }}
                         ></div>
-                        <span>{formData.color}</span>
+                        <span className="font-mono text-sm">{formData.color}</span>
                       </div>
-                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showColorPicker ? "rotate-180" : ""}`} />
+                      <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showColorPicker ? "rotate-180" : ""}`} />
                     </button>
+                    
                     {showColorPicker && (
-                      <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg p-3 grid grid-cols-3 gap-2">
+                      <div className="absolute z-20 mt-2 w-full bg-white/95 backdrop-blur-md border-2 border-gray-200 rounded-2xl shadow-2xl p-4 grid grid-cols-4 gap-3 animate-in fade-in zoom-in-95 duration-200">
                         {colors.map((color) => (
                           <button
                             key={color}
@@ -342,10 +293,10 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                               setFormData(prev => ({ ...prev, color }));
                               setShowColorPicker(false);
                             }}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
+                            className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-110 flex items-center justify-center"
                           >
-                            <div
-                              className="w-6 h-6 rounded-full border border-gray-200"
+                            <div 
+                              className="w-8 h-8 rounded-full border-2 border-white shadow-lg"
                               style={{ backgroundColor: color }}
                             ></div>
                           </button>
@@ -355,216 +306,250 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                   </div>
                 </div>
 
-                {/* Order */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">Ordre d'affichage *</label>
-                  <Input
+                {/* Ordre */}
+                <div>
+                  <label htmlFor="order" className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="mr-2">🔢</span> Ordre
+                  </label>
+                  <input
                     type="number"
                     id="order"
                     name="order"
                     min="1"
                     value={formData.order}
                     onChange={handleChange}
-                    placeholder="1"
-                    className={`border-2 ${errors.order ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-200 bg-white/80 backdrop-blur-sm"
+                    required
                   />
-                  {errors.order && (
-                    <div className="flex items-center space-x-2 text-red-600 text-sm">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{errors.order}</span>
-                    </div>
-                  )}
+                </div>
+              </div>
+
+              {/* Statut */}
+              <div className="mt-6">
+                <label className="block text-sm font-semibold text-gray-800 mb-4">Statut du thème</label>
+                <div className="flex items-center space-x-6">
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="isActive"
+                      checked={formData.isActive}
+                      onChange={() => setFormData(prev => ({ ...prev, isActive: true }))}
+                      className="h-5 w-5 text-emerald-600 focus:ring-emerald-500 focus:ring-2"
+                    />
+                    <span className="ml-3 text-gray-800 font-medium flex items-center">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
+                      Actif
+                    </span>
+                  </label>
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="isActive"
+                      checked={!formData.isActive}
+                      onChange={() => setFormData(prev => ({ ...prev, isActive: false }))}
+                      className="h-5 w-5 text-gray-600 focus:ring-gray-500 focus:ring-2"
+                    />
+                    <span className="ml-3 text-gray-800 font-medium flex items-center">
+                      <span className="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                      Inactif
+                    </span>
+                  </label>
                 </div>
               </div>
             </div>
 
-            {/* Status */}
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Tag className="w-5 h-5 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-700">Statut</h3>
-              </div>
-              <div className="flex items-center space-x-4">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={() => setFormData(prev => ({ ...prev, isActive: true }))}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-gray-700">Actif</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="isActive"
-                    checked={!formData.isActive}
-                    onChange={() => setFormData(prev => ({ ...prev, isActive: false }))}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-gray-700">Inactif</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Keywords */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Tag className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-700">Mots-clés</h3>
-                </div>
-                <Button
+            {/* Section Mots-clés */}
+            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl border border-blue-200/50">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Tag className="w-5 h-5 mr-2 text-blue-600" />
+                  Mots-clés ({formData.keywords.length})
+                </h3>
+                <button
                   type="button"
-                  variant="ghost"
                   onClick={() => setShowKeywordForm(!showKeywordForm)}
-                  className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                  className="flex items-center px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-xl transition-all duration-200 font-medium"
                 >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Ajouter un mot-clé
-                </Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajouter
+                </button>
               </div>
 
-              {/* New Keyword Form */}
+              {/* Form pour nouveau mot-clé */}
               {showKeywordForm && (
-                <div className="bg-gray-50 p-4 rounded-xl mb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                    <div className="space-y-2">
-                      <Input
+                <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl mb-6 border border-blue-200 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <input
                         type="text"
                         placeholder="Mot-clé (Français)"
                         value={newKeywordFr}
                         onChange={(e) => setNewKeywordFr(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Input
+                    <div>
+                      <input
                         type="text"
                         placeholder="Keyword (English)"
                         value={newKeywordEn}
                         onChange={(e) => setNewKeywordEn(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
                       />
                     </div>
                   </div>
-                  {errors.keywords && (
-                    <div className="flex items-center space-x-2 text-red-600 text-sm mb-3">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{errors.keywords}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-end space-x-2">
-                    <Button
+                  <div className="flex justify-end space-x-3">
+                    <button
                       type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowKeywordForm(false);
-                        setErrors(prev => ({ ...prev, keywords: undefined }));
-                      }}
-                      className="px-3 py-1.5 text-sm border-2 border-gray-200 hover:bg-gray-100"
+                      onClick={() => setShowKeywordForm(false)}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all duration-200 border border-gray-200"
                     >
                       Annuler
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                       type="button"
                       onClick={addKeyword}
-                      className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                      disabled={!newKeywordFr.trim() || !newKeywordEn.trim()}
                     >
                       Ajouter
-                    </Button>
+                    </button>
                   </div>
                 </div>
               )}
 
-              {/* Keywords List */}
+              {/* Liste des mots-clés */}
               {formData.keywords.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                   {formData.keywords.map((keyword) => (
-                    <Badge
+                    <div 
                       key={keyword.id}
-                      className="inline-flex items-center px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200"
-                      style={{
-                        backgroundColor: formData.color + '15',
+                      className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 shadow-sm"
+                      style={{ 
+                        backgroundColor: formData.color + '20',
                         color: formData.color,
-                        border: `1px solid ${formData.color}30`
+                        border: `2px solid ${formData.color}40`
                       }}
                     >
-                      {keyword.keywordFr}
+                      <span>{keyword.keywordFr}</span>
                       <button
                         type="button"
                         onClick={() => removeKeyword(keyword.id)}
-                        className="ml-2 text-xs opacity-70 hover:opacity-100"
+                        className="ml-2 hover:bg-white/50 rounded-full p-1 transition-all duration-200"
                       >
                         <X className="w-3 h-3" />
                       </button>
-                    </Badge>
+                    </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 italic">Aucun mot-clé ajouté</p>
+                <div className="text-center py-8 text-gray-500">
+                  <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">Aucun mot-clé ajouté</p>
+                </div>
               )}
             </div>
 
-            {/* Preview */}
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Aperçu</h3>
-              <Card className="p-4 bg-white border-2 border-gray-200">
-                <div className="text-center space-y-3">
-                  <div
-                    className="w-12 h-12 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center text-2xl"
-                    style={{ backgroundColor: formData.color + '15' }}
+            {/* Aperçu */}
+            <div className="bg-gradient-to-br from-emerald-50 to-white p-6 rounded-2xl border border-emerald-200/50">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                <Eye className="w-5 h-5 mr-2 text-emerald-600" />
+                Aperçu du thème
+              </h3>
+              <div 
+                className="bg-white/80 backdrop-blur-sm border-2 border-gray-200 rounded-2xl p-8 group hover:shadow-2xl transition-all duration-500 hover:scale-[1.02]"
+                style={{ borderLeft: `6px solid ${formData.color}` }}
+              >
+                <div className="flex items-start space-x-6 mb-6">
+                  <div 
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-xl border-2"
+                    style={{ 
+                      backgroundColor: formData.color + '20',
+                      borderColor: formData.color + '40',
+                    }}
                   >
                     {formData.icon}
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-800">{formData.titleFr || "Titre du thème"}</h4>
-                    <p className="text-sm text-gray-500 italic">{formData.titleEn || "Theme title"}</p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xl font-bold text-gray-900">{formData.titleFr || "Titre du thème"}</h4>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        formData.isActive 
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                          : 'bg-gray-100 text-gray-600 border border-gray-200'
+                      }`}>
+                        {formData.isActive ? 'Actif' : 'Inactif'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-1">{formData.titleEn || "Theme title"}</p>
+                    <p className="text-gray-700 mb-2">{formData.descriptionFr || "Description du thème..."}</p>
+                    <p className="text-sm text-gray-500 italic">{formData.descriptionEn || "Theme description..."}</p>
                   </div>
-                  <Badge
-                    className={`bg-gradient-to-r ${formData.isActive ? 'from-emerald-500 to-emerald-600' : 'from-gray-500 to-gray-600'} text-white px-3 py-1 flex items-center justify-center w-fit mx-auto`}
-                  >
-                    {formData.isActive ? 'Actif' : 'Inactif'}
-                  </Badge>
                 </div>
-              </Card>
-            </div>
-
-            {/* Error Message */}
-            {errors.submit && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <div className="flex items-center space-x-2 text-red-600">
-                  <AlertCircle className="w-5 h-5" />
-                  <span className="font-medium">{errors.submit}</span>
-                </div>
+                
+                {formData.keywords.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.keywords.slice(0, 4).map((keyword) => (
+                      <span 
+                        key={keyword.id}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                        style={{ 
+                          backgroundColor: formData.color + '15',
+                          color: formData.color,
+                        }}
+                      >
+                        {keyword.keywordFr}
+                      </span>
+                    ))}
+                    {formData.keywords.length > 4 && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                        +{formData.keywords.length - 4} autres
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                className="px-6 py-2 border-2 border-gray-300 hover:bg-gray-50"
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {theme ? "Modifier" : "Enregistrer"}
-              </Button>
             </div>
-          </form>
-        </Card>
+          </div>
+        </div>
+
+        {/* Actions fixées en bas - Boutons améliorés */}
+        <div className="bg-white/95 backdrop-blur-md border-t border-gray-200 p-6">
+          <div className="flex flex-col sm:flex-row gap-4 sm:justify-end">
+            {/* Bouton Annuler */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full sm:w-auto px-8 py-3 text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 rounded-2xl transition-all duration-200 border-2 border-gray-200 hover:border-gray-300 font-medium shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
+            >
+              <X className="w-4 h-4" />
+              <span>Annuler</span>
+            </button>
+
+            {/* Bouton Enregistrer/Modifier */}
+            <button
+              type="submit"
+              onClick={handleSubmit}
+              className={`w-full sm:w-auto px-8 py-3 text-white rounded-2xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-xl hover:shadow-2xl hover:scale-105 font-semibold ${
+                isEditMode 
+                  ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600' 
+                  : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700'
+              }`}
+            >
+              {isEditMode ? (
+                <>
+                  <Edit className="w-5 h-5" />
+                  <span>Modifier le thème</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  <span>Enregistrer le thème</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
