@@ -1,86 +1,50 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Search,
-  Plus,
-  Edit,
-  Trash,
-  Building2,
-  GraduationCap,
-  Handshake,
-  TrendingUp,
-} from "lucide-react";
+import { Search, Plus, Edit, Trash, Building2 } from "lucide-react";
 import PartnerForm from "./PartnerForm";
 
 export default function PartnersManager() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingPartner, setEditingPartner] = useState(null);
   const [showPartnerForm, setShowPartnerForm] = useState(false);
-  const [partners, setPartners] = useState([
-    {
-      id: 1,
-      nameFr: "Université de Technologie",
-      nameEn: "Technology University",
-      image: "/placeholder.svg",
-      type: "Académique",
-    },
-    {
-      id: 2,
-      nameFr: "Entreprise Innovante SA",
-      nameEn: "Innovative Company SA",
-      image: "/placeholder.svg",
-      type: "Sponsor",
-    },
-    {
-      id: 3,
-      nameFr: "Centre de Recherche",
-      nameEn: "Research Center",
-      image: "/placeholder.svg",
-      type: "Partenaire",
-    },
-    {
-      id: 4,
-      nameFr: "Institut National",
-      nameEn: "National Institute",
-      image: "/placeholder.svg",
-      type: "Académique",
-    },
-    {
-      id: 5,
-      nameFr: "TechCorp Solutions",
-      nameEn: "TechCorp Solutions",
-      image: "/placeholder.svg",
-      type: "Sponsor",
-    },
-    {
-      id: 6,
-      nameFr: "Laboratoire Avancé",
-      nameEn: "Advanced Laboratory",
-      image: "/placeholder.svg",
-      type: "Partenaire",
-    },
-  ]);
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/Partners/all");
+        if (!response.ok) {
+          throw new Error("Failed to fetch partners");
+        }
+        const data = await response.json();
+        setPartners(data);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+    fetchPartners();
+  }, []);
 
   const handleSavePartner = (formData) => {
     if (editingPartner) {
       const updatedPartner = {
         ...editingPartner,
-        nameFr: formData.name_fr,
-        nameEn: formData.name_en,
+        name_fr: formData.name_fr,
         image: formData.image ? URL.createObjectURL(formData.image) : editingPartner.image,
-        type: formData.type,
       };
       setPartners(prev => prev.map(p => p.id === editingPartner.id ? updatedPartner : p));
     } else {
       const newPartner = {
         id: Date.now(),
-        nameFr: formData.name_fr,
-        nameEn: formData.name_en,
-        image: formData.image ? URL.createObjectURL(formData.image) : "/placeholder.svg",
-        type: formData.type,
+        name_fr: formData.name_fr,
+        image: formData.image ? URL.createObjectURL(formData.image) : null,
       };
       setPartners(prev => [...prev, newPartner]);
     }
@@ -98,63 +62,21 @@ export default function PartnersManager() {
     setEditingPartner(null);
   };
 
-  const getTypeBadge = (type) => {
-    const badgeConfig = {
-      "Académique": {
-        className: "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md",
-        icon: <GraduationCap className="w-3 h-3 mr-1" />
-      },
-      "Sponsor": {
-        className: "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md",
-        icon: <TrendingUp className="w-3 h-3 mr-1" />
-      },
-      "Partenaire": {
-        className: "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md",
-        icon: <Handshake className="w-3 h-3 mr-1" />
-      },
-      "Entreprise": {
-        className: "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md",
-        icon: <Building2 className="w-3 h-3 mr-1" />
-      },
-    };
-    const config = badgeConfig[type] || {
-      className: "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md",
-      icon: <Building2 className="w-3 h-3 mr-1" />
-    };
-    return (
-      <Badge className={`${config.className} px-3 py-1 flex items-center justify-center font-medium`}>
-        {config.icon}
-        {type}
-      </Badge>
-    );
-  };
-
-  const getTypeIcon = (type) => {
-    switch (type) {
-      case "Académique":
-        return <GraduationCap className="w-10 h-10 text-blue-500" />;
-      case "Sponsor":
-        return <TrendingUp className="w-10 h-10 text-green-500" />;
-      case "Partenaire":
-        return <Handshake className="w-10 h-10 text-purple-500" />;
-      case "Entreprise":
-        return <Building2 className="w-10 h-10 text-orange-500" />;
-      default:
-        return <Building2 className="w-10 h-10 text-orange-500" />;
-    }
-  };
-
   const filteredPartners = partners.filter(partner =>
-    partner.nameFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    partner.nameEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    partner.type.toLowerCase().includes(searchTerm.toLowerCase())
+    partner.name_fr.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const stats = {
     total: partners.length,
-    sponsors: partners.filter(p => p.type === "Sponsor").length,
-    academiques: partners.filter(p => p.type === "Académique").length,
   };
+
+  if (loading) {
+    return <div className="min-h-screen bg-white flex items-center justify-center">Chargement...</div>;
+  }
+
+  if (error) {
+    return <div className="min-h-screen bg-white flex items-center justify-center text-red-600">Erreur: {error}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -189,35 +111,13 @@ export default function PartnersManager() {
               </div>
             </div>
           </Card>
-          <Card className="p-6 bg-white border-2 border-gray-100 hover:border-green-200 transition-all duration-300 hover:shadow-lg group">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">{stats.sponsors}</p>
-                <p className="text-gray-600 font-medium">Sponsors</p>
-              </div>
-              <div className="p-3 bg-green-50 rounded-full group-hover:bg-green-100 transition-colors">
-                <TrendingUp className="w-8 h-8 text-green-600" />
-              </div>
-            </div>
-          </Card>
-          <Card className="p-6 bg-white border-2 border-gray-100 hover:border-purple-200 transition-all duration-300 hover:shadow-lg group">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">{stats.academiques}</p>
-                <p className="text-gray-600 font-medium">Partenaires Académiques</p>
-              </div>
-              <div className="p-3 bg-purple-50 rounded-full group-hover:bg-purple-100 transition-colors">
-                <GraduationCap className="w-8 h-8 text-purple-600" />
-              </div>
-            </div>
-          </Card>
         </div>
 
         <Card className="p-6 bg-white border-2 border-gray-100 shadow-sm">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <Input
-              placeholder="Rechercher par nom, type ou description..."
+              placeholder="Rechercher par nom..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-12 pr-4 py-3 text-lg border-2 border-gray-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200"
@@ -238,7 +138,15 @@ export default function PartnersManager() {
               <div className="text-center space-y-4">
                 <div className="relative">
                   <div className="w-20 h-20 mx-auto bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl flex items-center justify-center group-hover:from-blue-50 group-hover:to-indigo-50 transition-all duration-300 shadow-inner">
-                    {getTypeIcon(partner.type)}
+                    {partner.image ? (
+                      <img
+                        src={`http://localhost:8000/storage/${partner.image}`}
+                        alt={partner.name_fr}
+                        className="w-full h-full object-cover rounded-2xl"
+                      />
+                    ) : (
+                      <Building2 className="w-10 h-10 text-blue-500" />
+                    )}
                   </div>
                   <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
@@ -248,14 +156,8 @@ export default function PartnersManager() {
                 </div>
                 <div className="space-y-2">
                   <h3 className="font-bold text-lg text-gray-800 group-hover:text-blue-700 transition-colors duration-200">
-                    {partner.nameFr}
+                    {partner.name_fr}
                   </h3>
-                  <p className="text-sm text-gray-500 italic font-medium">
-                    {partner.nameEn}
-                  </p>
-                </div>
-                <div className="flex justify-center">
-                  {getTypeBadge(partner.type)}
                 </div>
                 <div className="flex justify-center space-x-2 pt-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
                   <Button
@@ -290,7 +192,7 @@ export default function PartnersManager() {
         {showPartnerForm && (
           <PartnerForm
             onClose={handleCloseForm}
-            onSave={handleSavePartner}
+            onSubmit={handleSavePartner}
             partnerToEdit={editingPartner}
           />
         )}
