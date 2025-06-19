@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, FileText, Clock, X, Download } from 'lucide-react';
+import { Calendar, MapPin, FileText, Clock, X, Download, AlertCircle } from 'lucide-react';
 
 interface HeroSectionProps {
   language?: 'fr' | 'en';
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ language = 'fr' }) => {
-  const [timeLeft, setTimeLeft] = useState({
+  const [conferenceTimeLeft, setConferenceTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  const [submissionTimeLeft, setSubmissionTimeLeft] = useState({
     days: 0,
     hours: 0,
     minutes: 0,
@@ -18,17 +25,30 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language = 'fr' }) => {
 
   useEffect(() => {
     const conferenceDate = new Date('2025-10-24T08:00:00');
+    const submissionDate = new Date('2025-07-30T23:59:59');
 
     const timer = setInterval(() => {
       const now = new Date().getTime();
-      const distance = conferenceDate.getTime() - now;
+      
+      // Calcul pour la conférence
+      const conferenceDistance = conferenceDate.getTime() - now;
+      if (conferenceDistance > 0) {
+        setConferenceTimeLeft({
+          days: Math.floor(conferenceDistance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((conferenceDistance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((conferenceDistance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((conferenceDistance % (1000 * 60)) / 1000)
+        });
+      }
 
-      if (distance > 0) {
-        setTimeLeft({
-          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((distance % (1000 * 60)) / 1000)
+      // Calcul pour la date de soumission
+      const submissionDistance = submissionDate.getTime() - now;
+      if (submissionDistance > 0) {
+        setSubmissionTimeLeft({
+          days: Math.floor(submissionDistance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((submissionDistance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((submissionDistance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((submissionDistance % (1000 * 60)) / 1000)
         });
       }
     }, 1000);
@@ -67,7 +87,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language = 'fr' }) => {
       register: 'S\'inscrire maintenant',
       callForPapers: 'Appel à communication',
       program: 'Voir le programme',
-      countdown: 'Compte à rebours',
+      conferenceCountdown: 'Début de la conférence',
+      submissionCountdown: 'Date limite de soumission',
       days: 'Jours',
       hours: 'Heures',
       minutes: 'Minutes',
@@ -90,7 +111,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language = 'fr' }) => {
       register: 'Register Now',
       callForPapers: 'Call for Papers',
       program: 'View Program',
-      countdown: 'Countdown',
+      conferenceCountdown: 'Conference Starts In',
+      submissionCountdown: 'Submission Deadline',
       days: 'Days',
       hours: 'Hours',
       minutes: 'Minutes',
@@ -132,6 +154,71 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language = 'fr' }) => {
     document.body.removeChild(link);
   };
 
+  const CountdownCard = ({ title, timeLeft, icon: Icon, isUrgent = false }: { 
+    title: string, 
+    timeLeft: any, 
+    icon: any,
+    isUrgent?: boolean 
+  }) => (
+    <div className="relative bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group">
+      {/* Accent coloré en haut */}
+      <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-b-full ${
+        isUrgent ? 'bg-gradient-to-r from-red-500 to-red-600' : 'bg-gradient-to-r from-red-400 to-rose-500'
+      }`}></div>
+      
+      {/* En-tête avec icône */}
+      <div className="flex items-center justify-center gap-3 mb-6">
+        <div className={`p-3 rounded-xl ${
+          isUrgent ? 'bg-red-50 border border-red-100' : 'bg-rose-50 border border-rose-100'
+        } group-hover:scale-110 transition-transform duration-300`}>
+          <Icon className={`w-6 h-6 ${isUrgent ? 'text-red-600' : 'text-rose-600'}`} />
+        </div>
+        <h3 className={`text-xl font-bold ${
+          isUrgent ? 'text-red-700' : 'text-rose-700'
+        } text-center leading-tight`}>
+          {title}
+        </h3>
+      </div>
+      
+      {/* Grille de temps */}
+      <div className="grid grid-cols-4 gap-4">
+        {[
+          { value: timeLeft.days, label: content[language].days },
+          { value: timeLeft.hours, label: content[language].hours },
+          { value: timeLeft.minutes, label: content[language].minutes },
+          { value: timeLeft.seconds, label: content[language].seconds }
+        ].map((item, index) => (
+          <div key={index} className="text-center group/item">
+            <div className={`relative bg-white p-4 rounded-xl border-2 ${
+              isUrgent ? 'border-red-200 hover:border-red-300' : 'border-rose-200 hover:border-rose-300'
+            } shadow-sm hover:shadow-md transition-all duration-300 group-hover/item:scale-105`}>
+              {/* Effet de brillance */}
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white via-transparent to-transparent opacity-60"></div>
+              
+              <div className={`relative text-3xl font-bold ${
+                isUrgent ? 'text-red-600' : 'text-rose-600'
+              } mb-1 font-mono tracking-wider`}>
+                {String(item.value).padStart(2, '0')}
+              </div>
+              <div className={`text-xs font-medium uppercase tracking-wide ${
+                isUrgent ? 'text-red-500' : 'text-rose-500'
+              } opacity-80`}>
+                {item.label}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Ligne de séparation décorative */}
+      <div className={`mt-6 h-px w-full bg-gradient-to-r ${
+        isUrgent 
+          ? 'from-transparent via-red-200 to-transparent' 
+          : 'from-transparent via-rose-200 to-transparent'
+      }`}></div>
+    </div>
+  );
+
   return (
     <>
       <section id="home" className="relative pt-16 pb-20 bg-gradient-to-br from-slate-50 via-white to-slate-100 mt-12">
@@ -163,7 +250,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language = 'fr' }) => {
             </div>
 
             {/* Informations principales */}
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-8">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-12">
               <div className="flex items-center gap-2 text-primary bg-primary/10 px-6 py-3 rounded-lg border border-primary/20">
                 <Calendar className="w-5 h-5" />
                 <span className="font-semibold">{currentContent.date}</span>
@@ -174,29 +261,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language = 'fr' }) => {
               </div>
             </div>
 
-            {/* Compte à rebours */}
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-slate-200 mb-8">
-              <h3 className="text-xl font-semibold text-primary text-center mb-4">
-                {currentContent.countdown}
-              </h3>
-              <div className="grid grid-cols-4 gap-4 text-center">
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                  <div className="text-2xl font-bold text-primary">{timeLeft.days}</div>
-                  <div className="text-sm text-slate-600">{content[language].days}</div>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                  <div className="text-2xl font-bold text-primary">{timeLeft.hours}</div>
-                  <div className="text-sm text-slate-600">{content[language].hours}</div>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                  <div className="text-2xl font-bold text-primary">{timeLeft.minutes}</div>
-                  <div className="text-sm text-slate-600">{content[language].minutes}</div>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                  <div className="text-2xl font-bold text-primary">{timeLeft.seconds}</div>
-                  <div className="text-sm text-slate-600">{content[language].seconds}</div>
-                </div>
-              </div>
+            {/* Comptes à rebours modernisés */}
+            <div className="grid md:grid-cols-2 gap-8 mb-12">
+              <CountdownCard 
+                title={currentContent.submissionCountdown}
+                timeLeft={submissionTimeLeft}
+                icon={AlertCircle}
+                isUrgent={true}
+              />
+              <CountdownCard 
+                title={currentContent.conferenceCountdown}
+                timeLeft={conferenceTimeLeft}
+                icon={Calendar}
+                isUrgent={false}
+              />
             </div>
 
             {/* Boutons d'action */}

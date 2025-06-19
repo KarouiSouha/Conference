@@ -5,98 +5,123 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, Save, User, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { X, Save, User, AlertCircle, Eye, EyeOff, Upload } from "lucide-react";
 
 interface Participant {
-  firstName: string;
-  lastName: string;
+  id?: number;
+  first_name: string;
+  last_name: string;
   email: string;
   establishment: string;
   title: string;
   phone: string;
-  participationType: string;
+  participation_type: string;
   has_accompanying: string;
   accompanying_details: string;
   accommodation_type: string;
   payment_method: string;
   status: string;
   amount: number;
-  isPaid: boolean;
+  is_paid: boolean;
+  payment_proof?: string;
 }
 
 interface ParticipantFormProps {
   participant?: Participant;
   onClose: () => void;
-  onSave: (data: Participant) => void;
+  onSave: (data: FormData) => void;
 }
 
-type ParticipantFormErrors = Partial<Record<keyof Participant, string>>;
+type ParticipantFormErrors = Partial<Record<keyof Participant, string>> & { submit?: string };
 
 export default function ParticipantForm({ participant, onClose, onSave }: ParticipantFormProps) {
-  const [formData, setFormData] = useState<Participant>(participant || {
-    firstName: "",
-    lastName: "",
-    email: "",
-    establishment: "",
-    title: "",
-    phone: "",
-    participationType: "without-article",
-    has_accompanying: "no",
-    accompanying_details: "",
-    accommodation_type: "without-accommodation",
-    payment_method: "bank-transfer",
-    status: "pending",
-    amount: 0,
-    isPaid: false,
+  const [formData, setFormData] = useState<Participant>({
+    first_name: participant?.first_name || "",
+    last_name: participant?.last_name || "",
+    email: participant?.email || "",
+    establishment: participant?.establishment || "",
+    title: participant?.title || "",
+    phone: participant?.phone || "",
+    participation_type: participant?.participation_type || "without-article",
+    has_accompanying: participant?.has_accompanying || "no",
+    accompanying_details: participant?.accompanying_details || "",
+    accommodation_type: participant?.accommodation_type || "without-accommodation",
+    payment_method: participant?.payment_method || "bank-transfer",
+    status: participant?.status || "pending",
+    amount: participant?.amount || 0,
+    is_paid: participant?.is_paid || false,
   });
 
   const [errors, setErrors] = useState<ParticipantFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [paymentProof, setPaymentProof] = useState<File | null>(null);
+  const [paymentProofPreview, setPaymentProofPreview] = useState<string | null>(participant?.payment_proof ? `http://localhost:8000/storage/${participant.payment_proof}` : null);
 
   useEffect(() => {
     if (participant) {
-      setFormData(participant);
-    } else {
       setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        establishment: "",
-        title: "",
-        phone: "",
-        participationType: "without-article",
-        has_accompanying: "no",
-        accompanying_details: "",
-        accommodation_type: "without-accommodation",
-        payment_method: "bank-transfer",
-        status: "pending",
-        amount: 0,
-        isPaid: false,
+        first_name: participant.first_name,
+        last_name: participant.last_name,
+        email: participant.email,
+        establishment: participant.establishment,
+        title: participant.title,
+        phone: participant.phone,
+        participation_type: participant.participation_type,
+        has_accompanying: participant.has_accompanying,
+        accompanying_details: participant.accompanying_details,
+        accommodation_type: participant.accommodation_type,
+        payment_method: participant.payment_method,
+        status: participant.status,
+        amount: participant.amount,
+        is_paid: participant.is_paid,
       });
+      setPaymentProofPreview(participant.payment_proof ? `http://localhost:8000/storage/${participant.payment_proof}` : null);
     }
   }, [participant]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof Participant]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof Participant]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+    // Update amount based on accommodation type
+    if (name === "accommodation_type") {
+      const amount = value === "with-accommodation" ? 120.0 : 50.0;
+      setFormData((prev) => ({ ...prev, amount }));
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!["application/pdf", "image/jpeg", "image/png"].includes(file.type)) {
+        setErrors((prev) => ({ ...prev, payment_proof: "Le fichier doit être un PDF, JPG ou PNG" }));
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors((prev) => ({ ...prev, payment_proof: "Le fichier ne doit pas dépasser 5MB" }));
+        return;
+      }
+      setPaymentProof(file);
+      setPaymentProofPreview(URL.createObjectURL(file));
+      setErrors((prev) => ({ ...prev, payment_proof: undefined }));
     }
   };
 
   const validateForm = () => {
     const newErrors: ParticipantFormErrors = {};
 
-    if (!formData.firstName.trim()) newErrors.firstName = "Le prénom est requis";
-    if (!formData.lastName.trim()) newErrors.lastName = "Le nom est requis";
+    if (!formData.first_name.trim()) newErrors.first_name = "Le prénom est requis";
+    if (!formData.last_name.trim()) newErrors.last_name = "Le nom est requis";
     if (!formData.email.trim()) newErrors.email = "L'email est requis";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "L'email doit être valide";
     if (!formData.establishment.trim()) newErrors.establishment = "L'établissement est requis";
@@ -122,18 +147,47 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
     setIsSubmitting(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      onSave(formData);
-      onClose();
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error);
-      setErrors(prev => ({ ...prev, submit: "Une erreur est survenue lors de l'enregistrement" }));
+      const formDataToSend = new FormData();
+      formDataToSend.append("first_name", formData.first_name);
+      formDataToSend.append("last_name", formData.last_name);
+      formDataToSend.append("email", formData.email);
+      formDataToSend.append("establishment", formData.establishment);
+      formDataToSend.append("title", formData.title);
+      formDataToSend.append("phone", formData.phone);
+      formDataToSend.append("participation_type", formData.participation_type);
+      formDataToSend.append("has_accompanying", formData.has_accompanying);
+      formDataToSend.append("accompanying_details", formData.accompanying_details);
+      formDataToSend.append("accommodation_type", formData.accommodation_type);
+      formDataToSend.append("payment_method", formData.payment_method);
+      formDataToSend.append("status", formData.status);
+      formDataToSend.append("amount", formData.amount.toString());
+      if (paymentProof) {
+        formDataToSend.append("payment_proof", paymentProof);
+      }
+
+      await onSave(formDataToSend);
+    } catch (error: unknown) {
+      let errorMessage = "Une erreur est survenue lors de l'enregistrement";
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response === "object" &&
+        (error as { response?: { data?: { message?: string } } }).response !== null &&
+        "data" in (error as { response?: { data?: { message?: string } } }).response! &&
+        typeof ((error as { response?: { data?: { message?: string } } }).response as { data?: { message?: string } }).data === "object" &&
+        ((error as { response?: { data?: { message?: string } } }).response as { data?: { message?: string } }).data !== null &&
+        "message" in ((error as { response?: { data?: { message?: string } } }).response as { data?: { message?: string } }).data!
+      ) {
+        errorMessage =
+          (((error as { response?: { data?: { message?: string } } }).response as { data?: { message?: string } }).data as { message?: string }).message ||
+          errorMessage;
+      }
+      setErrors((prev) => ({ ...prev, submit: errorMessage }));
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  if (!participant && !formData) return null;
 
   const getStatusBadge = () => {
     if (formData.status === "confirmed") {
@@ -199,36 +253,36 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName" className="block text-sm font-semibold text-gray-700">Prénom *</Label>
+                      <Label htmlFor="first_name" className="block text-sm font-semibold text-gray-700">Prénom *</Label>
                       <Input
-                        id="firstName"
-                        name="firstName"
-                        value={formData.firstName}
+                        id="first_name"
+                        name="first_name"
+                        value={formData.first_name}
                         onChange={handleChange}
                         placeholder="Prénom"
-                        className={`border-2 ${errors.firstName ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        className={`border-2 ${errors.first_name ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                       />
-                      {errors.firstName && (
+                      {errors.first_name && (
                         <div className="flex items-center space-x-2 text-red-600 text-sm">
                           <AlertCircle className="w-4 h-4" />
-                          <span>{errors.firstName}</span>
+                          <span>{errors.first_name}</span>
                         </div>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName" className="block text-sm font-semibold text-gray-700">Nom *</Label>
+                      <Label htmlFor="last_name" className="block text-sm font-semibold text-gray-700">Nom *</Label>
                       <Input
-                        id="lastName"
-                        name="lastName"
-                        value={formData.lastName}
+                        id="last_name"
+                        name="last_name"
+                        value={formData.last_name}
                         onChange={handleChange}
                         placeholder="Nom"
-                        className={`border-2 ${errors.lastName ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        className={`border-2 ${errors.last_name ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                       />
-                      {errors.lastName && (
+                      {errors.last_name && (
                         <div className="flex items-center space-x-2 text-red-600 text-sm">
                           <AlertCircle className="w-4 h-4" />
-                          <span>{errors.lastName}</span>
+                          <span>{errors.last_name}</span>
                         </div>
                       )}
                     </div>
@@ -241,7 +295,7 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="email@exemple.com"
-                        className={`border-2 ${errors.email ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        className={`border-2 ${errors.email ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                       />
                       {errors.email && (
                         <div className="flex items-center space-x-2 text-red-600 text-sm">
@@ -259,7 +313,7 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                         value={formData.phone}
                         onChange={handleChange}
                         placeholder="+33 123 456 789"
-                        className={`border-2 ${errors.phone ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        className={`border-2 ${errors.phone ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                       />
                       {errors.phone && (
                         <div className="flex items-center space-x-2 text-red-600 text-sm">
@@ -288,7 +342,7 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                         value={formData.establishment}
                         onChange={handleChange}
                         placeholder="Nom de l'établissement"
-                        className={`border-2 ${errors.establishment ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        className={`border-2 ${errors.establishment ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                       />
                       {errors.establishment && (
                         <div className="flex items-center space-x-2 text-red-600 text-sm">
@@ -305,7 +359,7 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                         value={formData.title}
                         onChange={handleChange}
                         placeholder="Fonction ou titre"
-                        className={`border-2 ${errors.title ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        className={`border-2 ${errors.title ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                       />
                       {errors.title && (
                         <div className="flex items-center space-x-2 text-red-600 text-sm">
@@ -317,10 +371,12 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                     <div className="space-y-2">
                       <Label className="block text-sm font-semibold text-gray-700">Type de participation</Label>
                       <Select
-                        value={formData.participationType}
-                        onValueChange={(value) => handleSelectChange("participationType", value)}
+                        value={formData.participation_type}
+                        onValueChange={(value) => handleSelectChange("participation_type", value)}
                       >
-                        <SelectTrigger className={`border-2 ${errors.participationType ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}>
+                        <SelectTrigger
+                          className={`border-2 ${errors.participation_type ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        >
                           <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
@@ -328,10 +384,10 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                           <SelectItem value="without-article">Sans article</SelectItem>
                         </SelectContent>
                       </Select>
-                      {errors.participationType && (
+                      {errors.participation_type && (
                         <div className="flex items-center space-x-2 text-red-600 text-sm">
                           <AlertCircle className="w-4 h-4" />
-                          <span>{errors.participationType}</span>
+                          <span>{errors.participation_type}</span>
                         </div>
                       )}
                     </div>
@@ -341,7 +397,9 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                         value={formData.status}
                         onValueChange={(value) => handleSelectChange("status", value)}
                       >
-                        <SelectTrigger className={`border-2 ${errors.status ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}>
+                        <SelectTrigger
+                          className={`border-2 ${errors.status ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        >
                           <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
@@ -375,7 +433,9 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                         value={formData.has_accompanying}
                         onValueChange={(value) => handleSelectChange("has_accompanying", value)}
                       >
-                        <SelectTrigger className={`border-2 ${errors.has_accompanying ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}>
+                        <SelectTrigger
+                          className={`border-2 ${errors.has_accompanying ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        >
                           <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
@@ -385,14 +445,16 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                       </Select>
                       {formData.has_accompanying === "yes" && (
                         <div className="mt-4 space-y-2">
-                          <Label htmlFor="accompanying_details" className="block text-sm font-semibold text-gray-700">Détails accompagnant *</Label>
+                          <Label htmlFor="accompanying_details" className="block text-sm font-semibold text-gray-700">
+                            Détails accompagnant *
+                          </Label>
                           <Input
                             id="accompanying_details"
                             name="accompanying_details"
                             value={formData.accompanying_details}
                             onChange={handleChange}
                             placeholder="Nom et informations de l'accompagnant"
-                            className={`border-2 ${errors.accompanying_details ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                            className={`border-2 ${errors.accompanying_details ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                           />
                           {errors.accompanying_details && (
                             <div className="flex items-center space-x-2 text-red-600 text-sm">
@@ -409,7 +471,9 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                         value={formData.payment_method}
                         onValueChange={(value) => handleSelectChange("payment_method", value)}
                       >
-                        <SelectTrigger className={`border-2 ${errors.payment_method ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}>
+                        <SelectTrigger
+                          className={`border-2 ${errors.payment_method ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        >
                           <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
@@ -427,7 +491,7 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                           value={formData.amount}
                           onChange={handleChange}
                           placeholder="0"
-                          className={`border-2 ${errors.amount ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                          className={`border-2 ${errors.amount ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                         />
                         {errors.amount && (
                           <div className="flex items-center space-x-2 text-red-600 text-sm">
@@ -440,6 +504,61 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                   </div>
                 </div>
 
+                {/* Payment Proof Upload */}
+                <div className="space-y-3">
+                  <Label className="block text-sm font-semibold text-gray-700">Justificatif de paiement</Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors duration-200">
+                    {paymentProofPreview ? (
+                      <div className="space-y-4">
+                        {paymentProofPreview.endsWith(".pdf") ? (
+                          <embed src={paymentProofPreview} type="application/pdf" width="100%" height="200px" />
+                        ) : (
+                          <img src={paymentProofPreview} alt="Justificatif" className="w-32 h-32 object-cover rounded-lg mx-auto shadow-md" />
+                        )}
+                        <div className="flex justify-center space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setPaymentProof(null);
+                              setPaymentProofPreview(null);
+                            }}
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                          >
+                            Supprimer
+                          </Button>
+                          <label className="cursor-pointer">
+                            <Button type="button" variant="outline" size="sm" asChild>
+                              <span>Changer</span>
+                            </Button>
+                            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="hidden" />
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer block">
+                        <div className="space-y-3">
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                            <Upload className="w-8 h-8 text-gray-400" />
+                          </div>
+                          <div>
+                            <p className="text-gray-600 font-medium">Cliquez pour ajouter un justificatif</p>
+                            <p className="text-sm text-gray-500">PDF, JPG, PNG jusqu'à 5MB</p>
+                          </div>
+                        </div>
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="hidden" />
+                      </label>
+                    )}
+                  </div>
+                  {errors.payment_proof && (
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.payment_proof}</span>
+                    </div>
+                  )}
+                </div>
+
                 {/* Preview Card */}
                 <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">Aperçu</h3>
@@ -449,7 +568,7 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                         <User className="w-6 h-6 text-gray-600" />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-800">{`${formData.firstName || "Prénom"} ${formData.lastName || "Nom"}`}</h4>
+                        <h4 className="font-semibold text-gray-800">{`${formData.first_name || "Prénom"} ${formData.last_name || "Nom"}`}</h4>
                         <p className="text-sm text-gray-500 italic">{formData.email || "email@exemple.com"}</p>
                       </div>
                       {getStatusBadge()}
@@ -506,16 +625,14 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                 </div>
                 <Card className="p-8 bg-white border-2 border-gray-200">
                   <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      {getStatusBadge()}
-                    </div>
+                    <div className="flex items-center gap-4">{getStatusBadge()}</div>
                     <div className="space-y-3">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">{`${formData.firstName} ${formData.lastName}`}</h3>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">{`${formData.first_name} ${formData.last_name}`}</h3>
                       <p className="text-sm text-gray-500 font-medium italic mb-3">{formData.email}</p>
                       <p className="text-gray-700 leading-relaxed">{formData.title}, {formData.establishment}</p>
                       <p className="text-gray-700 leading-relaxed">Téléphone: {formData.phone}</p>
                       <p className="text-gray-700 leading-relaxed">
-                        Type de participation: {formData.participationType === "with-article" ? "Avec article" : "Sans article"}
+                        Type de participation: {formData.participation_type === "with-article" ? "Avec article" : "Sans article"}
                       </p>
                       <p className="text-gray-700 leading-relaxed">
                         Accompagnant: {formData.has_accompanying === "yes" ? `Oui (${formData.accompanying_details})` : "Non"}
@@ -524,7 +641,7 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                         Méthode de paiement: {formData.payment_method === "bank-transfer" ? "Virement bancaire" : formData.payment_method === "administrative-order" ? "Ordre administratif" : "Chèque"}
                       </p>
                       <p className="text-gray-700 leading-relaxed">Montant: {formData.amount} €</p>
-                      <p className="text-gray-700 leading-relaxed">Payé: {formData.isPaid ? "Oui" : "Non"}</p>
+                      <p className="text-gray-700 leading-relaxed">Payé: {formData.is_paid ? "Oui" : "Non"}</p>
                     </div>
                   </div>
                 </Card>
@@ -544,4 +661,4 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
       </div>
     </div>
   );
-}
+  }
