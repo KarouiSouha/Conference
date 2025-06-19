@@ -19,15 +19,16 @@ import { Label } from "recharts";
 
 interface PartnerFormProps {
   onClose: () => void;
-  onSubmit: (data: { name_fr: string; name_en: string; image: File | null; type: string }) => void;
+  onSubmit: (data: { id?: string; name_fr: string; name_en: string; image: File | string | null; type: string }) => void;
   partnerToEdit?: { id?: string; nameFr?: string; nameEn?: string; image?: string; type?: string } | null;
 }
 
 export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }: PartnerFormProps) {
   const [formData, setFormData] = useState({
+    id: partnerToEdit?.id || "",
     name_fr: partnerToEdit?.nameFr || "",
-    name_en: partnerToEdit?.nameEn || "",
-    image: null,
+    name_en: partnerToEdit?.nameEn || "", // Ensure nameEn is initialized
+    image: partnerToEdit?.image || null,
     type: partnerToEdit?.type || "Partenaire"
   });
 
@@ -39,7 +40,7 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
   };
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imagePreview, setImagePreview] = useState(partnerToEdit?.image || null);
+  const [imagePreview, setImagePreview] = useState(partnerToEdit?.image ? `http://localhost:8000/storage/${partnerToEdit.image}` : null);
 
   const partnerTypes = [
     {
@@ -111,58 +112,58 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
   };
 
   const handleSubmit = async () => {
-  if (!validateForm()) {
-    return;
-  }
-
-  setIsSubmitting(true);
-  console.log("Submitting form data:", partnerToEdit.id);
-  try {
-    const formDataToSend = new FormData();
-    formDataToSend.append('name_fr', formData.name_fr);
-    formDataToSend.append('name_en', formData.name_en);
-    formDataToSend.append('type', formData.type);
-    if (formData.image) {
-      formDataToSend.append('image', formData.image);
+    if (!validateForm()) {
+      return;
     }
 
-    // Déterminer si c'est une création ou une mise à jour
-    const isEditing = !!partnerToEdit;
-    const url = isEditing
-      ? `http://localhost:8000/api/Partners/update/${partnerToEdit.id}`
-      : 'http://localhost:8000/api/Partners/store';
+    setIsSubmitting(true);
+    console.log("Submitting form data:", formData);
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('name_fr', formData.name_fr);
+      formDataToSend.append('name_en', formData.name_en);
+      formDataToSend.append('type', formData.type);
+      if (
+        formData.image &&
+        typeof formData.image !== "string" &&
+        (formData.image as any) instanceof File
+      ) {
+        formDataToSend.append('image', formData.image);
+      }
 
-    const response = await fetch(url, {
-      method: isEditing ? 'POST' : 'POST', // Note : Utiliser 'PUT' si l'API attend PUT pour les mises à jour
-      body: formDataToSend,
-    });
-    
+      const isEditing = !!partnerToEdit;
+      const url = isEditing
+        ? `http://localhost:8000/api/Partners/update/${partnerToEdit.id}`
+        : 'http://localhost:8000/api/Partners/store';
 
-    if (!response.ok) {
-      throw new Error(`Erreur lors de ${isEditing ? 'la mise à jour' : 'l\'enregistrement'} du partenaire`);
+      const response = await fetch(url, {
+        method: isEditing ? 'POST' : 'POST',
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur lors de ${isEditing ? 'la mise à jour' : 'l\'enregistrement'} du partenaire`);
+      }
+
+      const result = await response.json();
+      console.log('Réponse de l\'API:', result);
+
+      onSubmit({
+        id: result.partner.id,
+        name_fr: formData.name_fr,
+        name_en: formData.name_en,
+        type: formData.type,
+        image: result.partner.image,
+      });
+
+      onClose();
+    } catch (error) {
+      console.error(`Erreur lors de ${partnerToEdit ? 'la mise à jour' : 'l\'enregistrement'} du partenaire:`, error);
+      setErrors((prev) => ({ ...prev, submit: `Une erreur est survenue lors de ${partnerToEdit ? 'la mise à jour' : 'l\'enregistrement'}` }));
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const result = await response.json();
-    console.log('Réponse de l\'API:', result);
-
-    // Passer les données renvoyées par l'API à onSubmit
-    onSubmit({
-      id: result.partner.id,
-      name_fr: formData.name_fr,
-      name_en: formData.name_en,
-      type: formData.type,
-      image: result.partner.image, // Utiliser le chemin renvoyé par l'API
-    });
-
-    onClose();
-  } catch (error) {
-    console.error(`Erreur lors de ${partnerToEdit ? 'la mise à jour' : 'l\'enregistrement'} du partenaire:`, error);
-    setErrors((prev) => ({ ...prev, submit: `Une erreur est survenue lors de ${partnerToEdit ? 'la mise à jour' : 'l\'enregistrement'}` }));
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
+  };
 
   const getSelectedTypeConfig = () => {
     return partnerTypes.find(type => type.value === formData.type) || partnerTypes[2];

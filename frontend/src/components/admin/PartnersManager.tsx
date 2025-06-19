@@ -41,8 +41,9 @@ export default function PartnersManager() {
         const formattedPartners = data.map((partner) => ({
           id: partner.id,
           nameFr: partner.name_fr,
+          nameEn: partner.name_en, // Include nameEn
           image: partner.image,
-          type: partner.type || "Institutionnels", // Default type if not provided
+          type: partner.type || "Institutionnels",
         }));
         setPartners(formattedPartners);
       })
@@ -55,6 +56,7 @@ export default function PartnersManager() {
         ...editingPartner,
         id: formData.id,
         nameFr: formData.name_fr,
+        nameEn: formData.name_en,
         image: formData.image,
         type: formData.type,
       };
@@ -63,6 +65,7 @@ export default function PartnersManager() {
       const newPartner = {
         id: formData.id,
         nameFr: formData.name_fr,
+        nameEn: formData.name_en,
         image: formData.image || '/placeholder.svg',
         type: formData.type,
       };
@@ -103,10 +106,10 @@ export default function PartnersManager() {
   };
 
   const getImageUrl = (partner) => {
-    if (imageErrors[partner.id]) {
+    if (imageErrors[partner.id] || !partner.image) {
       return null;
     }
-    return partner.image ? `http://localhost:8000/storage/${partner.image}` : null;
+    return `http://localhost:8000/storage/${partner.image}`;
   };
 
   const getTypeBadge = (type) => {
@@ -244,7 +247,6 @@ export default function PartnersManager() {
           </div>
         </Card>
 
-        {/* Partners Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {currentPartners.map((partner) => (
             <Card
@@ -252,7 +254,6 @@ export default function PartnersManager() {
               className="group p-0 bg-white border-2 border-gray-100 hover:border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer overflow-hidden"
             >
               <div className="flex flex-col h-full">
-                {/* Image Section */}
                 <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 group-hover:from-blue-50 group-hover:to-indigo-50 transition-all duration-300">
                   {getImageUrl(partner) ? (
                     <img
@@ -276,7 +277,6 @@ export default function PartnersManager() {
                   </div>
                 </div>
 
-                {/* Content Section */}
                 <div className="flex-1 p-6 flex flex-col justify-between">
                   <div className="space-y-3 text-center">
                     <h3 className="font-bold text-lg text-gray-800 group-hover:text-blue-700 transition-colors duration-200 line-clamp-2">
@@ -287,7 +287,6 @@ export default function PartnersManager() {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="flex justify-center space-x-2 pt-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
                     <Button
                       size="sm"
@@ -312,7 +311,6 @@ export default function PartnersManager() {
           ))}
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <Card className="p-6 bg-white border-2 border-gray-100 shadow-sm">
             <div className="flex items-center justify-between">
@@ -337,11 +335,7 @@ export default function PartnersManager() {
                     variant={currentPage === page ? "default" : "outline"}
                     size="sm"
                     onClick={() => goToPage(page)}
-                    className={`border-2 ${
-                      currentPage === page
-                        ? "bg-blue-600 border-blue-600 text-white"
-                        : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                    } min-w-[40px]`}
+                    className={`border-2 ${currentPage === page ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"} min-w-[40px]`}
                   >
                     {page}
                   </Button>
@@ -361,7 +355,6 @@ export default function PartnersManager() {
           </Card>
         )}
 
-        {/* Empty State */}
         {filteredPartners.length === 0 && searchTerm && (
           <Card className="p-12 bg-white border-2 border-dashed border-gray-200 text-center">
             <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -370,7 +363,6 @@ export default function PartnersManager() {
           </Card>
         )}
 
-        {/* Partner Form Modal */}
         {showPartnerForm && (
           <PartnerForm
             onClose={handleCloseForm}
