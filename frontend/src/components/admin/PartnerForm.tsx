@@ -24,7 +24,13 @@ interface PartnerFormProps {
 }
 
 export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }: PartnerFormProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    id: string;
+    name_fr: string;
+    name_en: string;
+    image: File | string | null;
+    type: string;
+  }>({
     id: partnerToEdit?.id || "",
     name_fr: partnerToEdit?.nameFr || "",
     name_en: partnerToEdit?.nameEn || "", // Ensure nameEn is initialized
@@ -126,7 +132,7 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
       if (
         formData.image &&
         typeof formData.image !== "string" &&
-        (formData.image as any) instanceof File
+        formData.image instanceof File
       ) {
         formDataToSend.append('image', formData.image);
       }
