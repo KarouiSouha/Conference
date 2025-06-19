@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Edit, Trash, ExternalLink, Camera, Users, FileText, Globe, Archive, Calendar, MapPin, Loader2 } from "lucide-react";
 import ArchiveForm from "./ArchiveForm";
+import DeleteArchveModal from "./DeleteArchiveModal";
 
 type ArchiveFormData = {
   id?: number;
@@ -30,17 +31,20 @@ export default function ArchivesManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [archiveToDelete, setArchiveToDelete] = useState(null);
+
   // Fonction pour récupérer les archives depuis l'API
   const fetchArchives = async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await fetch('http://localhost:8000/api/Archive/all');
-      
+
       if (!response.ok) {
         throw new Error(`Erreur ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       setArchives(data);
     } catch (err) {
@@ -80,25 +84,60 @@ export default function ArchivesManager() {
     setIsFormOpen(true);
   };
 
-  const handleDeleteArchive = async (id: number) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette archive ?')) {
-      return;
-    }
-    
+  // const handleDeleteArchive = async (id: number) => {
+  //   if (!confirm('Êtes-vous sûr de vouloir supprimer cette archive ?')) {
+  //     return;
+  //   }
+
+  //   try {
+  //     const response = await fetch(`http://localhost:8000/api/Archive/destroy/${id}`, {
+  //       method: 'DELETE',
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error('Erreur lors de la suppression');
+  //     }
+
+  //     await fetchArchives();
+  //   } catch (err) {
+  //     console.error('Erreur lors de la suppression:', err);
+  //     alert('Erreur lors de la suppression de l\'archive');
+  //   }
+  // };
+  const handleDeleteArchive = (archive) => {
+    setArchiveToDelete(archive);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteArchive = async () => {
+    if (!archiveToDelete) return;
+
     try {
-      const response = await fetch(`http://localhost:8000/api/Archive/destroy/${id}`, {
+      const response = await fetch(`http://localhost:8000/api/Archive/destroy/${archiveToDelete.id}`, {
         method: 'DELETE',
       });
-      
-      if (!response.ok) {
+
+      if (response.ok) {
+        setArchives(prevArchive =>
+          prevArchive.filter(archive => archive.id !== archiveToDelete.id)
+        );
+        // Fermer le modal et reset l'état
+        setShowDeleteModal(false);
+        setArchiveToDelete(null);
+      } else {
         throw new Error('Erreur lors de la suppression');
       }
-      
-      await fetchArchives();
     } catch (err) {
-      console.error('Erreur lors de la suppression:', err);
-      alert('Erreur lors de la suppression de l\'archive');
+      alert('Erreur lors de la suppression: ' + err.message);
+      // En cas d'erreur, on ferme quand même le modal
+      setShowDeleteModal(false);
+      setArchiveToDelete(null);
     }
+  };
+
+  const cancelDeleteArchive = () => {
+    setShowDeleteModal(false);
+    setArchiveToDelete(null);
   };
 
   // Calcul des statistiques
@@ -129,7 +168,7 @@ export default function ArchivesManager() {
             </div>
             <h3 className="text-lg font-semibold text-red-600 mb-2">Erreur de chargement</h3>
             <p className="text-gray-500 mb-4">{error}</p>
-            <Button 
+            <Button
               onClick={fetchArchives}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
@@ -361,7 +400,7 @@ export default function ArchivesManager() {
                       variant="outline"
                       className="border-gray-300 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200 shadow-sm"
                       title="Supprimer l'archive"
-                      onClick={() => archive.id && handleDeleteArchive(archive.id)}
+                      onClick={() => handleDeleteArchive(archive)}
                     >
                       <Trash className="w-4 h-4" />
                     </Button>
@@ -372,6 +411,13 @@ export default function ArchivesManager() {
           </div>
         )}
       </div>
+
+      <DeleteArchveModal
+        isOpen={showDeleteModal}
+        onClose={cancelDeleteArchive}
+        onConfirm={confirmDeleteArchive}
+        archiveName={archiveToDelete?.event_name || ''}
+      />
     </div>
   );
 }

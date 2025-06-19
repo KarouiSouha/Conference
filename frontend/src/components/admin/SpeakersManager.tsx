@@ -7,6 +7,8 @@ import { Search, Plus, Edit, Trash, Mail, Users, Award, Globe, BookOpen, Filter,
 
 // Import du composant SpeakerForm
 import SpeakerForm from "./SpeakerForm";
+// Import du composant DeleteConfirmationModal
+import DeleteSpeakerModal from "./DeleteSpeakerModal";
 
 export default function SpeakersManager() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,6 +18,10 @@ export default function SpeakersManager() {
   const [themes, setThemes] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // États pour le modal de suppression
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [speakerToDelete, setSpeakerToDelete] = useState(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,7 +73,6 @@ export default function SpeakersManager() {
     }
   };
 
-
   // Fonctions pour gérer le formulaire
   const handleNewSpeaker = () => {
     setSelectedSpeaker(null);
@@ -79,24 +84,43 @@ export default function SpeakersManager() {
     setShowForm(true);
   };
 
-  const handleDeleteSpeaker = async (speakerId) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cet intervenant ?")) {
-      try {
-        const response = await fetch(`http://localhost:8000/api/Speakers/destroy/${speakerId}`, {
-          method: 'DELETE',
-        });
+  // Fonction pour ouvrir le modal de suppression
+  const handleDeleteSpeaker = (speaker) => {
+    setSpeakerToDelete(speaker);
+    setShowDeleteModal(true);
+  };
 
-        if (response.ok) {
-          setSpeakers(prevSpeakers =>
-            prevSpeakers.filter(speaker => speaker.id !== speakerId)
-          );
-        } else {
-          throw new Error('Erreur lors de la suppression');
-        }
-      } catch (err) {
-        alert('Erreur lors de la suppression: ' + err.message);
+  // Fonction pour confirmer la suppression
+  const confirmDeleteSpeaker = async () => {
+    if (!speakerToDelete) return;
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/Speakers/destroy/${speakerToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setSpeakers(prevSpeakers =>
+          prevSpeakers.filter(speaker => speaker.id !== speakerToDelete.id)
+        );
+        // Fermer le modal et reset l'état
+        setShowDeleteModal(false);
+        setSpeakerToDelete(null);
+      } else {
+        throw new Error('Erreur lors de la suppression');
       }
+    } catch (err) {
+      alert('Erreur lors de la suppression: ' + err.message);
+      // En cas d'erreur, on ferme quand même le modal
+      setShowDeleteModal(false);
+      setSpeakerToDelete(null);
     }
+  };
+
+  // Fonction pour annuler la suppression
+  const cancelDeleteSpeaker = () => {
+    setShowDeleteModal(false);
+    setSpeakerToDelete(null);
   };
 
   const getThemeName = (themeId) => {
@@ -130,7 +154,6 @@ export default function SpeakersManager() {
   const getInitials = (name) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2);
   };
-
 
   const getCountryFlagUrl = (country) => {
     const codes = {
@@ -424,7 +447,7 @@ export default function SpeakersManager() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleDeleteSpeaker(speaker.id)}
+                          onClick={() => handleDeleteSpeaker(speaker)}
                           className="h-9 w-9 p-0 border-red-300 hover:bg-red-50 hover:border-red-400 text-red-600 hover:text-red-700 transition-colors"
                           title="Supprimer"
                         >
@@ -529,6 +552,14 @@ export default function SpeakersManager() {
           setShowForm(false);
           setSelectedSpeaker(null);
         }}
+      />
+
+      {/* Modal de confirmation de suppression */}
+      <DeleteSpeakerModal
+        isOpen={showDeleteModal}
+        onClose={cancelDeleteSpeaker}
+        onConfirm={confirmDeleteSpeaker}
+        speakerName={speakerToDelete?.name || ''}
       />
     </div>
   );
