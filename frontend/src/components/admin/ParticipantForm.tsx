@@ -30,7 +30,7 @@ interface ParticipantFormProps {
   onSave: (data: Participant) => void;
 }
 
-type ParticipantFormErrors = Partial<Record<keyof Participant, string>>;
+type ParticipantFormErrors = Partial<Record<keyof Participant, string>> & { submit?: string };
 
 export default function ParticipantForm({ participant, onClose, onSave }: ParticipantFormProps) {
   const [formData, setFormData] = useState<Participant>(participant || {
