@@ -21,7 +21,9 @@ type ArchiveFormData = {
   status?: string;
 };
 
-type ArchiveFormErrors = Partial<Record<keyof ArchiveFormData, string | undefined>>;
+type ArchiveFormErrors = Partial<Record<keyof ArchiveFormData, string | undefined>> & {
+  submit?: string;
+};
 
 function ArchiveForm({
   isOpen,
@@ -32,7 +34,7 @@ function ArchiveForm({
   isOpen: boolean;
   archiveItem?: Partial<ArchiveFormData>;
   onClose: () => void;
-  onSave: (data: ArchiveFormData) => Promise<void>;
+  onSave?: () => void;
 }) {
   const [formData, setFormData] = useState<ArchiveFormData>({
     event_name: "",
@@ -51,6 +53,7 @@ function ArchiveForm({
   useEffect(() => {
     if (archiveItem) {
       setFormData({
+        id: archiveItem.id,
         event_name: archiveItem.event_name || "",
         subject_fr: archiveItem.subject_fr || "",
         subject_en: archiveItem.subject_en || "",
@@ -59,6 +62,10 @@ function ArchiveForm({
         articles: archiveItem.articles || "",
         countries: archiveItem.countries || "",
         photoGalleryLink: archiveItem.photoGalleryLink || "",
+        year: archiveItem.year || "",
+        duration: archiveItem.duration || "",
+        location: archiveItem.location || "",
+        status: archiveItem.status || "",
       });
     } else {
       setFormData({
@@ -142,7 +149,34 @@ function ArchiveForm({
     setIsSubmitting(true);
 
     try {
-      await onSave(formData);
+      let response;
+      if (formData.id) {
+        // Update existing archive
+        response = await fetch(`http://localhost:8000/api/Archive/update/${formData.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+      } else {
+        // Create new archive
+        response = await fetch('http://localhost:8000/api/Archive/store', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+      }
+
+      if (!response.ok) {
+        throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+      }
+
+      if (onSave) {
+        await onSave();
+      }
       onClose();
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);

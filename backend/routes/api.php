@@ -96,6 +96,12 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
 Route::prefix('Archive')->controller(ArchiveController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
+    // hthy
+    Route::post('/store', [ArchiveController::class, 'store']);
+     // hthy
+    Route::put('/update/{id}', [ArchiveController::class, 'update']);
+     // hthy
+    Route::delete('/destroy/{id}', [ArchiveController::class, 'destroy']);
 });
 
 Route::prefix('News')->controller(NewsController::class)->group(function () {
