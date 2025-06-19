@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Programme;
+use App\Models\Speaker;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
@@ -17,11 +18,27 @@ class ProgrammeController extends Controller
         try {
             $lang = $request->get('lang', 'fr');
 
-            $programmes = Programme::orderBy('jour')
+            $programmes = Programme::with('speaker')
+                ->orderBy('jour')
                 ->orderBy('heure')
                 ->get()
                 ->map(function ($programme) use ($lang) {
-                    return $programme->getContentInLanguage($lang);
+                    $data = $programme->getContentInLanguage($lang);
+                    
+                    // Ajouter les informations du speaker si disponible
+                    if ($programme->speaker) {
+                        $data['speaker'] = [
+                            'id' => $programme->speaker->id,
+                            'name' => $programme->speaker->name,
+                            'job' => $lang === 'en' ? $programme->speaker->job_en : $programme->speaker->job_fr,
+                            'country' => $lang === 'en' ? $programme->speaker->country_en : $programme->speaker->country_fr,
+                            'description' => $lang === 'en' ? $programme->speaker->description_en : $programme->speaker->description_fr,
+                        ];
+                    } else {
+                        $data['speaker'] = null;
+                    }
+                    
+                    return $data;
                 })
                 ->groupBy(function ($item) {
                     return Carbon::parse($item['jour'])->format('Y-m-d');
@@ -40,7 +57,7 @@ class ProgrammeController extends Controller
         }
     }
 
-    // Récupérer les événements d'un jour spécifique ou aujourd'hui
+    // Récupérer les événements d'un jour spécifique
     public function daily(Request $request): JsonResponse
     {
         try {
@@ -58,17 +75,35 @@ class ProgrammeController extends Controller
                 ], 422);
             }
 
-            $programmes = Programme::forDate($date)
+            $programmes = Programme::with('speaker')
+                ->forDate($date)
                 ->orderBy('heure')
                 ->get()
                 ->map(function ($programme) use ($lang) {
-                    return $programme->getContentInLanguage($lang);
+                    $data = $programme->getContentInLanguage($lang);
+                    
+                    // Ajouter les informations du speaker si disponible
+                    if ($programme->speaker) {
+                        $data['speaker'] = [
+                            'id' => $programme->speaker->id,
+                            'name' => $programme->speaker->name,
+                            'job' => $lang === 'en' ? $programme->speaker->job_en : $programme->speaker->job_fr,
+                            'country' => $lang === 'en' ? $programme->speaker->country_en : $programme->speaker->country_fr,
+                            'description' => $lang === 'en' ? $programme->speaker->description_en : $programme->speaker->description_fr,
+                        ];
+                    } else {
+                        $data['speaker'] = null;
+                    }
+                    
+                    return $data;
                 });
 
             return response()->json([
+                'success' => true,
                 'date' => $date,
                 'programmes' => $programmes,
-                'language' => $lang
+                'language' => $lang,
+                'count' => $programmes->count()
             ]);
         } catch (\Exception $e) {
             return $this->handleError($e, 'Erreur lors de la récupération des programmes du jour');
@@ -83,18 +118,34 @@ class ProgrammeController extends Controller
             $today = Carbon::today();
             $endDate = $today->copy()->addDays(3);
 
-            $programmes = Programme::whereBetween('jour', [$today, $endDate])
+            $programmes = Programme::with('speaker')
+                ->whereBetween('jour', [$today, $endDate])
                 ->orderBy('jour')
                 ->orderBy('heure')
                 ->get()
                 ->map(function ($programme) use ($lang) {
-                    return $programme->getContentInLanguage($lang);
+                    $data = $programme->getContentInLanguage($lang);
+                    
+                    // Ajouter les informations du speaker si disponible
+                    if ($programme->speaker) {
+                        $data['speaker'] = [
+                            'id' => $programme->speaker->id,
+                            'name' => $programme->speaker->name,
+                            'job' => $lang === 'en' ? $programme->speaker->job_en : $programme->speaker->job_fr,
+                            'country' => $lang === 'en' ? $programme->speaker->country_en : $programme->speaker->country_fr,
+                        ];
+                    } else {
+                        $data['speaker'] = null;
+                    }
+                    
+                    return $data;
                 })
                 ->groupBy(function ($item) {
                     return Carbon::parse($item['jour'])->format('Y-m-d');
                 });
 
             return response()->json([
+                'success' => true,
                 'start_date' => $today->format('Y-m-d'),
                 'end_date' => $endDate->format('Y-m-d'),
                 'days' => $programmes,
@@ -111,24 +162,100 @@ class ProgrammeController extends Controller
         try {
             $lang = $request->get('lang', 'fr');
 
-            $programmes = Programme::forMonth()
+            $programmes = Programme::with('speaker')
+                ->forMonth()
                 ->orderBy('jour')
                 ->orderBy('heure')
                 ->get()
                 ->map(function ($programme) use ($lang) {
-                    return $programme->getContentInLanguage($lang);
+                    $data = $programme->getContentInLanguage($lang);
+                    
+                    // Ajouter les informations du speaker si disponible
+                    if ($programme->speaker) {
+                        $data['speaker'] = [
+                            'id' => $programme->speaker->id,
+                            'name' => $programme->speaker->name,
+                            'job' => $lang === 'en' ? $programme->speaker->job_en : $programme->speaker->job_fr,
+                        ];
+                    } else {
+                        $data['speaker'] = null;
+                    }
+                    
+                    return $data;
                 })
                 ->groupBy(function ($item) {
                     return Carbon::parse($item['jour'])->format('Y-m-d');
                 });
 
             return response()->json([
+                'success' => true,
                 'month' => Carbon::now()->monthName,
                 'days' => $programmes,
                 'language' => $lang
             ]);
         } catch (\Exception $e) {
             return $this->handleError($e, 'Erreur lors de la récupération des programmes du mois');
+        }
+    }
+
+    // Récupérer les programmes par plage de dates
+    public function getByDateRange(Request $request): JsonResponse
+    {
+        try {
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+            $lang = $request->get('lang', 'fr');
+
+            $validator = Validator::make([
+                'start_date' => $startDate,
+                'end_date' => $endDate
+            ], [
+                'start_date' => 'required|date_format:Y-m-d',
+                'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $programmes = Programme::with('speaker')
+                ->whereBetween('jour', [$startDate, $endDate])
+                ->orderBy('jour')
+                ->orderBy('heure')
+                ->get()
+                ->map(function ($programme) use ($lang) {
+                    $data = $programme->getContentInLanguage($lang);
+                    
+                    if ($programme->speaker) {
+                        $data['speaker'] = [
+                            'id' => $programme->speaker->id,
+                            'name' => $programme->speaker->name,
+                            'job' => $lang === 'en' ? $programme->speaker->job_en : $programme->speaker->job_fr,
+                            'country' => $lang === 'en' ? $programme->speaker->country_en : $programme->speaker->country_fr,
+                        ];
+                    } else {
+                        $data['speaker'] = null;
+                    }
+                    
+                    return $data;
+                })
+                ->groupBy(function ($item) {
+                    return Carbon::parse($item['jour'])->format('Y-m-d');
+                });
+
+            return response()->json([
+                'success' => true,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'programmes' => $programmes,
+                'language' => $lang,
+                'total_days' => $programmes->count()
+            ]);
+        } catch (\Exception $e) {
+            return $this->handleError($e, 'Erreur lors de la récupération des programmes par plage de dates');
         }
     }
 
@@ -147,12 +274,15 @@ class ProgrammeController extends Controller
                 'intervenant_en' => 'nullable|string|max:255',
                 'lieu_fr' => 'nullable|string|max:255',
                 'lieu_en' => 'nullable|string|max:255',
-                'type_evenement' => 'nullable|in:keynote,session,workshop,panel,break,meal,networking,ceremony'
+                'type_evenement' => 'nullable|in:keynote,session,workshop,panel,break,meal,networking,ceremony',
+                'speaker_id' => 'nullable|exists:speakers,id'
             ]);
 
             $programme = Programme::create($validated);
+            $programme->load('speaker'); // Charger la relation speaker
 
             return response()->json([
+                'success' => true,
                 'message' => 'Programme créé avec succès',
                 'data' => $programme
             ], 201);
@@ -169,7 +299,6 @@ class ProgrammeController extends Controller
 
             $validated = $request->validate([
                 'jour' => 'sometimes|date',
-                'heure' => 'sometimes|date_format:H:i',
                 'evenement_fr' => 'sometimes|string|max:255',
                 'evenement_en' => 'sometimes|string|max:255',
                 'description_fr' => 'nullable|string',
@@ -178,12 +307,15 @@ class ProgrammeController extends Controller
                 'intervenant_en' => 'nullable|string|max:255',
                 'lieu_fr' => 'nullable|string|max:255',
                 'lieu_en' => 'nullable|string|max:255',
-                'type_evenement' => 'nullable|in:keynote,session,workshop,panel,break,meal,networking,ceremony'
+                'type_evenement' => 'nullable|in:keynote,session,workshop,panel,break,meal,networking,ceremony',
+                'speaker_id' => 'nullable|exists:speakers,id'
             ]);
 
             $programme->update($validated);
+            $programme->load('speaker'); // Recharger la relation speaker
 
             return response()->json([
+                'success' => true,
                 'message' => 'Programme mis à jour avec succès',
                 'data' => $programme
             ]);
@@ -200,10 +332,35 @@ class ProgrammeController extends Controller
             $programme->delete();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Programme supprimé avec succès'
             ]);
         } catch (\Exception $e) {
             return $this->handleError($e, 'Erreur lors de la suppression du programme');
+        }
+    }
+
+    // Récupérer tous les speakers disponibles
+    public function getSpeakers(Request $request): JsonResponse
+    {
+        try {
+            $lang = $request->get('lang', 'fr');
+            $speakers = Speaker::all()->map(function ($speaker) use ($lang) {
+                return [
+                    'id' => $speaker->id,
+                    'name' => $speaker->name,
+                    'job' => $lang === 'en' ? $speaker->job_en : $speaker->job_fr,
+                    'country' => $lang === 'en' ? $speaker->country_en : $speaker->country_fr,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $speakers,
+                'language' => $lang
+            ]);
+        } catch (\Exception $e) {
+            return $this->handleError($e, 'Erreur lors de la récupération des speakers');
         }
     }
 
@@ -213,6 +370,7 @@ class ProgrammeController extends Controller
         Log::error($message . ': ' . $e->getMessage());
 
         return response()->json([
+            'success' => false,
             'error' => $message,
             'message' => $e->getMessage()
         ], 500);

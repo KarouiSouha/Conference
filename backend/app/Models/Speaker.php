@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Speaker extends Model
 {
-    protected $fillable = ['name', 'job_fr', 'job_en','email', 'country_fr', 'country_en', 'description_fr', 'description_en', 'theme_id'];
+    protected $fillable = ['name', 'job_fr', 'job_en', 'email', 'country_fr', 'country_en', 'description_fr', 'description_en', 'theme_id'];
 
     // Relation One-to-Many vers la table pivot
     public function speakerRealisations()
@@ -24,4 +24,9 @@ class Speaker extends Model
     {
         return $this->belongsTo(Theme::class);
     }
+    public function programmes()
+    {
+        return $this->hasMany(Programme::class);
+    }
+
 }

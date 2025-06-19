@@ -21,7 +21,8 @@ class Programme extends Model
         'intervenant_en',
         'lieu_fr',
         'lieu_en',
-        'type_evenement'
+        'type_evenement',
+        'speaker_id'
     ];
 
     protected $casts = [
@@ -83,8 +84,13 @@ class Programme extends Model
             'intervenant' => $lang === 'en' ? $this->intervenant_en : $this->intervenant_fr,
             'lieu' => $lang === 'en' ? $this->lieu_en : $this->lieu_fr,
             'type_evenement' => $this->type_evenement,
+            'speaker_id' => $this->speaker_id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
+    }
+    public function speaker()
+    {
+        return $this->belongsTo(Speaker::class);
     }
 }
