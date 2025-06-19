@@ -29,7 +29,7 @@ type NewsFormData = {
   status: string;
 };
 
-type NewsFormErrors = Partial<Record<keyof NewsFormData, string>>;
+type NewsFormErrors = Partial<Record<keyof NewsFormData | 'submit', string>>;
 
 type NewsFormProps = {
   isOpen?: boolean;

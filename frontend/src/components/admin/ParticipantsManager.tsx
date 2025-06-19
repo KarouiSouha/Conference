@@ -1,72 +1,86 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Eye, Edit, Trash, Download, Filter, Users, CheckCircle, Clock, DollarSign } from "lucide-react";
+import { Search, Plus, Edit, Trash, Download, Filter, Users, CheckCircle, Clock, DollarSign, ChevronLeft, ChevronRight } from "lucide-react";
 import ParticipantForm from "./ParticipantForm";
+import axios from "axios";
+
+interface Participant {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  establishment: string;
+  title: string;
+  phone: string;
+  participation_type: string;
+  has_accompanying: string;
+  accompanying_details: string;
+  accommodation_type: string;
+  payment_method: string;
+  status: string;
+  amount: number;
+  is_paid: boolean;
+  payment_proof?: string;
+}
+
+interface Stats {
+  total: number;
+  confirmed: number;
+  pending: number;
+  paid_amount: number;
+}
 
 export default function ParticipantsManager() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentParticipant, setCurrentParticipant] = useState(null);
+  const [currentParticipant, setCurrentParticipant] = useState<Participant | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  const [stats, setStats] = useState<Stats>({
+    total: 0,
+    confirmed: 0,
+    pending: 0,
+    paid_amount: 0,
+  });
 
-  // Données d'exemple
-  const participants = [
-    {
-      id: 1,
-      firstName: "Marie",
-      lastName: "Dupont",
-      email: "marie.dupont@example.com",
-      establishment: "Université Paris-Saclay",
-      title: "Professeure",
-      phone: "+33 1 23 45 67 89",
-      participationType: "with-article",
-      has_accompanying: "no",
-      accompanying_details: "",
-      accommodation_type: "with-accommodation",
-      payment_method: "bank-transfer",
-      status: "confirmed",
-      amount: 350.00,
-      isPaid: true,
-    },
-    {
-      id: 2,
-      firstName: "Ahmed",
-      lastName: "Ben Ali",
-      email: "ahmed.benali@example.com",
-      establishment: "Institut Polytechnique",
-      title: "Docteur",
-      phone: "+33 6 12 34 56 78",
-      participationType: "without-article",
-      has_accompanying: "yes",
-      accompanying_details: "Fatima Ben Ali",
-      accommodation_type: "without-accommodation",
-      payment_method: "administrative-order",
-      status: "pending",
-      amount: 250.00,
-      isPaid: false,
-    },
-    {
-      id: 3,
-      firstName: "Sarah",
-      lastName: "Johnson",
-      email: "s.johnson@university.edu",
-      establishment: "MIT",
-      title: "Chercheuse",
-      phone: "+1 555 123 4567",
-      participationType: "with-article",
-      has_accompanying: "no",
-      accompanying_details: "",
-      accommodation_type: "with-accommodation",
-      payment_method: "check",
-      status: "confirmed",
-      amount: 350.00,
-      isPaid: true,
-    },
-  ];
+  // Fetch participants and statistics from API
+  useEffect(() => {
+    fetchParticipants();
+    fetchStatistics();
+  }, []);
 
-  const handleOpenForm = (participant = null) => {
+  const fetchParticipants = async () => {
+    try {
+      const response = await axios.get("http://localhost:8000/api/Registration/all");
+      // Ensure amount is a number
+      const parsedParticipants = response.data.data.map((participant: Participant) => ({
+        ...participant,
+        amount: parseFloat(participant.amount as unknown as string) || 0, // Convert to number, fallback to 0 if invalid
+      }));
+      setParticipants(parsedParticipants);
+    } catch (error) {
+      console.error("Error fetching participants:", error);
+    }
+  };
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await axios.get("http://localhost:8000/api/Registration/statistics");
+      // Ensure paid_amount is a number
+      setStats({
+        ...response.data.data,
+        paid_amount: parseFloat(response.data.data.paid_amount) || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+    }
+  };
+
+  const handleOpenForm = (participant: Participant | null = null) => {
     setCurrentParticipant(participant);
     setIsFormOpen(true);
   };
@@ -76,36 +90,50 @@ export default function ParticipantsManager() {
     setCurrentParticipant(null);
   };
 
-  const handleSaveParticipant = (data) => {
-    // Ici vous devrez implémenter la logique pour sauvegarder dans votre API
-    console.log("Participant à sauvegarder:", data);
+  const handleSaveParticipant = async (data: FormData) => {
+    try {
+      let response;
+      if (currentParticipant) {
+        // Update existing participant
+        response = await axios.put(`http://localhost:8000/api/Registration/${currentParticipant.id}`, data, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        // Create new participant
+        response = await axios.post("http://localhost:8000/api/Registration", data, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
 
-    // Exemple de mise à jour locale (à remplacer par un appel API)
-    if (data.id) {
-      // Mise à jour d'un participant existant
-      const updatedParticipants = participants.map(p =>
-        p.id === data.id ? { ...p, ...data } : p
-      );
-      // Dans une vraie application, vous mettriez à jour l'état ici
-    } else {
-      // Création d'un nouveau participant
-      const newParticipant = {
-        ...data,
-        id: Math.max(...participants.map(p => p.id)) + 1
-      };
-      // Dans une vraie application, vous ajouteriez au state ici
+      // Refresh participants list
+      await fetchParticipants();
+      handleCloseForm();
+    } catch (error) {
+      console.error("Error saving participant:", error);
+      throw error; // Let ParticipantForm handle the error
     }
-
-    handleCloseForm();
   };
 
-  const handleDeleteParticipant = (id) => {
-    // Implémentez la suppression ici
-    console.log("Supprimer participant avec id:", id);
-    // Dans une vraie application, vous filtreriez le state ici
+  const handleDeleteParticipant = async (id: number) => {
+    try {
+      await axios.delete(`http://localhost:8000/api/Registration/${id}`);
+      setParticipants((prev) => prev.filter((p) => p.id !== id));
+    } catch (error) {
+      console.error("Error deleting participant:", error);
+    }
   };
 
-  const getStatusBadge = (status) => {
+  const handleMarkAsPaid = async (id: number) => {
+    try {
+      await axios.patch(`http://localhost:8000/api/Registration/${id}/mark-as-paid`);
+      await fetchParticipants();
+      await fetchStatistics();
+    } catch (error) {
+      console.error("Error marking as paid:", error);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "confirmed":
         return <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-emerald-200 font-medium">Confirmé</Badge>;
@@ -118,24 +146,39 @@ export default function ParticipantsManager() {
     }
   };
 
-  const getPaymentBadge = (isPaid) => {
+  const getPaymentBadge = (isPaid: boolean) => {
     return isPaid
       ? <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-emerald-200 font-medium">Payé</Badge>
       : <Badge className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200 font-medium">Non payé</Badge>;
   };
 
-  const getTypeBadge = (participationType) => {
-    return participationType === 'with-article'
+  const getTypeBadge = (participationType: string) => {
+    return participationType === "with-article"
       ? <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200 font-medium">Avec article</Badge>
       : <Badge className="bg-slate-100 text-slate-800 hover:bg-slate-100 border-slate-200 font-medium">Sans article</Badge>;
   };
 
-  const filteredParticipants = participants.filter(participant =>
-    participant.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    participant.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredParticipants = participants.filter((participant) =>
+    participant.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    participant.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     participant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     participant.establishment.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredParticipants.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentParticipants = filteredParticipants.slice(startIndex, endIndex);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -169,49 +212,40 @@ export default function ParticipantsManager() {
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">{participants.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
                 <p className="text-sm font-medium text-gray-600">Total Participants</p>
               </div>
             </div>
           </Card>
-
           <Card className="p-6 bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center">
               <div className="p-2 bg-emerald-100 rounded-lg">
                 <CheckCircle className="w-6 h-6 text-emerald-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">
-                  {participants.filter(p => p.status === 'confirmed').length}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{stats.confirmed}</p>
                 <p className="text-sm font-medium text-gray-600">Confirmés</p>
               </div>
             </div>
           </Card>
-
           <Card className="p-6 bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center">
               <div className="p-2 bg-amber-100 rounded-lg">
                 <Clock className="w-6 h-6 text-amber-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">
-                  {participants.filter(p => p.status === 'pending').length}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
                 <p className="text-sm font-medium text-gray-600">En Attente</p>
               </div>
             </div>
           </Card>
-
           <Card className="p-6 bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
                 <DollarSign className="w-6 h-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">
-                  €{participants.reduce((sum, p) => sum + (p.isPaid ? p.amount : 0), 0).toFixed(2)}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">€{stats.paid_amount.toFixed(2)}</p>
                 <p className="text-sm font-medium text-gray-600">Revenus Totaux</p>
               </div>
             </div>
@@ -261,15 +295,15 @@ export default function ParticipantsManager() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredParticipants.map((participant) => (
+                  {currentParticipants.map((participant) => (
                     <tr key={participant.id} className="hover:bg-gray-50 transition-colors duration-150">
                       <td className="py-4 px-6">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                            {participant.firstName[0]}{participant.lastName[0]}
+                            {participant.first_name[0]}{participant.last_name[0]}
                           </div>
                           <div className="ml-4">
-                            <p className="font-semibold text-gray-900">{participant.firstName} {participant.lastName}</p>
+                            <p className="font-semibold text-gray-900">{participant.first_name} {participant.last_name}</p>
                             <p className="text-sm text-gray-600">{participant.title}</p>
                           </div>
                         </div>
@@ -284,15 +318,17 @@ export default function ParticipantsManager() {
                         <p className="text-gray-900 font-medium">{participant.establishment}</p>
                       </td>
                       <td className="py-4 px-6">
-                        {getTypeBadge(participant.participationType)}
+                        {getTypeBadge(participant.participation_type)}
                       </td>
                       <td className="py-4 px-6">
                         {getStatusBadge(participant.status)}
                       </td>
                       <td className="py-4 px-6">
                         <div className="space-y-1">
-                          {getPaymentBadge(participant.isPaid)}
-                          <p className="text-sm font-semibold text-gray-900">€{participant.amount.toFixed(2)}</p>
+                          {getPaymentBadge(participant.is_paid)}
+                          <p className="text-sm font-semibold text-gray-900">
+                            €{(typeof participant.amount === 'number' ? participant.amount : parseFloat(participant.amount) || 0).toFixed(2)}
+                          </p>
                         </div>
                       </td>
                       <td className="py-4 px-6">
@@ -313,6 +349,16 @@ export default function ParticipantsManager() {
                           >
                             <Trash className="w-4 h-4" />
                           </Button>
+                          {!participant.is_paid && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50 h-8 w-8 p-0"
+                              onClick={() => handleMarkAsPaid(participant.id)}
+                            >
+                              <DollarSign className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -329,6 +375,52 @@ export default function ParticipantsManager() {
               </div>
             )}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Card className="p-6 bg-white border-2 border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Affichage de {startIndex + 1} à {Math.min(endIndex, filteredParticipants.length)} sur {filteredParticipants.length} participants
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => goToPage(page)}
+                      className={`border-2 ${
+                        currentPage === page
+                          ? "bg-blue-600 border-blue-600 text-white"
+                          : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                      } min-w-[40px]`}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
         </Card>
       </div>
 
