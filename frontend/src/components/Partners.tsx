@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Building2, Users, Calendar, Award, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Building2, Users, Calendar, Award } from 'lucide-react';
 
 interface Partner {
   id: number;
@@ -242,7 +242,19 @@ const Partners: React.FC<PartnersProps> = ({ language = 'fr' }) => {
           <div className="max-w-7xl mx-auto">
             {/* En-tête de section Organisateurs */}
             <div className="text-center mb-20">
-              <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-slate-800 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-6 leading-tight">
+              <h2 
+                className="text-5xl md:text-6xl font-bold text-slate-800 mb-6 leading-normal"
+                style={{
+                  background: 'linear-gradient(to right, #1e293b, #1e40af)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                  fontFamily: 'Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  textRendering: 'optimizeLegibility',
+                  WebkitFontSmoothing: 'antialiased',
+                  MozOsxFontSmoothing: 'grayscale'
+                }}
+              >
                 {content[language].organizersTitle}
               </h2>
               <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
@@ -310,7 +322,7 @@ const Partners: React.FC<PartnersProps> = ({ language = 'fr' }) => {
         </div>
       </section>
 
-      {/* Section Partenaires (existante) */}
+      {/* Section Partenaires */}
       <section className="py-24 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50" id='partners'>
         <div className="container mx-auto px-6 relative">
           <div className="max-w-7xl mx-auto">
