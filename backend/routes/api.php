@@ -59,11 +59,8 @@ Route::prefix('Theme')->controller(ThemeController::class)->group(function () {
 Route::prefix('Partners')->controller(PartnerController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
-    // hethy
     Route::post('/store', [PartnerController::class, 'store']);
-    // hthy
     Route::post('/update/{id}', [PartnerController::class, 'update']);
-    // hthy
     Route::delete('/destroy/{id}', [PartnerController::class, 'destroy']);
 });
 Route::prefix('Gallery')->controller(GalleryController::class)->group(function () {
@@ -96,11 +93,8 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
 Route::prefix('Archive')->controller(ArchiveController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
-    // hthy
     Route::post('/store', [ArchiveController::class, 'store']);
-     // hthy
     Route::put('/update/{id}', [ArchiveController::class, 'update']);
-     // hthy
     Route::delete('/destroy/{id}', [ArchiveController::class, 'destroy']);
 });
 
