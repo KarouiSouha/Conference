@@ -16,6 +16,7 @@ import {
   Image,
 } from "lucide-react";
 import PartnerForm from "./PartnerForm";
+import DeleteConfirmationModal from "./DeleteConfirmationModal";
 
 export default function PartnersManager() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,6 +26,8 @@ export default function PartnersManager() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(4);
   const [imageErrors, setImageErrors] = useState({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [partnerToDelete, setPartnerToDelete] = useState(null);
 
   // Fetch partners from API
   useEffect(() => {
@@ -41,7 +44,7 @@ export default function PartnersManager() {
         const formattedPartners = data.map((partner) => ({
           id: partner.id,
           nameFr: partner.name_fr,
-          nameEn: partner.name_en, // Include nameEn
+          nameEn: partner.name_en,
           image: partner.image,
           type: partner.type || "Institutionnels",
         }));
@@ -86,9 +89,21 @@ export default function PartnersManager() {
       }
 
       setPartners((prev) => prev.filter((partner) => partner.id !== partnerId));
+      setShowDeleteModal(false);
+      setPartnerToDelete(null);
     } catch (error) {
       console.error("Error deleting partner:", error);
     }
+  };
+
+  const handleOpenDeleteModal = (partner) => {
+    setPartnerToDelete(partner);
+    setShowDeleteModal(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false);
+    setPartnerToDelete(null);
   };
 
   const handleEditPartner = (partner) => {
@@ -299,7 +314,7 @@ export default function PartnersManager() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleDeletePartner(partner.id)}
+                      onClick={() => handleOpenDeleteModal(partner)}
                       className="border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:text-red-700 transition-all duration-200 shadow-sm hover:shadow-md"
                     >
                       <Trash className="w-4 h-4" />
@@ -368,6 +383,15 @@ export default function PartnersManager() {
             onClose={handleCloseForm}
             onSubmit={handleSavePartner}
             partnerToEdit={editingPartner}
+          />
+        )}
+
+        {showDeleteModal && partnerToDelete && (
+          <DeleteConfirmationModal
+            isOpen={showDeleteModal}
+            onClose={handleCloseDeleteModal}
+            onConfirm={() => handleDeletePartner(partnerToDelete.id)}
+            partnerName={partnerToDelete.nameFr}
           />
         )}
       </div>
