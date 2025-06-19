@@ -34,6 +34,12 @@ Route::apiResource('dates', ImportantDateController::class);
 Route::prefix('Speakers')->controller(SpeakerController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
+    // hthy
+    Route::post('/store', [SpeakerController::class, 'store']);
+    // hthy
+    Route::put('/update/{id}', [SpeakerController::class, 'update']);
+    // hthy
+    Route::delete('/destroy/{id}', [SpeakerController::class, 'destroy']);
 });
 Route::post('login', [AuthController::class, 'login']);
 

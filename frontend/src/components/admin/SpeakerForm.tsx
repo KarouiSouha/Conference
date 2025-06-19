@@ -3,14 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  X, 
-  Save, 
-  User, 
-  Mail, 
-  Briefcase, 
-  Globe, 
-  FileText, 
+import {
+  X,
+  Save,
+  User,
+  Mail,
+  Briefcase,
+  Globe,
+  FileText,
   Tag,
   Languages,
   MapPin,
@@ -18,11 +18,11 @@ import {
   AlertCircle
 } from "lucide-react";
 
-export default function SpeakerForm({ 
-  isOpen = true, 
-  speaker = null, 
-  onClose = () => {}, 
-  onSave = () => {} 
+export default function SpeakerForm({
+  isOpen = true,
+  speaker = null,
+  onClose = () => { },
+  onSave = () => { }
 }) {
   const [formData, setFormData] = useState({
     name: "",
@@ -39,16 +39,7 @@ export default function SpeakerForm({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
-  // Thèmes disponibles (normalement récupérés depuis l'API)
-  const themes = [
-    { id: 1, name: "IA et Technologies", color: "from-blue-500 to-blue-600" },
-    { id: 2, name: "Sciences Médicales", color: "from-green-500 to-green-600" },
-    { id: 3, name: "Nanotechnologies", color: "from-purple-500 to-purple-600" },
-    { id: 4, name: "Environnement", color: "from-teal-500 to-teal-600" },
-    { id: 5, name: "Énergie", color: "from-orange-500 to-orange-600" },
-    { id: 6, name: "Économie", color: "from-indigo-500 to-indigo-600" }
-  ];
+  const [themes, setThemes] = useState([]);
 
   // Pays populaires pour l'auto-complétion
   const countries = [
@@ -64,19 +55,55 @@ export default function SpeakerForm({
     { fr: "Inde", en: "India" }
   ];
 
+  // Charger les thèmes depuis l'API
+  useEffect(() => {
+    const fetchThemes = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/Theme/all');
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error('Erreur lors du chargement des thèmes');
+        }
+        // Assumant que l'API retourne un tableau d'objets { id, name }
+        setThemes(data.data.map(theme => ({
+          id: theme.id,
+          name: theme.title,
+          color: getThemeColor(theme.id)
+        })));
+      } catch (error) {
+        console.error('Erreur lors du chargement des thèmes:', error);
+      }
+    };
+
+    fetchThemes();
+  }, []);
+
+  // Associer une couleur aux thèmes
+  const getThemeColor = (id) => {
+    const colors = [
+      "from-blue-500 to-blue-600",
+      "from-green-500 to-green-600",
+      "from-purple-500 to-purple-600",
+      "from-teal-500 to-teal-600",
+      "from-orange-500 to-orange-600",
+      "from-indigo-500 to-indigo-600"
+    ];
+    return colors[id % colors.length] || "from-gray-500 to-gray-600";
+  };
+
   // Charger les données de l'intervenant si modification
   useEffect(() => {
     if (speaker) {
       setFormData({
         name: speaker.name || "",
         email: speaker.email || "",
-        job_fr: speaker.jobFr || "",
-        job_en: speaker.jobEn || "",
-        country_fr: speaker.countryFr || "",
-        country_en: speaker.countryEn || "",
-        description_fr: speaker.descriptionFr || "",
-        description_en: speaker.descriptionEn || "",
-        theme_id: speaker.themeId?.toString() || ""
+        job_fr: speaker.job_fr || "",
+        job_en: speaker.job_en || "",
+        country_fr: speaker.country_fr || "",
+        country_en: speaker.country_en || "",
+        description_fr: speaker.description_fr || "",
+        description_en: speaker.description_en || "",
+        theme_id: speaker.theme_id?.toString() || ""
       });
     } else {
       // Reset pour nouveau speaker
@@ -101,7 +128,7 @@ export default function SpeakerForm({
       ...prev,
       [field]: value
     }));
-    
+
     // Effacer l'erreur du champ modifié
     if (errors[field]) {
       setErrors(prev => ({
@@ -155,6 +182,10 @@ export default function SpeakerForm({
       newErrors.country_en = "Le pays en anglais est obligatoire";
     }
 
+    if (!formData.theme_id) {
+      newErrors.theme_id = "Le thème est obligatoire";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -163,20 +194,44 @@ export default function SpeakerForm({
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    
+
     try {
-      // Simulation d'appel API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const url = speaker
+        ? `http://localhost:8000/api/Speakers/update/${speaker.id}`
+        : 'http://localhost:8000/api/Speakers/store';
+
+      const method = speaker ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          job_fr: formData.job_fr,
+          job_en: formData.job_en,
+          country_fr: formData.country_fr,
+          country_en: formData.country_en,
+          description_fr: formData.description_fr,
+          description_en: formData.description_en,
+          theme_id: parseInt(formData.theme_id)
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur lors de ${speaker ? 'la mise à jour' : "l'ajout"} de l'intervenant`);
+      }
+
       setShowSuccess(true);
       setTimeout(() => {
-        onSave(formData);
+        onSave();
         onClose();
       }, 1500);
-      
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
-      setErrors({ submit: "Une erreur est survenue lors de l'enregistrement" });
+      console.error(`Erreur lors de ${speaker ? 'la mise à jour' : "l'ajout"}:`, error);
+      setErrors({ submit: `Une erreur est survenue lors de ${speaker ? 'la mise à jour' : "l'ajout"}` });
     } finally {
       setIsSubmitting(false);
     }
@@ -185,7 +240,7 @@ export default function SpeakerForm({
   if (!isOpen) return null;
 
   const getSelectedThemeConfig = () => {
-    return themes.find(theme => theme.id.toString() === formData.theme_id) || themes[0];
+    return themes.find(theme => theme.id.toString() === formData.theme_id) || themes[0] || { name: "Sélectionner un thème", color: "from-gray-500 to-gray-600" };
   };
 
   return (
@@ -399,27 +454,37 @@ export default function SpeakerForm({
               <label className="block text-sm font-semibold text-gray-700">
                 Thème de Spécialisation
               </label>
-              <div className="grid grid-cols-2 gap-3">
-                {themes.map((theme) => (
-                  <button
-                    key={theme.id}
-                    type="button"
-                    onClick={() => handleInputChange('theme_id', theme.id.toString())}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center space-x-3 ${formData.theme_id === theme.id.toString()
-                      ? 'border-blue-400 bg-blue-50 shadow-md'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                  >
-                    <div className={`p-2 rounded-lg bg-gradient-to-r ${theme.color} text-white`}>
-                      <Tag className="w-4 h-4" />
-                    </div>
-                    <span className="font-medium text-gray-700">{theme.name}</span>
-                    {formData.theme_id === theme.id.toString() && (
-                      <Check className="w-4 h-4 text-blue-600 ml-auto" />
-                    )}
-                  </button>
-                ))}
-              </div>
+              {themes.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {themes.map((theme) => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => handleInputChange('theme_id', theme.id.toString())}
+                      className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center space-x-3 ${formData.theme_id === theme.id.toString()
+                        ? 'border-blue-400 bg-blue-50 shadow-md'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                    >
+                      <div className={`p-2 rounded-lg bg-gradient-to-r ${theme.color} text-white`}>
+                        <Tag className="w-4 h-4" />
+                      </div>
+                      <span className="font-medium text-gray-700">{theme.name}</span>
+                      {formData.theme_id === theme.id.toString() && (
+                        <Check className="w-4 h-4 text-blue-600 ml-auto" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-gray-500 text-sm">Chargement des thèmes...</div>
+              )}
+              {errors.theme_id && (
+                <div className="flex items-center space-x-2 text-red-600 text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.theme_id}</span>
+                </div>
+              )}
             </div>
 
             {/* Descriptions */}
@@ -444,7 +509,7 @@ export default function SpeakerForm({
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-gray-700">
                     Description (Anglais)
-                  </ label>
+                  </label>
                   <textarea
                     value={formData.description_en}
                     onChange={(e) => handleInputChange("description_en", e.target.value)}

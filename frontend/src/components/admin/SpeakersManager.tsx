@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Edit, Trash, Mail, Users, Award, Globe, BookOpen, Filter, Download, MessageSquare } from "lucide-react";
+import { Search, Plus, Edit, Trash, Mail, Users, Award, Globe, BookOpen, Filter, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 // Import du composant SpeakerForm
 import SpeakerForm from "./SpeakerForm";
@@ -12,75 +12,61 @@ export default function SpeakersManager() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [selectedSpeaker, setSelectedSpeaker] = useState(null);
+  const [speakers, setSpeakers] = useState([]);
+  const [themes, setThemes] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Données d'exemple étoffées
-  const [speakers, setSpeakers] = useState([
-    {
-      id: 1,
-      name: "Dr. Sophie Martin",
-      email: "sophie.martin@research.fr",
-      jobFr: "Professeure en Intelligence Artificielle",
-      jobEn: "Professor in Artificial Intelligence",
-      countryFr: "France",
-      countryEn: "France",
-      themeId: 1,
-      themeName: "IA et Technologies",
-      isKeynote: true,
-      avatar: null,
-    },
-    {
-      id: 2,
-      name: "Prof. Ahmed Hassan",
-      email: "a.hassan@university.eg",
-      jobFr: "Directeur de Recherche",
-      jobEn: "Research Director",
-      countryFr: "Égypte",
-      countryEn: "Egypt",
-      themeId: 2,
-      themeName: "Sciences Médicales",
-      isKeynote: false,
-      avatar: null,
-    },
-    {
-      id: 3,
-      name: "Dr. Maria Rodriguez",
-      email: "m.rodriguez@tech.es",
-      jobFr: "Chercheuse Senior",
-      jobEn: "Senior Researcher",
-      countryFr: "Espagne",
-      countryEn: "Spain",
-      themeId: 1,
-      themeName: "IA et Technologies",
-      isKeynote: true,
-      avatar: null,
-    },
-    {
-      id: 4,
-      name: "Prof. John Williams",
-      email: "j.williams@mit.edu",
-      jobFr: "Professeur de Robotique",
-      jobEn: "Professor of Robotics",
-      countryFr: "États-Unis",
-      countryEn: "United States",
-      themeId: 1,
-      themeName: "IA et Technologies",
-      isKeynote: false,
-      avatar: null,
-    },
-    {
-      id: 5,
-      name: "Dr. Yuki Tanaka",
-      email: "y.tanaka@tokyo.ac.jp",
-      jobFr: "Spécialiste en Nanotechnologie",
-      jobEn: "Nanotechnology Specialist",
-      countryFr: "Japon",
-      countryEn: "Japan",
-      themeId: 3,
-      themeName: "Nanotechnologies",
-      isKeynote: false,
-      avatar: null,
-    },
-  ]);
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const speakersPerPage = 5;
+
+  // Charger les données depuis l'API
+  useEffect(() => {
+    fetchSpeakers();
+    fetchThemes();
+  }, []);
+
+  const fetchSpeakers = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:8000/api/Speakers/all');
+      if (!response.ok) {
+        throw new Error('Erreur lors du chargement des intervenants');
+      }
+
+      const data = await response.json();
+      setSpeakers(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error('Erreur:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchThemes = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/Theme/all');
+
+      if (!response.ok) {
+        throw new Error("Erreur lors du chargement des thèmes");
+      }
+
+      const data = await response.json();
+
+      const themesMap = {};
+      data.data.forEach(theme => {
+        themesMap[theme.id] = theme.title; // Utilise "title" car c'est ce que l'API renvoie
+      });
+
+      setThemes(themesMap);
+    } catch (err) {
+      console.error("Erreur de récupération des thèmes :", err);
+    }
+  };
+
 
   // Fonctions pour gérer le formulaire
   const handleNewSpeaker = () => {
@@ -93,75 +79,36 @@ export default function SpeakersManager() {
     setShowForm(true);
   };
 
-  const handleDeleteSpeaker = (speakerId) => {
+  const handleDeleteSpeaker = async (speakerId) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cet intervenant ?")) {
-      setSpeakers(prevSpeakers =>
-        prevSpeakers.filter(speaker => speaker.id !== speakerId)
-      );
-    }
-  };
+      try {
+        const response = await fetch(`http://localhost:8000/api/Speakers/destroy/${speakerId}`, {
+          method: 'DELETE',
+        });
 
-  const handleSaveSpeaker = (speakerData) => {
-    if (selectedSpeaker) {
-      // Modification d'un intervenant existant
-      setSpeakers(prevSpeakers =>
-        prevSpeakers.map(speaker =>
-          speaker.id === selectedSpeaker.id
-            ? {
-              ...speaker,
-              name: speakerData.name,
-              email: speakerData.email,
-              jobFr: speakerData.job_fr,
-              jobEn: speakerData.job_en,
-              countryFr: speakerData.country_fr,
-              countryEn: speakerData.country_en,
-              themeId: parseInt(speakerData.theme_id) || null,
-              themeName: getThemeName(speakerData.theme_id)
-            }
-            : speaker
-        )
-      );
-    } else {
-      // Création d'un nouvel intervenant
-      const newSpeaker = {
-        id: Date.now(), // ID temporaire
-        name: speakerData.name,
-        email: speakerData.email,
-        jobFr: speakerData.job_fr,
-        jobEn: speakerData.job_en,
-        countryFr: speakerData.country_fr,
-        countryEn: speakerData.country_en,
-        themeId: parseInt(speakerData.theme_id) || null,
-        themeName: getThemeName(speakerData.theme_id),
-        isKeynote: false,
-        avatar: null
-      };
-      setSpeakers(prevSpeakers => [...prevSpeakers, newSpeaker]);
+        if (response.ok) {
+          setSpeakers(prevSpeakers =>
+            prevSpeakers.filter(speaker => speaker.id !== speakerId)
+          );
+        } else {
+          throw new Error('Erreur lors de la suppression');
+        }
+      } catch (err) {
+        alert('Erreur lors de la suppression: ' + err.message);
+      }
     }
-    setShowForm(false);
-    setSelectedSpeaker(null);
   };
 
   const getThemeName = (themeId) => {
-    const themes = {
-      1: "IA et Technologies",
-      2: "Sciences Médicales",
-      3: "Nanotechnologies",
-      4: "Environnement",
-      5: "Énergie",
-      6: "Économie"
-    };
-    return themes[themeId] || "";
+    return themes[themeId] || "Thème inconnu";
   };
 
   const getThemeBadge = (themeName, isKeynote = false) => {
     const themeColors = {
-      "IA et Technologies": "bg-blue-50 text-blue-700 border-blue-200",
-      "Sciences Médicales": "bg-emerald-50 text-emerald-700 border-emerald-200",
-      "Nanotechnologies": "bg-purple-50 text-purple-700 border-purple-200",
-      "Environnement": "bg-green-50 text-green-700 border-green-200",
-      "Énergie": "bg-amber-50 text-amber-700 border-amber-200",
-      "Économie": "bg-indigo-50 text-indigo-700 border-indigo-200",
+      "Ingénierie et Innovation": "bg-blue-50 text-blue-700 border-blue-200",
+      "Processus, Environnement et Développement Durable": "bg-green-50 text-green-700 border-green-200",
+      "Pédagogie, Enseignement et Processus Socio-Humains": "bg-amber-50 text-amber-700 border-amber-200",
+      "Économie, Gestion et Entrepreneuriat": "bg-indigo-50 text-indigo-700 border-indigo-200",
     };
 
     const colorClass = themeColors[themeName] || "bg-gray-50 text-gray-700 border-gray-200";
@@ -184,31 +131,84 @@ export default function SpeakersManager() {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2);
   };
 
-  const getCountryFlag = (country) => {
-    const flags = {
-      "France": "🇫🇷",
-      "Égypte": "🇪🇬",
-      "Espagne": "🇪🇸",
-      "États-Unis": "🇺🇸",
-      "Japon": "🇯🇵"
+
+  const getCountryFlagUrl = (country) => {
+    const codes = {
+      "France": "fr",
+      "Égypte": "eg",
+      "Espagne": "es",
+      "États-Unis": "us",
+      "Japon": "jp",
+      "Allemagne": "de",
+      "Italie": "it",
+      "Royaume-Uni": "gb",
+      "Canada": "ca",
+      "Australie": "au"
     };
-    return flags[country] || "🌍";
+
+    for (const name in codes) {
+      if (country.toLowerCase().includes(name.toLowerCase())) {
+        return `https://flagcdn.com/w40/${codes[name]}.png`; // 40px wide
+      }
+    }
+
+    return `https://flagcdn.com/w40/un.png`; // 🌍 par défaut
   };
 
+  // Filtrage des speakers
   const filteredSpeakers = speakers.filter(speaker =>
     speaker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     speaker.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    speaker.jobFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    speaker.countryFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    speaker.themeName.toLowerCase().includes(searchTerm.toLowerCase())
+    speaker.job_fr.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    speaker.country_fr.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    getThemeName(speaker.theme_id).toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination
+  const totalPages = Math.ceil(filteredSpeakers.length / speakersPerPage);
+  const startIndex = (currentPage - 1) * speakersPerPage;
+  const endIndex = startIndex + speakersPerPage;
+  const currentSpeakers = filteredSpeakers.slice(startIndex, endIndex);
+
+  // Reset pagination when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const stats = {
     total: speakers.length,
-    keynote: speakers.filter(s => s.isKeynote).length,
-    countries: new Set(speakers.map(s => s.countryFr)).size,
-    themes: new Set(speakers.map(s => s.themeName)).size
+    keynote: speakers.filter(s => s.is_keynote).length,
+    countries: new Set(speakers.map(s => s.country_fr)).size,
+    themes: new Set(speakers.map(s => s.theme_id)).size
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Chargement des intervenants...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            ❌
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Erreur de chargement</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchSpeakers} className="bg-blue-600 hover:bg-blue-700">
+            Réessayer
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -309,9 +309,14 @@ export default function SpeakersManager() {
               <h3 className="text-xl font-semibold text-gray-900">
                 Liste des Intervenants ({filteredSpeakers.length})
               </h3>
-              <Badge variant="outline" className="text-gray-700 border-gray-300">
-                {filteredSpeakers.length} résultat{filteredSpeakers.length > 1 ? 's' : ''}
-              </Badge>
+              <div className="flex items-center gap-4">
+                <Badge variant="outline" className="text-gray-700 border-gray-300">
+                  {filteredSpeakers.length} résultat{filteredSpeakers.length > 1 ? 's' : ''}
+                </Badge>
+                <div className="text-sm text-gray-600">
+                  Page {currentPage} sur {totalPages}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -340,11 +345,11 @@ export default function SpeakersManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
-                {filteredSpeakers.map((speaker, index) => (
+                {currentSpeakers.map((speaker, index) => (
                   <tr
                     key={speaker.id}
                     className={`hover:bg-gray-50 transition-colors duration-150 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
-                      } ${speaker.isKeynote ? 'border-l-4 border-l-amber-400' : ''}`}
+                      } ${speaker.is_keynote ? 'border-l-4 border-l-amber-400' : ''}`}
                   >
                     <td className="py-6 px-6">
                       <div className="flex items-center space-x-4">
@@ -358,7 +363,7 @@ export default function SpeakersManager() {
                         <div>
                           <div className="text-base font-semibold text-gray-900 flex items-center gap-2">
                             {speaker.name}
-                            {speaker.isKeynote && (
+                            {speaker.is_keynote && (
                               <Award className="w-4 h-4 text-amber-500" />
                             )}
                           </div>
@@ -384,21 +389,26 @@ export default function SpeakersManager() {
                     </td>
                     <td className="py-6 px-6">
                       <div className="space-y-1">
-                        <div className="text-sm font-medium text-gray-900">{speaker.jobFr}</div>
-                        <div className="text-xs text-gray-600 italic">{speaker.jobEn}</div>
+                        <div className="text-sm font-medium text-gray-900">{speaker.job_fr}</div>
+                        <div className="text-xs text-gray-600 italic">{speaker.job_en}</div>
                       </div>
                     </td>
                     <td className="py-6 px-6">
                       <div className="flex items-center space-x-2">
-                        <span className="text-2xl">{getCountryFlag(speaker.countryFr)}</span>
+                        <img
+                          src={getCountryFlagUrl(speaker.country_fr)}
+                          alt="flag"
+                          className="w-6 h-4 object-cover inline-block rounded"
+                        />
+
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{speaker.countryFr}</div>
-                          <div className="text-xs text-gray-600 italic">{speaker.countryEn}</div>
+                          <div className="text-sm font-medium text-gray-900">{speaker.country_fr}</div>
+                          <div className="text-xs text-gray-600 italic">{speaker.country_en}</div>
                         </div>
                       </div>
                     </td>
                     <td className="py-6 px-6">
-                      {getThemeBadge(speaker.themeName, speaker.isKeynote)}
+                      {getThemeBadge(getThemeName(speaker.theme_id), speaker.is_keynote)}
                     </td>
                     <td className="py-6 px-6">
                       <div className="flex items-center space-x-2">
@@ -427,6 +437,63 @@ export default function SpeakersManager() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {filteredSpeakers.length > 0 && (
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Affichage de {startIndex + 1} à {Math.min(endIndex, filteredSpeakers.length)} sur {filteredSpeakers.length} résultats
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="h-9 w-9 p-0"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      if (
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      ) {
+                        return (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(page)}
+                            className="h-9 w-9 p-0"
+                          >
+                            {page}
+                          </Button>
+                        );
+                      } else if (page === currentPage - 2 || page === currentPage + 2) {
+                        return <span key={page} className="px-2 text-gray-400">...</span>;
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="h-9 w-9 p-0"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {filteredSpeakers.length === 0 && (
             <div className="text-center py-16">
@@ -457,7 +524,11 @@ export default function SpeakersManager() {
           setShowForm(false);
           setSelectedSpeaker(null);
         }}
-        onSave={handleSaveSpeaker}
+        onSave={() => {
+          fetchSpeakers();
+          setShowForm(false);
+          setSelectedSpeaker(null);
+        }}
       />
     </div>
   );
