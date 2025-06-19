@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   X,
   Save,
+  FlaskConical,
   Building2,
   GraduationCap,
   Handshake,
@@ -18,15 +19,16 @@ import { Label } from "recharts";
 
 interface PartnerFormProps {
   onClose: () => void;
-  onSubmit: (data: { name_fr: string; name_en: string; image: File | null; type: string }) => void;
+  onSubmit: (data: { id?: string; name_fr: string; name_en: string; image: File | string | null; type: string }) => void;
   partnerToEdit?: { id?: string; nameFr?: string; nameEn?: string; image?: string; type?: string } | null;
 }
 
 export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }: PartnerFormProps) {
   const [formData, setFormData] = useState({
+    id: partnerToEdit?.id || "",
     name_fr: partnerToEdit?.nameFr || "",
-    name_en: partnerToEdit?.nameEn || "",
-    image: null,
+    name_en: partnerToEdit?.nameEn || "", // Ensure nameEn is initialized
+    image: partnerToEdit?.image || null,
     type: partnerToEdit?.type || "Partenaire"
   });
 
@@ -38,32 +40,26 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
   };
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imagePreview, setImagePreview] = useState(partnerToEdit?.image || null);
+  const [imagePreview, setImagePreview] = useState(partnerToEdit?.image ? `http://localhost:8000/storage/${partnerToEdit.image}` : null);
 
   const partnerTypes = [
     {
-      value: "Académique",
-      label: "Académique",
+      value: "Institutionnels",
+      label: "Institutionnels",
       icon: <GraduationCap className="w-4 h-4" />,
       color: "bg-gradient-to-r from-blue-500 to-blue-600"
     },
     {
-      value: "Sponsor",
-      label: "Sponsor",
+      value: "Industriels & Technologiques",
+      label: "Industriels & Technologiques",
       icon: <TrendingUp className="w-4 h-4" />,
       color: "bg-gradient-to-r from-green-500 to-green-600"
     },
     {
-      value: "Partenaire",
-      label: "Partenaire",
-      icon: <Handshake className="w-4 h-4" />,
+      value: "Centres de Recherche & Innovation",
+      label: "Centres de Recherche & Innovation",
+      icon: <FlaskConical className="w-4 h-4" />,
       color: "bg-gradient-to-r from-purple-500 to-purple-600"
-    },
-    {
-      value: "Entreprise",
-      label: "Entreprise",
-      icon: <Building2 className="w-4 h-4" />,
-      color: "bg-gradient-to-r from-orange-500 to-orange-600"
     }
   ];
 
@@ -86,6 +82,7 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
         setErrors(prev => ({ ...prev, image: "La taille de l'image ne doit pas dépasser 5MB" }));
         return;
       }
+      console.log("Image file selected:", file);
 
       setFormData(prev => ({ ...prev, image: file }));
 
@@ -120,14 +117,49 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
     }
 
     setIsSubmitting(true);
-
+    console.log("Submitting form data:", formData);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      onSubmit(formData);
+      const formDataToSend = new FormData();
+      formDataToSend.append('name_fr', formData.name_fr);
+      formDataToSend.append('name_en', formData.name_en);
+      formDataToSend.append('type', formData.type);
+      if (
+        formData.image &&
+        typeof formData.image !== "string" &&
+        (formData.image as any) instanceof File
+      ) {
+        formDataToSend.append('image', formData.image);
+      }
+
+      const isEditing = !!partnerToEdit;
+      const url = isEditing
+        ? `http://localhost:8000/api/Partners/update/${partnerToEdit.id}`
+        : 'http://localhost:8000/api/Partners/store';
+
+      const response = await fetch(url, {
+        method: isEditing ? 'POST' : 'POST',
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur lors de ${isEditing ? 'la mise à jour' : 'l\'enregistrement'} du partenaire`);
+      }
+
+      const result = await response.json();
+      console.log('Réponse de l\'API:', result);
+
+      onSubmit({
+        id: result.partner.id,
+        name_fr: formData.name_fr,
+        name_en: formData.name_en,
+        type: formData.type,
+        image: result.partner.image,
+      });
+
       onClose();
     } catch (error) {
-      console.error('Erreur lors de l\'enregistrement du partenaire:', error);
-      setErrors(prev => ({ ...prev, submit: "Une erreur est survenue lors de l'enregistrement" }));
+      console.error(`Erreur lors de ${partnerToEdit ? 'la mise à jour' : 'l\'enregistrement'} du partenaire:`, error);
+      setErrors((prev) => ({ ...prev, submit: `Une erreur est survenue lors de ${partnerToEdit ? 'la mise à jour' : 'l\'enregistrement'}` }));
     } finally {
       setIsSubmitting(false);
     }
@@ -294,74 +326,74 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
                 <div className="flex items-center space-x-2 text-red-600 text-sm">
                   <AlertCircle className="w-4 h-4" />
                   <span>{errors.image}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Aperçu</h3>
-                <Card className="p-4 bg-white border-2 border-gray-200">
-                  <div className="text-center space-y-3">
-                    <div className="w-12 h-12 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
-                      {getSelectedTypeConfig().icon}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-800">
-                        {formData.name_fr || "Nom du partenaire"}
-                      </h4>
-                      <p className="text-sm text-gray-500 italic">
-                        {formData.name_en || "Nom du partenaire"}
-                      </p>
-                    </div>
-                    <Badge className={`bg-gradient-to-r ${getSelectedTypeConfig().color} text-white px-3 py-1 flex items-center justify-center w-fit mx-auto`}>
-                      {getSelectedTypeConfig().icon}
-                      <span className="ml-1">{formData.type}</span>
-                    </Badge>
-                  </div>
-                </Card>
-              </div>
-
-              {errors.submit && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                  <div className="flex items-center space-x-2 text-red-600">
-                    <AlertCircle className="w-5 h-5" />
-                    <span className="font-medium">{errors.submit}</span>
-                  </div>
                 </div>
               )}
-
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onClose}
-                  disabled={isSubmitting}
-                  className="px-6 py-2 border-2 border-gray-300 hover:bg-gray-50"
-                >
-                  Annuler
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      Enregistrement...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      {partnerToEdit ? 'Modifier' : 'Enregistrer'}
-                    </>
-                  )}
-                </Button>
-              </div>
             </div>
-          </Card>
-        </div>
+
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Aperçu</h3>
+              <Card className="p-4 bg-white border-2 border-gray-200">
+                <div className="text-center space-y-3">
+                  <div className="w-12 h-12 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+                    {getSelectedTypeConfig().icon}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-800">
+                      {formData.name_fr || "Nom du partenaire"}
+                    </h4>
+                    <p className="text-sm text-gray-500 italic">
+                      {formData.name_en || "Nom du partenaire"}
+                    </p>
+                  </div>
+                  <Badge className={`bg-gradient-to-r ${getSelectedTypeConfig().color} text-white px-3 py-1 flex items-center justify-center w-fit mx-auto`}>
+                    {getSelectedTypeConfig().icon}
+                    <span className="ml-1">{formData.type}</span>
+                  </Badge>
+                </div>
+              </Card>
+            </div>
+
+            {errors.submit && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <div className="flex items-center space-x-2 text-red-600">
+                  <AlertCircle className="w-5 h-5" />
+                  <span className="font-medium">{errors.submit}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="px-6 py-2 border-2 border-gray-300 hover:bg-gray-50"
+              >
+                Annuler
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Enregistrement...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    {partnerToEdit ? 'Modifier' : 'Enregistrer'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </Card>
       </div>
-    );
-  }
+    </div>
+  );
+}

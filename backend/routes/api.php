@@ -34,6 +34,12 @@ Route::apiResource('dates', ImportantDateController::class);
 Route::prefix('Speakers')->controller(SpeakerController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
+    // hthy
+    Route::post('/store', [SpeakerController::class, 'store']);
+    // hthy
+    Route::put('/update/{id}', [SpeakerController::class, 'update']);
+    // hthy
+    Route::delete('/destroy/{id}', [SpeakerController::class, 'destroy']);
 });
 Route::post('login', [AuthController::class, 'login']);
 
@@ -53,6 +59,12 @@ Route::prefix('Theme')->controller(ThemeController::class)->group(function () {
 Route::prefix('Partners')->controller(PartnerController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
+    // hethy
+    Route::post('/store', [PartnerController::class, 'store']);
+    // hthy
+    Route::post('/update/{id}', [PartnerController::class, 'update']);
+    // hthy
+    Route::delete('/destroy/{id}', [PartnerController::class, 'destroy']);
 });
 Route::prefix('Gallery')->controller(GalleryController::class)->group(function () {
     Route::get('/all', 'displayAll');           // GET /api/Gallery/all
@@ -84,6 +96,12 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
 Route::prefix('Archive')->controller(ArchiveController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
+    // hthy
+    Route::post('/store', [ArchiveController::class, 'store']);
+     // hthy
+    Route::put('/update/{id}', [ArchiveController::class, 'update']);
+     // hthy
+    Route::delete('/destroy/{id}', [ArchiveController::class, 'destroy']);
 });
 
 Route::prefix('News')->controller(NewsController::class)->group(function () {

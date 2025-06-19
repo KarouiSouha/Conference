@@ -81,4 +81,9 @@ class Theme extends Model
     {
         return $this->icon && (str_contains($this->icon, 'fa-') || str_contains($this->icon, 'bi-') || str_contains($this->icon, 'icon-'));
     }
+    public function speakers()
+    {
+        return $this->hasMany(Speaker::class);
+    }
+
 }
