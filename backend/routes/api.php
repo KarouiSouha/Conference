@@ -53,6 +53,12 @@ Route::prefix('Theme')->controller(ThemeController::class)->group(function () {
 Route::prefix('Partners')->controller(PartnerController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
+    // hethy
+    Route::post('/store', [PartnerController::class, 'store']);
+    // hthy
+    Route::post('/update/{id}', [PartnerController::class, 'update']);
+    // hthy
+    Route::delete('/destroy/{id}', [PartnerController::class, 'destroy']);
 });
 Route::prefix('Gallery')->controller(GalleryController::class)->group(function () {
     Route::get('/all', 'displayAll');           // GET /api/Gallery/all
