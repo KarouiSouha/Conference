@@ -58,8 +58,8 @@ export default function NewsManager() {
         descriptionFr: item.description_fr,
         descriptionEn: item.description_en,
         link: item.link,
+        status: item.status || "En attente", // Valeur par défaut si le statut n'est pas défini
         views: Math.floor(Math.random() * 2000), // Simulation des vues
-        status: "published", // Statut par défaut
       }));
 
       setNews(transformedData);
@@ -95,7 +95,7 @@ export default function NewsManager() {
   };
 
   const getStatusIndicator = (status: string) => {
-    if (status === "published") {
+    if (status === "Publié") {
       return <div className="w-2 h-2 bg-green-500 rounded-full"></div>;
     }
     return <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>;
@@ -322,7 +322,7 @@ export default function NewsManager() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-3xl font-bold text-emerald-600 group-hover:text-emerald-700 transition-colors">
-                  {news.filter((item) => item.status === "published" && new Date(item.date).getMonth() === new Date().getMonth())
+                  {news.filter((item) => item.status === "Publié" && new Date(item.date).getMonth() === new Date().getMonth())
                     .length}
                 </p>
                 <p className="text-sm font-medium text-gray-500 mt-1">Publiées ce mois</p>
@@ -337,7 +337,7 @@ export default function NewsManager() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-3xl font-bold text-amber-600 group-hover:text-amber-700 transition-colors">
-                  {news.filter((item) => item.status === "pending").length}
+                  {news.filter((item) => item.status === "En attente").length}
                 </p>
                 <p className="text-sm font-medium text-gray-500 mt-1">En attente</p>
               </div>

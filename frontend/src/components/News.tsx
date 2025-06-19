@@ -66,7 +66,7 @@ const News: React.FC<NewsProps> = ({ language }) => {
   const fetchNews = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/News/all');
+      const response = await fetch('http://localhost:8000/api/News/published');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
