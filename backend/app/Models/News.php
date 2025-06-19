@@ -11,7 +11,7 @@ class News extends Model
         'type_fr',
         'title_en',
         'title_fr',
-        'date_fr',
+        'date',
         'author',
         'description_en',
         'description_fr',

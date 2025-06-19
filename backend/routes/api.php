@@ -101,4 +101,7 @@ Route::prefix('Archive')->controller(ArchiveController::class)->group(function (
 Route::prefix('News')->controller(NewsController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
+    Route::post('/store', [NewsController::class, 'store']);
+    Route::put('/update/{id}', [NewsController::class, 'update']);
+    Route::delete('/destroy/{id}', [NewsController::class, 'destroy']);
 });
