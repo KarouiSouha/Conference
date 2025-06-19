@@ -154,10 +154,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language = 'fr' }) => {
     document.body.removeChild(link);
   };
 
+  interface TimeLeft {
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+  }
+
   const CountdownCard = ({ title, timeLeft, icon: Icon, isUrgent = false }: { 
     title: string, 
-    timeLeft: any, 
-    icon: any,
+    timeLeft: TimeLeft, 
+    icon: React.ElementType,
     isUrgent?: boolean 
   }) => (
     <div className="relative bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group">
