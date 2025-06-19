@@ -54,7 +54,7 @@ export default function NewsForm({
     descriptionFr: "",
     descriptionEn: "",
     link: "",
-    status: "pending"
+    status: "En attente"
   });
 
   const [errors, setErrors] = useState<NewsFormErrors>({});
@@ -82,7 +82,7 @@ export default function NewsForm({
         descriptionFr: newsItem.descriptionFr || "",
         descriptionEn: newsItem.descriptionEn || "",
         link: newsItem.link || "",
-        status: newsItem.status || "pending"
+        status: newsItem.status || "En attente"
       });
     } else {
       // Réinitialiser le formulaire pour une nouvelle actualité
@@ -449,27 +449,27 @@ export default function NewsForm({
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
-                      onClick={() => handleInputChange('status', 'pending')}
-                      className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center space-x-3 ${formData.status === 'pending' ? 'border-amber-400 bg-amber-50 shadow-md' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                      onClick={() => handleInputChange('status', 'En attente')}
+                      className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center space-x-3 ${formData.status === 'En attente' ? 'border-amber-400 bg-amber-50 shadow-md' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                     >
                       <div className="p-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-white">
                         <FileText className="w-4 h-4" />
                       </div>
                       <span className="font-medium text-gray-700">En attente</span>
-                      {formData.status === 'pending' && (
+                      {formData.status === 'En attente' && (
                         <Check className="w-4 h-4 text-amber-600 ml-auto" />
                       )}
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleInputChange('status', 'published')}
-                      className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center space-x-3 ${formData.status === 'published' ? 'border-green-400 bg-green-50 shadow-md' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                      onClick={() => handleInputChange('status', 'Publié')}
+                      className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center space-x-3 ${formData.status === 'Publié' ? 'border-green-400 bg-green-50 shadow-md' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                     >
                       <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white">
                         <FileText className="w-4 h-4" />
                       </div>
                       <span className="font-medium text-gray-700">Publié</span>
-                      {formData.status === 'published' && (
+                      {formData.status === 'Publié' && (
                         <Check className="w-4 h-4 text-green-600 ml-auto" />
                       )}
                     </button>

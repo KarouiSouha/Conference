@@ -15,6 +15,11 @@ class NewsController extends Controller
         $news = News::orderBy('date', 'desc')->take(4)->get();
         return response()->json($news);
     }
+    public function getPublished(): JsonResponse
+    {
+        $news = News::where('status', 'Publié')->orderBy('date', 'desc')->get();
+        return response()->json($news);
+    }
 
     // ✅ Ajouter une news
     public function store(Request $request): JsonResponse
@@ -29,16 +34,23 @@ class NewsController extends Controller
             'description_en' => 'required|string',
             'description_fr' => 'required|string',
             'link' => 'nullable|string',
+            'status' => 'nullable|in:En attente,Publié', // 👈 ligne ajoutée
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $news = News::create($request->all());
+        $data = $request->all();
+        if (!isset($data['status'])) {
+            $data['status'] = 'En Attente'; // 👈 valeur par défaut si non fournie
+        }
+
+        $news = News::create($data);
 
         return response()->json(['message' => 'News created successfully', 'news' => $news], 201);
     }
+
 
     // ✅ Modifier une news
     public function update(Request $request, $id): JsonResponse
@@ -59,6 +71,7 @@ class NewsController extends Controller
             'description_en' => 'sometimes|required|string',
             'description_fr' => 'sometimes|required|string',
             'link' => 'nullable|string',
+            'status' => 'sometimes|in:En attente,Publié', // 👈 ligne ajoutée
         ]);
 
         if ($validator->fails()) {
@@ -69,6 +82,7 @@ class NewsController extends Controller
 
         return response()->json(['message' => 'News updated successfully', 'news' => $news]);
     }
+
 
     // ✅ Supprimer une news
     public function destroy($id): JsonResponse

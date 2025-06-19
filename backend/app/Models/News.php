@@ -15,6 +15,7 @@ class News extends Model
         'author',
         'description_en',
         'description_fr',
-        'link'
+        'link',
+        'status'
     ];
 }

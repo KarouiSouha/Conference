@@ -104,4 +104,6 @@ Route::prefix('News')->controller(NewsController::class)->group(function () {
     Route::post('/store', [NewsController::class, 'store']);
     Route::put('/update/{id}', [NewsController::class, 'update']);
     Route::delete('/destroy/{id}', [NewsController::class, 'destroy']);
+    Route::get('/published', [NewsController::class, 'getPublished']);
+
 });
