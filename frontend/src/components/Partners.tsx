@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Building2, Users, Calendar, Award, Star } from 'lucide-react';
+import { Building2, Users, Calendar, Award, Star } from 'lucide-react';
 
 interface Partner {
   id: number;
@@ -20,7 +20,6 @@ const Partners: React.FC<PartnersProps> = ({ language = 'fr' }) => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentCategory, setCurrentCategory] = useState(0);
 
   // Fonction pour récupérer les partenaires depuis l'API
   const fetchPartners = async () => {
@@ -47,21 +46,6 @@ const Partners: React.FC<PartnersProps> = ({ language = 'fr' }) => {
     fetchPartners();
   }, []);
 
-  // Fonction pour naviguer entre les catégories
-  const nextCategory = () => {
-    const availableCategories = content[language].categories.filter(cat => 
-      getPartnersByType(cat.type).length > 0
-    );
-    setCurrentCategory((prev) => (prev + 1) % availableCategories.length);
-  };
-
-  const prevCategory = () => {
-    const availableCategories = content[language].categories.filter(cat => 
-      getPartnersByType(cat.type).length > 0
-    );
-    setCurrentCategory((prev) => prev === 0 ? availableCategories.length - 1 : prev - 1);
-  };
-
   // Fonction pour filtrer les partenaires par type
   const getPartnersByType = (type: string): Partner[] => {
     return partners.filter(partner => partner.type === type);
@@ -72,15 +56,15 @@ const Partners: React.FC<PartnersProps> = ({ language = 'fr' }) => {
     if (count === 1) {
       return "flex justify-center";
     } else if (count === 2) {
-      return "grid grid-cols-2 gap-6 max-w-md mx-auto";
+      return "grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg mx-auto";
     } else if (count === 3) {
-      return "grid grid-cols-3 gap-6 max-w-3xl mx-auto";
+      return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto";
     } else if (count === 4) {
-      return "grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto";
-    } else if (count === 5) {
-      return "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6";
+      return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto";
+    } else if (count <= 6) {
+      return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
     } else {
-      return "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6";
+      return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6";
     }
   };
 
@@ -108,19 +92,31 @@ const Partners: React.FC<PartnersProps> = ({ language = 'fr' }) => {
           title: 'Partenaires Institutionnels',
           type: 'Institutionnels',
           icon: Building2,
-          description: 'Organismes publics et institutions gouvernementales'
+          description: 'Organismes publics et institutions gouvernementales',
+          gradient: 'from-blue-500 to-cyan-600',
+          bgGradient: 'from-blue-50 to-cyan-50',
+          borderColor: 'border-blue-200',
+          accentColor: 'text-blue-600'
         },
         {
           title: 'Partenaires Industriels & Technologiques',
           type: 'Industriels & Technologiques',
           icon: Award,
-          description: 'Entreprises leaders dans l\'innovation technologique'
+          description: 'Entreprises leaders dans l\'innovation technologique',
+          gradient: 'from-emerald-500 to-teal-600',
+          bgGradient: 'from-emerald-50 to-teal-50',
+          borderColor: 'border-emerald-200',
+          accentColor: 'text-emerald-600'
         },
         {
           title: 'Centres de Recherche & Innovation',
           type: 'Centres de Recherche & Innovation',
           icon: Users,
-          description: 'Laboratoires et centres de recherche avancée'
+          description: 'Laboratoires et centres de recherche avancée',
+          gradient: 'from-purple-500 to-pink-600',
+          bgGradient: 'from-purple-50 to-pink-50',
+          borderColor: 'border-purple-200',
+          accentColor: 'text-purple-600'
         }
       ],
       loading: 'Chargement des partenaires...',
@@ -156,19 +152,31 @@ const Partners: React.FC<PartnersProps> = ({ language = 'fr' }) => {
           title: 'Institutional Partners',
           type: 'Institutionnels',
           icon: Building2,
-          description: 'Public organizations and government institutions'
+          description: 'Public organizations and government institutions',
+          gradient: 'from-blue-500 to-cyan-600',
+          bgGradient: 'from-blue-50 to-cyan-50',
+          borderColor: 'border-blue-200',
+          accentColor: 'text-blue-600'
         },
         {
           title: 'Industry & Technology Partners',
           type: 'Industriels & Technologiques',
           icon: Award,
-          description: 'Leading companies in technological innovation'
+          description: 'Leading companies in technological innovation',
+          gradient: 'from-emerald-500 to-teal-600',
+          bgGradient: 'from-emerald-50 to-teal-50',
+          borderColor: 'border-emerald-200',
+          accentColor: 'text-emerald-600'
         },
         {
           title: 'Research & Innovation Centers',
           type: 'Centres de Recherche & Innovation',
           icon: Users,
-          description: 'Advanced research laboratories and centers'
+          description: 'Advanced research laboratories and centers',
+          gradient: 'from-purple-500 to-pink-600',
+          bgGradient: 'from-purple-50 to-pink-50',
+          borderColor: 'border-purple-200',
+          accentColor: 'text-purple-600'
         }
       ],
       loading: 'Loading partners...',
@@ -310,11 +318,11 @@ const Partners: React.FC<PartnersProps> = ({ language = 'fr' }) => {
         </div>
       </section>
 
-      {/* Section Partenaires (existante) */}
+      {/* Section Partenaires - Affichage groupé */}
       <section className="py-24 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50" id='partners'>
         <div className="container mx-auto px-6 relative">
           <div className="max-w-7xl mx-auto">
-            {/* En-tête de section amélioré */}
+            {/* En-tête de section */}
             <div className="text-center mb-20">
               <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-slate-800 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-6 leading-tight">
                 {content[language].title}
@@ -324,133 +332,121 @@ const Partners: React.FC<PartnersProps> = ({ language = 'fr' }) => {
               </p>
             </div>
             
-            {/* Navigation et affichage des catégories */}
-            {(() => {
-              const availableCategories = content[language].categories.filter(cat => 
-                getPartnersByType(cat.type).length > 0
-              );
-              
-              if (availableCategories.length === 0) {
+            {/* Affichage des catégories */}
+            <div className="space-y-20">
+              {content[language].categories.map((category, categoryIndex) => {
+                const categoryPartners = getPartnersByType(category.type);
+                const IconComponent = category.icon;
+                
+                // Ne pas afficher la catégorie si elle n'a pas de partenaires
+                if (categoryPartners.length === 0) return null;
+
                 return (
-                  <div className="text-center py-20">
-                    <div className="w-24 h-24 bg-slate-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-                      <Users className="w-12 h-12 text-slate-400" />
-                    </div>
-                    <p className="text-xl text-slate-500 font-medium">
-                      {content[language].noPartners}
-                    </p>
-                  </div>
-                );
-              }
-
-              const currentCat = availableCategories[currentCategory];
-              const categoryPartners = getPartnersByType(currentCat.type);
-              const IconComponent = currentCat.icon;
-
-              return (
-                <div className="relative">
-                  {/* Contrôles de navigation améliorés */}
-                  <div className="flex items-center justify-between mb-16">
-                    {/* Flèche gauche */}
-                    <button
-                      onClick={prevCategory}
-                      disabled={availableCategories.length <= 1}
-                      className="group bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transform hover:scale-110"
-                    >
-                      <ChevronLeft className="w-6 h-6 text-slate-600 group-hover:text-blue-600 transition-colors duration-300" />
-                    </button>
-
-                    {/* Titre de catégorie et indicateurs améliorés */}
-                    <div className="text-center flex-1 px-8">
-                      <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-white/20">
-                        <div className="flex items-center justify-center mb-4">
-                          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
-                            <IconComponent className="w-8 h-8 text-white" />
-                          </div>
-                          <div className="text-left">
-                            <h3 className="text-3xl font-bold text-slate-800 mb-2">
-                              {currentCat.title}
-                            </h3>
-                            <p className="text-slate-600 text-sm">
-                              {currentCat.description}
-                            </p>
-                          </div>
+                  <div 
+                    key={category.type}
+                    className="relative"
+                    style={{ 
+                      animationDelay: `${categoryIndex * 300}ms`,
+                      animation: 'fadeInUp 0.8s ease-out forwards'
+                    }}
+                  >
+                    {/* En-tête de catégorie */}
+                    <div className={`bg-gradient-to-r ${category.bgGradient} rounded-3xl p-8 mb-12 border ${category.borderColor} shadow-lg`}>
+                      <div className="flex items-center justify-center mb-6">
+                        <div className={`w-20 h-20 bg-gradient-to-br ${category.gradient} rounded-2xl flex items-center justify-center mr-6 shadow-lg transform hover:scale-110 transition-transform duration-300`}>
+                          <IconComponent className="w-10 h-10 text-white" />
                         </div>
-                        
-                        {/* Indicateurs de pagination améliorés */}
-                        {availableCategories.length > 1 && (
-                          <div className="flex justify-center space-x-3 mt-6">
-                            {availableCategories.map((_, index) => (
-                              <button
-                                key={index}
-                                onClick={() => setCurrentCategory(index)}
-                                className={`transition-all duration-300 rounded-full ${
-                                  index === currentCategory 
-                                    ? 'w-10 h-3 bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg' 
-                                    : 'w-3 h-3 bg-slate-300 hover:bg-slate-400 hover:scale-125'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        )}
+                        <div className="text-center">
+                          <h3 className={`text-3xl md:text-4xl font-bold ${category.accentColor} mb-2`}>
+                            {category.title}
+                          </h3>
+                          <p className="text-slate-600 text-lg max-w-2xl">
+                            {category.description}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Compteur de partenaires */}
+                      <div className="text-center">
+                        <span className={`inline-flex items-center px-6 py-3 bg-white/80 backdrop-blur-sm rounded-full text-lg font-semibold ${category.accentColor} shadow-md`}>
+                          <Star className="w-5 h-5 mr-2" />
+                          {categoryPartners.length} {language === 'fr' ? 'partenaire(s)' : 'partner(s)'}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Flèche droite */}
-                    <button
-                      onClick={nextCategory}
-                      disabled={availableCategories.length <= 1}
-                      className="group bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transform hover:scale-110"
-                    >
-                      <ChevronRight className="w-6 h-6 text-slate-600 group-hover:text-blue-600 transition-colors duration-300" />
-                    </button>
-                  </div>
-
-                  {/* Grille de partenaires avec animations */}
-                  <div className={getGridClasses(categoryPartners.length)}>
-                    {categoryPartners.map((partner, partnerIndex) => (
-                      <Card 
-                        key={partner.id} 
-                        className="group bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden transform hover:scale-105 hover:-translate-y-2"
-                        style={{ 
-                          animationDelay: `${partnerIndex * 100}ms`,
-                          animation: 'fadeInUp 0.6s ease-out forwards'
-                        }}
-                      >
-                        <CardContent className="p-8 text-center">
-                          {/* Conteneur du logo amélioré */}
-                          <div className="relative w-24 h-24 mx-auto mb-6">
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl transform rotate-6 group-hover:rotate-12 transition-transform duration-300"></div>
-                            <div className="relative w-full h-full bg-white rounded-2xl shadow-lg flex items-center justify-center p-3 group-hover:shadow-xl transition-shadow duration-300">
-                              <img 
-                                src={`http://localhost:8000/storage/${partner.image}`}
-                                alt={`Logo ${language === 'fr' ? partner.name_fr : partner.name_en}`}
-                                className="max-w-full max-h-full object-contain filter group-hover:brightness-110 transition-all duration-300"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = '/storage/images/default-partner.png';
-                                  target.onerror = null;
-                                }}
-                              />
+                    {/* Grille de partenaires */}
+                    <div className={getGridClasses(categoryPartners.length)}>
+                      {categoryPartners.map((partner, partnerIndex) => (
+                        <Card 
+                          key={partner.id} 
+                          className={`group bg-white/90 backdrop-blur-sm border-2 ${category.borderColor} shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden transform hover:scale-105 hover:-translate-y-2`}
+                          style={{ 
+                            animationDelay: `${(categoryIndex * 300) + (partnerIndex * 100)}ms`,
+                            animation: 'fadeInUp 0.6s ease-out forwards'
+                          }}
+                        >
+                          <CardContent className="p-8 text-center relative">
+                            {/* Accent décoratif */}
+                            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${category.gradient} rounded-t-2xl`}></div>
+                            
+                            {/* Conteneur du logo */}
+                            <div className="relative w-24 h-24 mx-auto mb-6">
+                              <div className={`absolute inset-0 bg-gradient-to-br ${category.bgGradient} rounded-2xl transform rotate-6 group-hover:rotate-12 transition-transform duration-300`}></div>
+                              <div className="relative w-full h-full bg-white rounded-2xl shadow-lg flex items-center justify-center p-3 group-hover:shadow-xl transition-shadow duration-300">
+                                <img 
+                                  src={`http://localhost:8000/storage/${partner.image}`}
+                                  alt={`Logo ${language === 'fr' ? partner.name_fr : partner.name_en}`}
+                                  className="max-w-full max-h-full object-contain filter group-hover:brightness-110 transition-all duration-300"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/storage/images/default-partner.png';
+                                    target.onerror = null;
+                                  }}
+                                />
+                              </div>
                             </div>
-                          </div>
 
-                          {/* Nom du partenaire amélioré */}
-                          <h4 className="font-bold text-slate-800 text-lg group-hover:text-blue-600 transition-colors duration-300 leading-tight">
-                            {language === 'fr' ? partner.name_fr : partner.name_en}
-                          </h4>
-                          
-                          {/* Barre de progression animée */}
-                          <div className="w-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-600 mx-auto mt-4 rounded-full group-hover:w-full transition-all duration-500"></div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                            {/* Nom du partenaire */}
+                            <h4 className={`font-bold text-slate-800 text-lg group-hover:${category.accentColor} transition-colors duration-300 leading-tight`}>
+                              {language === 'fr' ? partner.name_fr : partner.name_en}
+                            </h4>
+                            
+                            {/* Barre de progression animée avec couleur de catégorie */}
+                            <div className={`w-0 h-1 bg-gradient-to-r ${category.gradient} mx-auto mt-4 rounded-full group-hover:w-full transition-all duration-500`}></div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+
+                    {/* Séparateur entre catégories (sauf pour la dernière) */}
+                    {categoryIndex < content[language].categories.filter(cat => getPartnersByType(cat.type).length > 0).length - 1 && (
+                      <div className="flex justify-center items-center mt-16">
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+                        <div className={`mx-8 w-8 h-8 bg-gradient-to-br ${category.gradient} rounded-full flex items-center justify-center shadow-lg`}>
+                          <div className="w-3 h-3 bg-white rounded-full"></div>
+                        </div>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              );
-            })()}
+                );
+              })}
+            </div>
 
-            {/* Section statistiques améliorée */}
+            {/* Vérification si aucune catégorie n'a de partenaires */}
+            {content[language].categories.every(cat => getPartnersByType(cat.type).length === 0) && (
+              <div className="text-center py-20">
+                <div className="w-24 h-24 bg-slate-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+                  <Users className="w-12 h-12 text-slate-400" />
+                </div>
+                <p className="text-xl text-slate-500 font-medium">
+                  {content[language].noPartners}
+                </p>
+              </div>
+            )}
+
+            {/* Section statistiques */}
             {partners.length > 0 && (
               <div className="mt-24">
                 <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-12 shadow-2xl border border-white/20">
