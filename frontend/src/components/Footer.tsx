@@ -9,7 +9,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
   const content = {
     fr: {
       copyright: '© 2024 SITE 2025. Tous droits réservés.',
-      organizedBy: 'Organisé par ISET Bizerte',
+      organizedBy: 'Organisé par',
       followUs: 'Suivez-nous',
       links: [
         { label: 'Politique de confidentialité', href: '#' },
@@ -19,7 +19,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
     },
     en: {
       copyright: '© 2024 SITE 2025. All rights reserved.',
-      organizedBy: 'Organized by ISET Bizerte',
+      organizedBy: 'Organized by',
       followUs: 'Follow Us',
       links: [
         { label: 'Privacy Policy', href: '#' },
@@ -37,6 +37,9 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
       
       <div className="relative z-10 container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
+          {/* Section organisateurs en haut du footer */}
+        
+
           {/* Main content grid */}
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             
@@ -56,7 +59,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
               </div>
               <div className="flex items-start space-x-2 text-sm opacity-90">
                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>{content[language].organizedBy}</span>
+                <span>Bizerte, Tunisie</span>
               </div>
             </div>
             
@@ -156,7 +159,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
               </p>
               <div className="flex items-center space-x-2 text-sm opacity-75">
                 <span>Made with ❤️</span>
-                <span>for iset Bizerte</span>
+                <span>for ISET Bizerte & ADT</span>
               </div>
             </div>
           </div>
