@@ -11,11 +11,10 @@ class ThemeController extends Controller
 {
     public function displayAll(Request $request)
     {
-        $language = $request->query('lang', 'fr'); // Par défaut français
+        $language = $request->query('lang', 'fr');
 
-        // Récupérer tous les thèmes actifs avec leurs mots-clés
-        $themes = Theme::active()
-                       ->ordered()
+        // Récupérer tous les thèmes avec leurs mots-clés (pas de filtre actif)
+        $themes = Theme::ordered()
                        ->with('motsCles')
                        ->get();
 
@@ -23,21 +22,26 @@ class ThemeController extends Controller
             $keywords = $theme->motsCles->map(function ($motCle) use ($language) {
                 return [
                     'id' => $motCle->id,
-                    'keyword' => $language === 'en' ? $motCle->keyword_en : $motCle->keyword_fr,
+                    'keywordFr' => $motCle->keyword_fr,
+                    'keywordEn' => $motCle->keyword_en,
                     'order' => $motCle->order
                 ];
             });
 
             return [
                 'id' => $theme->id,
-                'title' => $theme->getTitle($language),
-                'description' => $theme->getDescription($language),
+                'titleFr' => $theme->title_fr,
+                'titleEn' => $theme->title_en,
+                'descriptionFr' => $theme->description_fr,
+                'descriptionEn' => $theme->description_en,
                 'icon' => $theme->icon,
-                'icon_url' => $theme->icon_url, // URL complète pour les fichiers
-                'is_icon_class' => $theme->isIconClass(), // Indique si c'est une classe CSS
+                'icon_url' => $theme->icon_url,
+                'is_icon_class' => $theme->isIconClass(),
+                'color' => $theme->color ?? null,
                 'order' => $theme->order,
-                'keywords' => $keywords,
-                'is_active' => $theme->is_active
+                'sessions' => $theme->sessions,
+                'lastUpdated' => $theme->updated_at,
+                'keywords' => $keywords
             ];
         });
 
@@ -62,35 +66,38 @@ class ThemeController extends Controller
             ];
         });
 
-        $formatted_theme = [
-            'id' => $theme->id,
-            'title' => $theme->getTitle($language),
-            'description' => $theme->getDescription($language),
-            'icon' => $theme->icon,
-            'icon_url' => $theme->icon_url,
-            'is_icon_class' => $theme->isIconClass(),
-            'order' => $theme->order,
-            'keywords' => $keywords,
-            'is_active' => $theme->is_active
-        ];
-
         return response()->json([
             'success' => true,
             'language' => $language,
-            'data' => $formatted_theme
+            'data' => [
+                'id' => $theme->id,
+                'titleFr' => $theme->title_fr,
+                'titleEn' => $theme->title_en,
+                'descriptionFr' => $theme->description_fr,
+                'descriptionEn' => $theme->description_en,
+                'icon' => $theme->icon,
+                'icon_url' => $theme->icon_url,
+                'is_icon_class' => $theme->isIconClass(),
+                'color' => $theme->color ?? null,
+                'order' => $theme->order,
+                'sessions' => $theme->sessions,
+                'lastUpdated' => $theme->updated_at,
+                'keywords' => $keywords
+            ]
         ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title_fr' => 'required|string|max:255',
-            'title_en' => 'required|string|max:255',
-            'description_fr' => 'required|string',
-            'description_en' => 'required|string',
+            'titleFr' => 'required|string|max:255',
+            'titleEn' => 'required|string|max:255',
+            'descriptionFr' => 'required|string',
+            'descriptionEn' => 'required|string',
             'icon' => 'nullable|string|max:255',
+            'color' => 'nullable|string|max:255',
             'order' => 'integer|min:0',
-            'is_active' => 'boolean',
+            'sessions' => 'integer|min:0',
             'keywords' => 'array',
             'keywords.*.keyword_fr' => 'required|string|max:255',
             'keywords.*.keyword_en' => 'required|string|max:255',
@@ -100,18 +107,17 @@ class ThemeController extends Controller
         DB::beginTransaction();
 
         try {
-            // Créer le thème
             $theme = Theme::create([
-                'title_fr' => $validated['title_fr'],
-                'title_en' => $validated['title_en'],
-                'description_fr' => $validated['description_fr'],
-                'description_en' => $validated['description_en'],
+                'title_fr' => $validated['titleFr'],
+                'title_en' => $validated['titleEn'],
+                'description_fr' => $validated['descriptionFr'],
+                'description_en' => $validated['descriptionEn'],
                 'icon' => $validated['icon'] ?? null,
+                'color' => $validated['color'] ?? null,
                 'order' => $validated['order'] ?? 0,
-                'is_active' => $validated['is_active'] ?? true,
+                'sessions' => $validated['sessions'] ?? 0
             ]);
 
-            // Créer les mots-clés s'ils existent
             if (isset($validated['keywords'])) {
                 foreach ($validated['keywords'] as $keyword) {
                     MotsCles::create([
@@ -124,8 +130,6 @@ class ThemeController extends Controller
             }
 
             DB::commit();
-
-            // Recharger le thème avec ses mots-clés
             $theme->load('motsCles');
 
             return response()->json([
@@ -148,13 +152,14 @@ class ThemeController extends Controller
         $theme = Theme::findOrFail($id);
 
         $validated = $request->validate([
-            'title_fr' => 'string|max:255',
-            'title_en' => 'string|max:255',
-            'description_fr' => 'string',
-            'description_en' => 'string',
+            'titleFr' => 'string|max:255',
+            'titleEn' => 'string|max:255',
+            'descriptionFr' => 'string',
+            'descriptionEn' => 'string',
             'icon' => 'nullable|string|max:255',
+            'color' => 'nullable|string|max:255',
             'order' => 'integer|min:0',
-            'is_active' => 'boolean',
+            'sessions' => 'integer|min:0',
             'keywords' => 'array',
             'keywords.*.id' => 'nullable|integer|exists:mots_cles,id',
             'keywords.*.keyword_fr' => 'required|string|max:255',
@@ -165,24 +170,22 @@ class ThemeController extends Controller
         DB::beginTransaction();
 
         try {
-            // Mettre à jour le thème
             $theme->update(array_filter([
-                'title_fr' => $validated['title_fr'] ?? $theme->title_fr,
-                'title_en' => $validated['title_en'] ?? $theme->title_en,
-                'description_fr' => $validated['description_fr'] ?? $theme->description_fr,
-                'description_en' => $validated['description_en'] ?? $theme->description_en,
+                'title_fr' => $validated['titleFr'] ?? $theme->title_fr,
+                'title_en' => $validated['titleEn'] ?? $theme->title_en,
+                'description_fr' => $validated['descriptionFr'] ?? $theme->description_fr,
+                'description_en' => $validated['descriptionEn'] ?? $theme->description_en,
                 'icon' => $validated['icon'] ?? $theme->icon,
+                'color' => $validated['color'] ?? $theme->color,
                 'order' => $validated['order'] ?? $theme->order,
-                'is_active' => $validated['is_active'] ?? $theme->is_active,
+                'sessions' => $validated['sessions'] ?? $theme->sessions
             ]));
 
-            // Gérer les mots-clés s'ils sont fournis
             if (isset($validated['keywords'])) {
                 $existingKeywordIds = [];
 
                 foreach ($validated['keywords'] as $keyword) {
                     if (isset($keyword['id'])) {
-                        // Mettre à jour le mot-clé existant
                         $motCle = MotsCles::findOrFail($keyword['id']);
                         $motCle->update([
                             'keyword_fr' => $keyword['keyword_fr'],
@@ -191,7 +194,6 @@ class ThemeController extends Controller
                         ]);
                         $existingKeywordIds[] = $keyword['id'];
                     } else {
-                        // Créer un nouveau mot-clé
                         $newMotCle = MotsCles::create([
                             'theme_id' => $theme->id,
                             'keyword_fr' => $keyword['keyword_fr'],
@@ -202,15 +204,12 @@ class ThemeController extends Controller
                     }
                 }
 
-                // Supprimer les mots-clés qui ne sont plus dans la liste
                 MotsCles::where('theme_id', $theme->id)
                         ->whereNotIn('id', $existingKeywordIds)
                         ->delete();
             }
 
             DB::commit();
-
-            // Recharger le thème avec ses mots-clés
             $theme->load('motsCles');
 
             return response()->json([
@@ -235,7 +234,6 @@ class ThemeController extends Controller
         DB::beginTransaction();
 
         try {
-            // Les mots-clés seront supprimés automatiquement grâce à onDelete('cascade')
             $theme->delete();
 
             DB::commit();

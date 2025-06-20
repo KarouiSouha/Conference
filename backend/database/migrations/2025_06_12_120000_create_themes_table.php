@@ -28,8 +28,6 @@ return new class extends Migration
             // Ordre d'affichage
             $table->integer('order')->default(0);
 
-            // Statut actif/inactif
-            $table->boolean('is_active')->default(true);
 
             $table->timestamps();
         });
