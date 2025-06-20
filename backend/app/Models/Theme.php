@@ -15,12 +15,13 @@ class Theme extends Model
         'description_en',
         'icon',
         'order',
-        'is_active'
+        'sessions',
+        'color'
+
     ];
 
     protected $casts = [
-        'order' => 'integer',
-        'is_active' => 'boolean'
+        'order' => 'integer'
     ];
 
     /**
@@ -31,13 +32,6 @@ class Theme extends Model
         return $this->hasMany(MotsCles::class)->orderBy('order');
     }
 
-    /**
-     * Scope pour les thèmes actifs
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
 
     /**
      * Scope pour ordonner les thèmes
