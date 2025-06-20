@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { X, Save, Tag, Globe, Info, List, Palette, ChevronDown, Plus, Eye, Sparkles, Edit } from "lucide-react";
+import { X, Save, Tag, Info, List, Palette, ChevronDown, Plus, Eye, Sparkles, Edit } from "lucide-react";
 
 interface Keyword {
   id: number;
   keywordFr: string;
   keywordEn: string;
+  order: number;
 }
 
 interface Theme {
@@ -16,7 +17,7 @@ interface Theme {
   icon: string;
   color: string;
   order: number;
-  isActive: boolean;
+  sessions?: number;
   keywords: Keyword[];
 }
 
@@ -27,18 +28,39 @@ interface ThemeFormProps {
   nextOrder: number;
 }
 
+const iconMapping: { [key: string]: string } = {
+  "📚": "fa-book",
+  "🔬": "fa-flask",
+  "💡": "fa-lightbulb",
+  "🌐": "fa-globe",
+  "🧪": "fa-vial",
+  "⚙️": "fa-cogs",
+  "🧠": "fa-brain",
+  "🔍": "fa-search",
+  "📊": "fa-chart-bar",
+  "🤖": "fa-robot",
+  "🧬": "fa-dna",
+  "🌱": "fa-leaf",
+  "🔒": "fa-lock",
+  "🎨": "fa-paint-brush",
+  "🚀": "fa-rocket",
+  "💻": "fa-laptop-code",
+  "♻️": "fa-recycle",         // ajouté
+  "📈": "fa-chart-line"       // ajouté
+};
+
+
 export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFormProps) {
   const [formData, setFormData] = useState<Theme>({
     titleFr: "",
     titleEn: "",
     descriptionFr: "",
     descriptionEn: "",
-    icon: "📚",
+    icon: "fa-book",
     color: "#6366F1",
     order: nextOrder,
-    isActive: true,
+    sessions: 0,
     keywords: [],
-    ...theme
   });
 
   const [newKeywordFr, setNewKeywordFr] = useState("");
@@ -49,22 +71,44 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
 
   const icons = ["📚", "🔬", "💡", "🌐", "🧪", "⚙️", "🧠", "🔍", "📊", "🤖", "🧬", "🌱", "🔒", "🎨", "🚀", "💻"];
   const colors = [
-    "#6366F1", "#8B5CF6", "#EC4899", "#EF4444", "#F59E0B", 
+    "#6366F1", "#8B5CF6", "#EC4899", "#EF4444", "#F59E0B",
     "#10B981", "#06B6D4", "#3B82F6", "#F97316", "#84CC16",
     "#6B7280", "#1F2937"
   ];
 
-  // Détermine si c'est un mode édition ou création
-  const isEditMode = Boolean(theme && theme.id);
+  const isEditMode = Boolean(theme?.id);
 
   useEffect(() => {
     if (theme) {
-      setFormData(theme);
+      setFormData({
+        id: theme.id,
+        titleFr: theme.titleFr || "",
+        titleEn: theme.titleEn || "",
+        descriptionFr: theme.descriptionFr || "",
+        descriptionEn: theme.descriptionEn || "",
+        icon: theme.icon || "fa-book",
+        color: theme.color || "#6366F1",
+        order: theme.order || nextOrder,
+        sessions: theme.sessions || 0,
+        keywords: theme.keywords?.map(kw => ({
+          id: kw.id,
+          keywordFr: kw.keywordFr,
+          keywordEn: kw.keywordEn,
+          order: kw.order,
+        })) || [],
+      });
     } else {
-      setFormData(prev => ({
-        ...prev,
-        order: nextOrder
-      }));
+      setFormData({
+        titleFr: "",
+        titleEn: "",
+        descriptionFr: "",
+        descriptionEn: "",
+        icon: "fa-book",
+        color: "#6366F1",
+        order: nextOrder,
+        sessions: 0,
+        keywords: [],
+      });
     }
   }, [theme, nextOrder]);
 
@@ -78,7 +122,15 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    const mappedIcon = iconMapping[formData.icon] || formData.icon;
+    onSave({
+      ...formData,
+      icon: mappedIcon,
+      keywords: formData.keywords.map((kw, index) => ({
+        ...kw,
+        order: kw.order || index + 1,
+      })),
+    });
   };
 
   const addKeyword = () => {
@@ -86,14 +138,15 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
       const newKeyword = {
         id: Date.now(),
         keywordFr: newKeywordFr.trim(),
-        keywordEn: newKeywordEn.trim()
+        keywordEn: newKeywordEn.trim(),
+        order: formData.keywords.length + 1,
       };
-      
+
       setFormData(prev => ({
         ...prev,
         keywords: [...prev.keywords, newKeyword]
       }));
-      
+
       setNewKeywordFr("");
       setNewKeywordEn("");
       setShowKeywordForm(false);
@@ -107,10 +160,13 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
     }));
   };
 
+  const reverseIconMapping: { [key: string]: string } = Object.fromEntries(
+    Object.entries(iconMapping).map(([emoji, faClass]) => [faClass, emoji])
+  );
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[95vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-        {/* Header avec gradient */}
         <div className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 p-8 text-white relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
           <div className="relative flex items-center justify-between">
@@ -131,7 +187,7 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                 </p>
               </div>
             </div>
-            <button 
+            <button
               onClick={onClose}
               className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-200 flex items-center justify-center border border-white/20 hover:border-white/40"
             >
@@ -140,16 +196,14 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
           </div>
         </div>
 
-        {/* Form avec scrolling */}
         <div className="max-h-[calc(95vh-200px)] overflow-y-auto">
           <div className="p-8 space-y-8">
-            {/* Section Informations générales */}
             <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-200/50">
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
                 <Info className="w-5 h-5 mr-2 text-indigo-600" />
                 Informations générales
               </h3>
-              
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-6">
                   <div>
@@ -183,7 +237,7 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                     />
                   </div>
                 </div>
-                
+
                 <div className="space-y-6">
                   <div>
                     <label htmlFor="titleEn" className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
@@ -219,15 +273,13 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
               </div>
             </div>
 
-            {/* Section Apparence */}
             <div className="bg-gradient-to-br from-purple-50 to-white p-6 rounded-2xl border border-purple-200/50">
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
                 <Palette className="w-5 h-5 mr-2 text-purple-600" />
                 Apparence et style
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Icône */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
                     <span className="mr-2">🎭</span> Icône
@@ -238,10 +290,10 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                       onClick={() => setShowIconPicker(!showIconPicker)}
                       className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl flex items-center justify-between bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 hover:border-purple-300 hover:shadow-lg"
                     >
-                      <span className="text-3xl">{formData.icon}</span>
+                      <span className="text-3xl">{reverseIconMapping[formData.icon] || formData.icon}</span>
                       <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showIconPicker ? "rotate-180" : ""}`} />
                     </button>
-                    
+
                     {showIconPicker && (
                       <div className="absolute z-20 mt-2 w-full bg-white/95 backdrop-blur-md border-2 border-gray-200 rounded-2xl shadow-2xl p-4 grid grid-cols-4 gap-3 animate-in fade-in zoom-in-95 duration-200">
                         {icons.map((icon) => (
@@ -249,7 +301,7 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                             key={icon}
                             type="button"
                             onClick={() => {
-                              setFormData(prev => ({ ...prev, icon }));
+                              setFormData(prev => ({ ...prev, icon: iconMapping[icon] }));
                               setShowIconPicker(false);
                             }}
                             className="text-2xl p-3 hover:bg-purple-100 rounded-xl transition-all duration-200 hover:scale-110"
@@ -262,7 +314,6 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                   </div>
                 </div>
 
-                {/* Couleur */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
                     <span className="mr-2">🎨</span> Couleur
@@ -271,10 +322,10 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                     <button
                       type="button"
                       onClick={() => setShowColorPicker(!showColorPicker)}
-                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl flex items-center justify-between bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 hover:border-purple-300 hover:shadow-lg"
+                      className="w-full px-4 pyemd-4 border-2 border-gray-200 rounded-xl flex items-center justify-between bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 hover:border-purple-300 hover:shadow-lg"
                     >
                       <div className="flex items-center">
-                        <div 
+                        <div
                           className="w-7 h-7 rounded-full mr-3 border-2 border-white shadow-lg"
                           style={{ backgroundColor: formData.color }}
                         ></div>
@@ -282,7 +333,7 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                       </div>
                       <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showColorPicker ? "rotate-180" : ""}`} />
                     </button>
-                    
+
                     {showColorPicker && (
                       <div className="absolute z-20 mt-2 w-full bg-white/95 backdrop-blur-md border-2 border-gray-200 rounded-2xl shadow-2xl p-4 grid grid-cols-4 gap-3 animate-in fade-in zoom-in-95 duration-200">
                         {colors.map((color) => (
@@ -295,7 +346,7 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                             }}
                             className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-110 flex items-center justify-center"
                           >
-                            <div 
+                            <div
                               className="w-8 h-8 rounded-full border-2 border-white shadow-lg"
                               style={{ backgroundColor: color }}
                             ></div>
@@ -306,7 +357,6 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                   </div>
                 </div>
 
-                {/* Ordre */}
                 <div>
                   <label htmlFor="order" className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
                     <span className="mr-2">🔢</span> Ordre
@@ -323,42 +373,8 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                   />
                 </div>
               </div>
-
-              {/* Statut */}
-              <div className="mt-6">
-                <label className="block text-sm font-semibold text-gray-800 mb-4">Statut du thème</label>
-                <div className="flex items-center space-x-6">
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      name="isActive"
-                      checked={formData.isActive}
-                      onChange={() => setFormData(prev => ({ ...prev, isActive: true }))}
-                      className="h-5 w-5 text-emerald-600 focus:ring-emerald-500 focus:ring-2"
-                    />
-                    <span className="ml-3 text-gray-800 font-medium flex items-center">
-                      <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
-                      Actif
-                    </span>
-                  </label>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      name="isActive"
-                      checked={!formData.isActive}
-                      onChange={() => setFormData(prev => ({ ...prev, isActive: false }))}
-                      className="h-5 w-5 text-gray-600 focus:ring-gray-500 focus:ring-2"
-                    />
-                    <span className="ml-3 text-gray-800 font-medium flex items-center">
-                      <span className="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
-                      Inactif
-                    </span>
-                  </label>
-                </div>
-              </div>
             </div>
 
-            {/* Section Mots-clés */}
             <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl border border-blue-200/50">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -375,7 +391,6 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                 </button>
               </div>
 
-              {/* Form pour nouveau mot-clé */}
               {showKeywordForm && (
                 <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl mb-6 border border-blue-200 animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -418,14 +433,13 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
                 </div>
               )}
 
-              {/* Liste des mots-clés */}
               {formData.keywords.length > 0 ? (
                 <div className="flex flex-wrap gap-3">
                   {formData.keywords.map((keyword) => (
-                    <div 
+                    <div
                       key={keyword.id}
                       className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 shadow-sm"
-                      style={{ 
+                      style={{
                         backgroundColor: formData.color + '20',
                         color: formData.color,
                         border: `2px solid ${formData.color}40`
@@ -450,50 +464,42 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
               )}
             </div>
 
-            {/* Aperçu */}
             <div className="bg-gradient-to-br from-emerald-50 to-white p-6 rounded-2xl border border-emerald-200/50">
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
                 <Eye className="w-5 h-5 mr-2 text-emerald-600" />
                 Aperçu du thème
               </h3>
-              <div 
+              <div
                 className="bg-white/80 backdrop-blur-sm border-2 border-gray-200 rounded-2xl p-8 group hover:shadow-2xl transition-all duration-500 hover:scale-[1.02]"
                 style={{ borderLeft: `6px solid ${formData.color}` }}
               >
                 <div className="flex items-start space-x-6 mb-6">
-                  <div 
+                  <div
                     className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-xl border-2"
-                    style={{ 
+                    style={{
                       backgroundColor: formData.color + '20',
                       borderColor: formData.color + '40',
                     }}
                   >
-                    {formData.icon}
+                    {reverseIconMapping[formData.icon] || formData.icon}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-xl font-bold text-gray-900">{formData.titleFr || "Titre du thème"}</h4>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        formData.isActive 
-                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
-                          : 'bg-gray-100 text-gray-600 border border-gray-200'
-                      }`}>
-                        {formData.isActive ? 'Actif' : 'Inactif'}
-                      </span>
                     </div>
                     <p className="text-sm text-gray-500 mb-1">{formData.titleEn || "Theme title"}</p>
                     <p className="text-gray-700 mb-2">{formData.descriptionFr || "Description du thème..."}</p>
                     <p className="text-sm text-gray-500 italic">{formData.descriptionEn || "Theme description..."}</p>
                   </div>
                 </div>
-                
+
                 {formData.keywords.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {formData.keywords.slice(0, 4).map((keyword) => (
-                      <span 
+                      <span
                         key={keyword.id}
                         className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-                        style={{ 
+                        style={{
                           backgroundColor: formData.color + '15',
                           color: formData.color,
                         }}
@@ -513,10 +519,8 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
           </div>
         </div>
 
-        {/* Actions fixées en bas - Boutons améliorés */}
         <div className="bg-white/95 backdrop-blur-md border-t border-gray-200 p-6">
           <div className="flex flex-col sm:flex-row gap-4 sm:justify-end">
-            {/* Bouton Annuler */}
             <button
               type="button"
               onClick={onClose}
@@ -526,13 +530,12 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
               <span>Annuler</span>
             </button>
 
-            {/* Bouton Enregistrer/Modifier */}
             <button
               type="submit"
               onClick={handleSubmit}
               className={`w-full sm:w-auto px-8 py-3 text-white rounded-2xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-xl hover:shadow-2xl hover:scale-105 font-semibold ${
-                isEditMode 
-                  ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600' 
+                isEditMode
+                  ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600'
                   : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700'
               }`}
             >

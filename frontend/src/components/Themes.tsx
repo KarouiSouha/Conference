@@ -48,14 +48,15 @@ interface Keyword {
 
 interface Theme {
   id: number;
-  title: string;
-  description: string;
+  titleFr: string;
+  titleEn: string;
+  descriptionFr: string;
+  descriptionEn: string;
   icon: string;
   icon_url: string;
   is_icon_class: boolean;
   order: number;
   keywords: Keyword[];
-  is_active: boolean;
 }
 
 interface ThemesProps {
@@ -65,7 +66,6 @@ interface ThemesProps {
 
 // Mapping des icônes FontAwesome vers Lucide React
 const fontAwesomeToLucideMap: { [key: string]: React.ComponentType<React.SVGProps<SVGSVGElement>> } = {
-  // Technologies Web
   'fa-code': Code,
   'fa-laptop-code': Computer,
   'fa-html5': Code,
@@ -74,39 +74,27 @@ const fontAwesomeToLucideMap: { [key: string]: React.ComponentType<React.SVGProp
   'fa-react': Code,
   'fa-vue': Code,
   'fa-angular': Code,
-  
-  // Intelligence Artificielle
   'fa-brain': Brain,
   'fa-robot': Brain,
   'fa-neural-network': Brain,
   'fa-microchip': Microscope,
-  
-  // Base de données
   'fa-database': Database,
   'fa-server': Database,
   'fa-hdd': Database,
-  
-  // Cybersécurité
   'fa-shield': Shield,
   'fa-shield-alt': Shield,
   'fa-lock': Lock,
   'fa-key': Lock,
   'fa-fingerprint': Shield,
-  
-  // DevOps et Cloud
   'fa-cloud': Cloud,
   'fa-docker': Cloud,
   'fa-aws': Cloud,
   'fa-digital-ocean': Cloud,
-  
-  // Mobile
   'fa-mobile': Smartphone,
   'fa-mobile-alt': Smartphone,
   'fa-tablet': Smartphone,
   'fa-android': Smartphone,
   'fa-apple': Smartphone,
-  
-  // Général
   'fa-lightbulb': Lightbulb,
   'fa-globe': Globe,
   'fa-search': Search,
@@ -140,19 +128,16 @@ const fontAwesomeToLucideMap: { [key: string]: React.ComponentType<React.SVGProp
 };
 
 // Fonction pour obtenir l'icône appropriée
-const getIconComponent = (theme: Theme): React.ComponentType<React.SVGProps<SVGSVGElement>> => {
-  // Si c'est une classe CSS (FontAwesome), utiliser le mapping
+const getIconComponent = (theme: Theme, language: 'fr' | 'en'): React.ComponentType<React.SVGProps<SVGSVGElement>> => {
   if (theme.is_icon_class && theme.icon) {
     const mappedIcon = fontAwesomeToLucideMap[theme.icon];
     if (mappedIcon) {
       return mappedIcon;
     }
   }
-  
-  // Si c'est un fichier image, on ne peut pas l'utiliser avec Lucide
-  // Dans ce cas, essayer de deviner l'icône basée sur le titre
-  const title = theme.title.toLowerCase();
-  
+
+  const title = (language === 'fr' ? theme.titleFr : theme.titleEn)?.toLowerCase() || '';
+
   if (title.includes('web') || title.includes('technolog') || title.includes('informatique') || title.includes('digital')) {
     return Computer;
   } else if (title.includes('intelligence') || title.includes('ai') || title.includes('ia') || title.includes('machine learning')) {
@@ -181,56 +166,52 @@ const getIconComponent = (theme: Theme): React.ComponentType<React.SVGProps<SVGS
     return Globe;
   }
 
-  // Icône par défaut
   return FileText;
 };
 
-// Fonction pour afficher l'icône (gestion des fichiers images)
-const IconDisplay: React.FC<{ theme: Theme; className?: string }> = ({ theme, className = "w-7 h-7" }) => {
-  const IconComponent = getIconComponent(theme);
-  
-  // Si c'est un fichier image et qu'on a une URL
+// Fonction pour afficher l'icône
+const IconDisplay: React.FC<{ theme: Theme; language: 'fr' | 'en'; className?: string }> = ({ theme, language, className = "w-7 h-7" }) => {
+  const IconComponent = getIconComponent(theme, language);
+
   if (!theme.is_icon_class && theme.icon_url) {
     return (
-      <img 
-        src={theme.icon_url} 
-        alt={theme.title} 
+      <img
+        src={theme.icon_url}
+        alt={language === 'fr' ? theme.titleFr : theme.titleEn}
         className={className}
         onError={(e) => {
-          // En cas d'erreur de chargement, remplacer par l'icône par défaut
           const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
           const parent = target.parentElement;
-          if (parent) {
-            parent.innerHTML = '';
-            const iconElement = document.createElement('div');
-            parent.appendChild(iconElement);
-            // Ici on pourrait utiliser React.render mais c'est plus complexe
-            // On va plutôt fallback sur l'icône component
+          if (parent && !parent.querySelector('.fallback-icon')) {
+            const fallbackIcon = document.createElement('div');
+            fallbackIcon.className = 'fallback-icon';
+            parent.appendChild(fallbackIcon);
+            const iconElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            iconElement.className = className;
+            parent.replaceChild(iconElement, fallbackIcon);
           }
         }}
       />
     );
   }
-  
-  // Sinon utiliser l'icône Lucide
+
   return <IconComponent className={className} />;
 };
 
 // Fonction pour extraire la première phrase
 const getFirstSentence = (text: string): string => {
   if (!text) return '';
-  
-  // Chercher le premier point suivi d'un espace ou fin de chaîne
+
   const match = text.match(/^[^.!?]*[.!?](?:\s|$)/);
   if (match) {
     return match[0].trim();
   }
-  
-  // Si pas de ponctuation trouvée, limiter à 100 caractères avec "..."
+
   if (text.length > 100) {
     return text.substring(0, 97) + '...';
   }
-  
+
   return text;
 };
 
@@ -253,17 +234,15 @@ const Themes: React.FC<ThemesProps> = ({
 
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  // Nombre d'éléments visibles selon la taille d'écran
   const getVisibleItems = () => {
     if (typeof window === 'undefined') return 3;
-    if (window.innerWidth < 768) return 1; // Mobile
-    if (window.innerWidth < 1024) return 2; // Tablet
-    return 3; // Desktop
+    if (window.innerWidth < 768) return 1;
+    if (window.innerWidth < 1024) return 2;
+    return 3;
   };
 
   const [visibleItems, setVisibleItems] = useState(getVisibleItems());
 
-  // Mettre à jour le nombre d'éléments visibles lors du redimensionnement
   useEffect(() => {
     const handleResize = () => {
       setVisibleItems(getVisibleItems());
@@ -273,7 +252,6 @@ const Themes: React.FC<ThemesProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Charger les thèmes depuis l'API Laravel
   useEffect(() => {
     const fetchThemes = async () => {
       try {
@@ -282,11 +260,8 @@ const Themes: React.FC<ThemesProps> = ({
           throw new Error('Erreur lors du chargement des thèmes');
         }
         const data = await response.json();
-
         if (data.success) {
-          // Filtrer seulement les thèmes actifs
-          const activeThemes = data.data.filter((theme: Theme) => theme.is_active);
-          setThemes(activeThemes);
+          setThemes(data.data || []);
         } else {
           throw new Error('Erreur dans la réponse de l\'API');
         }
@@ -317,7 +292,6 @@ const Themes: React.FC<ThemesProps> = ({
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Formulaire soumis:', submitForm);
-    // Ici vous pouvez ajouter la logique de soumission vers votre API
     setIsModalOpen(false);
     setSubmitForm({ nom: '', prenom: '', email: '', fichier: null });
 
@@ -334,7 +308,6 @@ const Themes: React.FC<ThemesProps> = ({
     }
   };
 
-  // Navigation du carousel
   const canGoNext = currentIndex < themes.length - visibleItems;
   const canGoPrev = currentIndex > 0;
 
@@ -350,15 +323,14 @@ const Themes: React.FC<ThemesProps> = ({
     }
   };
 
-  // Auto-scroll (optionnel)
   useEffect(() => {
     const interval = setInterval(() => {
       if (canGoNext) {
         goNext();
       } else {
-        setCurrentIndex(0); // Retour au début
+        setCurrentIndex(0);
       }
-    }, 5000); // Change toutes les 5 secondes
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [currentIndex, canGoNext, goNext]);
@@ -467,7 +439,6 @@ const Themes: React.FC<ThemesProps> = ({
     <section id="themes" className="py-20 bg-gradient-to-br from-background to-secondary/30">
       <div className="container mx-auto px-4">
         <div className="max-w-7xl mx-auto">
-          {/* En-tête de section */}
           <div className="text-center mb-16">
             <div className="flex items-center justify-center mb-6">
               <div className="flex items-center gap-3">
@@ -486,9 +457,7 @@ const Themes: React.FC<ThemesProps> = ({
             </p>
           </div>
 
-          {/* Carousel Container */}
           <div className="relative">
-            {/* Navigation Buttons */}
             <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between pointer-events-none z-10">
               <Button
                 variant="secondary"
@@ -517,7 +486,6 @@ const Themes: React.FC<ThemesProps> = ({
               </Button>
             </div>
 
-            {/* Carousel Content */}
             <div className="overflow-hidden" ref={carouselRef}>
               <div 
                 className="flex transition-transform duration-500 ease-in-out gap-6"
@@ -525,153 +493,113 @@ const Themes: React.FC<ThemesProps> = ({
                   transform: `translateX(-${currentIndex * (100 / visibleItems)}%)`,
                 }}
               >
-                {themes.map((theme, index) => {
-                  const IconComponent = getIconComponent(theme);
+                {themes.map((theme) => (
+                  <div 
+                    key={theme.id}
+                    className="flex-shrink-0"
+                    style={{
+                      width: `calc(${100 / visibleItems}% - ${(visibleItems - 1) * 24 / visibleItems}px)`
+                    }}
+                  >
+                    <Card className="group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border-border bg-card/80 backdrop-blur-sm hover:-translate-y-2 relative overflow-hidden h-full">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-                  return (
-                    <div 
-                      key={theme.id}
-                      className="flex-shrink-0"
-                      style={{
-                        width: `calc(${100 / visibleItems}% - ${(visibleItems - 1) * 24 / visibleItems}px)`
-                      }}
-                    >
-                      <Card className="group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border-border bg-card/80 backdrop-blur-sm hover:-translate-y-2 relative overflow-hidden h-full">
-                        {/* Gradient de fond animé */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                        <CardHeader className="relative">
-                          <div className="flex items-start gap-4 mb-3">
-                            <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                              {!theme.is_icon_class && theme.icon_url ? (
-                                <img 
-                                  src={theme.icon_url} 
-                                  alt={theme.title} 
-                                  className="w-7 h-7 object-contain"
-                                  onError={(e) => {
-                                    // En cas d'erreur, remplacer par l'icône par défaut
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    const parent = target.parentElement;
-                                    if (parent && !parent.querySelector('.fallback-icon')) {
-                                      const fallbackIcon = document.createElement('div');
-                                      fallbackIcon.className = 'fallback-icon';
-                                      const Component = getIconComponent(theme);
-                                      parent.appendChild(fallbackIcon);
-                                    }
-                                  }}
-                                />
-                              ) : (
-                                <IconComponent className="w-7 h-7 text-primary-foreground" />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <CardTitle className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight">
-                                {theme.title}
-                              </CardTitle>
-                            </div>
+                      <CardHeader className="relative">
+                        <div className="flex items-start gap-4 mb-3">
+                          <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <IconDisplay theme={theme} language={language} className="w-7 h-7 text-primary-foreground" />
                           </div>
-                        </CardHeader>
+                          <div className="flex-1">
+                            <CardTitle className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight">
+                              {language === 'fr' ? theme.titleFr : theme.titleEn}
+                            </CardTitle>
+                          </div>
+                        </div>
+                      </CardHeader>
 
-                        <CardContent className="relative space-y-6 flex flex-col">
-                          <p className="text-muted-foreground leading-relaxed text-sm flex-1">
-                            {getFirstSentence(theme.description)}
-                          </p>
+                      <CardContent className="relative space-y-6 flex flex-col">
+                        <p className="text-muted-foreground leading-relaxed text-sm flex-1">
+                          {getFirstSentence(language === 'fr' ? theme.descriptionFr : theme.descriptionEn)}
+                        </p>
 
-                          {/* Bouton voir détails */}
-                          <Modal
-                            trigger={
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-between group/btn hover:bg-primary/10 border border-border hover:border-primary/50 transition-colors duration-300"
-                              >
-                                <span className="flex items-center gap-2">
-                                  <Eye className="w-4 h-4" />
-                                  {content[language].actions.details}
-                                </span>
-                                <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform duration-200" />
-                              </Button>
-                            }
-                            title={theme.title}
+                        <Modal
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-full justify-between group/btn hover:bg-primary/10 border border-border hover:border-primary/50 transition-colors duration-300"
+                            >
+                              <span className="flex items-center gap-2">
+                                <Eye className="w-4 h-4" />
+                                {content[language].actions.details}
+                              </span>
+                              <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform duration-200" />
+                            </Button>
+                          }
+                          title={language === 'fr' ? theme.titleFr : theme.titleEn}
+                        >
+                          <div className="space-y-6">
+                            <div className="flex items-center gap-4">
+                              <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
+                                <IconDisplay theme={theme} language={language} className="w-8 h-8 text-primary-foreground" />
+                              </div>
+                              <div>
+                                <h3 className="text-2xl font-bold text-foreground">{language === 'fr' ? theme.titleFr : theme.titleEn}</h3>
+                              </div>
+                            </div>
+
+                            <div className="bg-secondary/50 rounded-lg p-4 border border-border">
+                              <p className="text-muted-foreground leading-relaxed">{language === 'fr' ? theme.descriptionFr : theme.descriptionEn}</p>
+                            </div>
+
+                            {theme.keywords && theme.keywords.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
+                                  <Search className="w-4 h-4" />
+                                  {content[language].labels.keywords}
+                                </h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {theme.keywords.map((keyword) => (
+                                    <span
+                                      key={keyword.id}
+                                      className="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-medium border border-primary/20 hover:bg-primary/20 transition-colors duration-200"
+                                    >
+                                      {keyword.keyword}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </Modal>
+
+                        <div className="flex gap-3 pt-2">
+                          <Button
+                            size="sm"
+                            onClick={() => scrollToSection('registration')}
+                            className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
                           >
-                            <div className="space-y-6">
-                              <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-                                  {!theme.is_icon_class && theme.icon_url ? (
-                                    <img 
-                                      src={theme.icon_url} 
-                                      alt={theme.title} 
-                                      className="w-8 h-8 object-contain"
-                                      onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = 'none';
-                                      }}
-                                    />
-                                  ) : (
-                                    <IconComponent className="w-8 h-8 text-primary-foreground" />
-                                  )}
-                                </div>
-                                <div>
-                                  <h3 className="text-2xl font-bold text-foreground">{theme.title}</h3>
-                                </div>
-                              </div>
+                            <Users className="w-4 h-4 mr-2" />
+                            {content[language].inscription}
+                          </Button>
 
-                              <div className="bg-secondary/50 rounded-lg p-4 border border-border">
-                                <p className="text-muted-foreground leading-relaxed">{theme.description}</p>
-                              </div>
-
-                              {theme.keywords && theme.keywords.length > 0 && (
-                                <div>
-                                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
-                                    <Search className="w-4 h-4" />
-                                    {content[language].labels.keywords}
-                                  </h4>
-                                  <div className="flex flex-wrap gap-2">
-                                    {theme.keywords.map((keyword) => (
-                                      <span
-                                        key={keyword.id}
-                                        className="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-medium border border-primary/20 hover:bg-primary/20 transition-colors duration-200"
-                                      >
-                                        {keyword.keyword}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </Modal>
-
-                          {/* Boutons d'action */}
-                          <div className="flex gap-3 pt-2">
-                            <Button
-                              size="sm"
-                              onClick={() => scrollToSection('registration')}
-                              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
-                            >
-                              <Users className="w-4 h-4 mr-2" />
-                              {content[language].inscription}
-                            </Button>
-
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => window.location.href = 'https://cmt3.research.microsoft.com/User/Login?ReturnUrl=%2FConference%2FRecent'}
-                              className="flex-1 bg-secondary hover:bg-secondary/80 text-secondary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
-                            >
-                              <Upload className="w-4 h-4 mr-2" />
-                              {content[language].deposit}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  );
-                })}
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => window.location.href = 'https://cmt3.research.microsoft.com/User/Login?ReturnUrl=%2FConference%2FRecent'}
+                            className="flex-1 bg-secondary hover:bg-secondary/80 text-secondary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            {content[language].deposit}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Indicators */}
             <div className="flex justify-center mt-8 gap-2">
               {Array.from({ length: Math.ceil(themes.length / visibleItems) }).map((_, index) => (
                 <button

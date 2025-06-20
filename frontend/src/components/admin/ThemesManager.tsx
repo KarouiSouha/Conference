@@ -1,11 +1,15 @@
-import { useState } from "react";
-import { Search, Plus, Edit, Trash, Tag, Eye, EyeOff, Settings, ArrowUpDown, Filter, MoreVertical, Star, Users, Calendar, TrendingUp, ChevronDown, Zap, Target, Activity } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Plus, Edit, Trash, Tag, ArrowUpDown, Filter, MoreVertical, Star, Users, Calendar, ChevronDown, Target } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCogs, faCode, faRecycle, faChartLine, faChalkboardTeacher, faBook, faRobot, faLeaf, faBookOpen, faFlask, faLightbulb, faGlobe, faVial, faBrain, faSearch, faChartBar, faLock, faPaintBrush, faRocket, faLaptopCode, faDna } from "@fortawesome/free-solid-svg-icons";
 import ThemeForm from "./ThemeForm";
+import { useToast } from "../../hooks/use-toast";
 
 interface Keyword {
   id: number;
   keywordFr: string;
   keywordEn: string;
+  order: number;
 }
 
 interface Theme {
@@ -15,114 +19,133 @@ interface Theme {
   descriptionFr: string;
   descriptionEn: string;
   icon: string;
-  color: string;
+  color: string | null;
   order: number;
-  isActive: boolean;
   sessions: number;
   lastUpdated: string;
-  popularity: number;
   keywords: Keyword[];
 }
 
+const fontAwesomeIcons = {
+  'fa-cogs': faCogs,
+  'fa-code': faCode,
+  'fa-book': faBook,
+  'fa-robot': faRobot,
+  'fa-leaf': faLeaf,
+  'fa-book-open': faBookOpen,
+  'fa-flask': faFlask,
+  'fa-lightbulb': faLightbulb,
+  'fa-globe': faGlobe,
+  'fa-vial': faVial,
+  'fa-brain': faBrain,
+  'fa-search': faSearch,
+  'fa-chart-bar': faChartBar,
+  'fa-lock': faLock,
+  'fa-paint-brush': faPaintBrush,
+  'fa-rocket': faRocket,
+  'fa-laptop-code': faLaptopCode,
+  'fa-dna': faDna,
+  'fa-recycle': faRecycle,
+  'fa-chart-line': faChartLine,
+  'fa-chalkboard-teacher': faChalkboardTeacher,
+};
+
 export default function ThemesManager() {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedThemes, setSelectedThemes] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState("order");
-  const [filterStatus, setFilterStatus] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentTheme, setCurrentTheme] = useState<Theme | null>(null);
+  const [themes, setThemes] = useState<Theme[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [themes, setThemes] = useState<Theme[]>([
-    {
-      id: 1,
-      titleFr: "Intelligence Artificielle",
-      titleEn: "Artificial Intelligence",
-      descriptionFr: "Recherches et applications en IA",
-      descriptionEn: "AI research and applications",
-      icon: "🤖",
-      color: "#6366F1",
-      order: 1,
-      isActive: true,
-      sessions: 23,
-      lastUpdated: "2024-01-15",
-      popularity: 95,
-      keywords: [
-        { id: 1, keywordFr: "apprentissage automatique", keywordEn: "machine learning" },
-        { id: 2, keywordFr: "réseaux de neurones", keywordEn: "neural networks" },
-        { id: 3, keywordFr: "traitement du langage", keywordEn: "natural language processing" },
-      ],
-    },
-    {
-      id: 2,
-      titleFr: "Biotechnologies",
-      titleEn: "Biotechnology",
-      descriptionFr: "Innovations en biotechnologie moderne",
-      descriptionEn: "Modern biotechnology innovations",
-      icon: "🧬",
-      color: "#10B981",
-      order: 2,
-      isActive: true,
-      sessions: 18,
-      lastUpdated: "2024-01-12",
-      popularity: 78,
-      keywords: [
-        { id: 4, keywordFr: "génie génétique", keywordEn: "genetic engineering" },
-        { id: 5, keywordFr: "thérapie génique", keywordEn: "gene therapy" },
-      ],
-    },
-    {
-      id: 3,
-      titleFr: "Développement Durable",
-      titleEn: "Sustainable Development",
-      descriptionFr: "Solutions pour un avenir durable",
-      descriptionEn: "Solutions for a sustainable future",
-      icon: "🌱",
-      color: "#059669",
-      order: 3,
-      isActive: false,
-      sessions: 12,
-      lastUpdated: "2024-01-08",
-      popularity: 65,
-      keywords: [
-        { id: 6, keywordFr: "énergies renouvelables", keywordEn: "renewable energy" },
-        { id: 7, keywordFr: "économie circulaire", keywordEn: "circular economy" },
-      ],
-    },
-    {
-      id: 4,
-      titleFr: "Cybersécurité",
-      titleEn: "Cybersecurity",
-      descriptionFr: "Protection et sécurité numérique",
-      descriptionEn: "Digital protection and security",
-      icon: "🔒",
-      color: "#EF4444",
-      order: 4,
-      isActive: true,
-      sessions: 31,
-      lastUpdated: "2024-01-16",
-      popularity: 88,
-      keywords: [
-        { id: 8, keywordFr: "sécurité informatique", keywordEn: "computer security" },
-        { id: 9, keywordFr: "cryptographie", keywordEn: "cryptography" },
-      ],
-    },
-  ]);
+  useEffect(() => {
+    const fetchThemes = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/Theme/all?lang=fr');
+        if (!response.ok) {
+          throw new Error('Erreur lors du chargement des thèmes');
+        }
+        const data = await response.json();
+        if (data.success) {
+          setThemes(data.data || []);
+        } else {
+          throw new Error('Erreur dans la réponse de l\'API');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erreur inconnue');
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les thèmes",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const toggleTheme = (id: number) => {
-    setThemes(themes.map(theme =>
-      theme.id === id ? { ...theme, isActive: !theme.isActive } : theme
-    ));
+    fetchThemes();
+  }, [toast]);
+
+  const deleteTheme = async (id: number) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/Theme/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Erreur lors de la suppression du thème');
+      }
+      const data = await response.json();
+      if (data.success) {
+        setThemes(themes.filter(theme => theme.id !== id));
+        setSelectedThemes(selectedThemes.filter(themeId => themeId !== id));
+        toast({
+          title: "Succès",
+          description: "Thème supprimé avec succès",
+          variant: "default",
+        });
+      } else {
+        throw new Error(data.message || 'Erreur lors de la suppression');
+      }
+    } catch (err) {
+      toast({
+        title: "Erreur",
+        description: err instanceof Error ? err.message : 'Erreur inconnue',
+        variant: "destructive",
+      });
+    }
   };
 
-  const deleteTheme = (id: number) => {
-    setThemes(themes.filter(theme => theme.id !== id));
-    setSelectedThemes(selectedThemes.filter(themeId => themeId !== id));
-  };
-
-  const deleteSelectedThemes = () => {
-    setThemes(themes.filter(theme => !selectedThemes.includes(theme.id)));
-    setSelectedThemes([]);
+  const deleteSelectedThemes = async () => {
+    try {
+      const deletePromises = selectedThemes.map(id =>
+        fetch(`http://localhost:8000/api/Theme/${id}`, {
+          method: 'DELETE',
+        }).then(response => {
+          if (!response.ok) {
+            throw new Error(`Erreur lors de la suppression du thème ${id}`);
+          }
+          return response.json();
+        })
+      );
+      await Promise.all(deletePromises);
+      setThemes(themes.filter(theme => !selectedThemes.includes(theme.id)));
+      setSelectedThemes([]);
+      toast({
+        title: "Succès",
+        description: "Thèmes sélectionnés supprimés avec succès",
+        variant: "default",
+      });
+    } catch (err) {
+      toast({
+        title: "Erreur",
+        description: err instanceof Error ? err.message : 'Erreur inconnue',
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleSelectTheme = (id: number) => {
@@ -151,43 +174,111 @@ export default function ThemesManager() {
     setCurrentTheme(null);
   };
 
-  const handleSaveTheme = (themeData: Theme) => {
-    if (themeData.id) {
-      // Update existing theme
-      setThemes(themes.map(t => t.id === themeData.id ? themeData : t));
-    } else {
-      // Create new theme
-      const newTheme = {
-        ...themeData,
-        id: Math.max(...themes.map(t => t.id), 0) + 1,
-        sessions: 0,
-        popularity: 50,
-        lastUpdated: new Date().toISOString().split('T')[0]
-      };
-      setThemes([...themes, newTheme]);
+ const handleSaveTheme = async (themeData: Theme) => {
+    try {
+        const payload = {
+            titleFr: themeData.titleFr,
+            titleEn: themeData.titleEn,
+            descriptionFr: themeData.descriptionFr,
+            descriptionEn: themeData.descriptionEn,
+            icon: themeData.icon,
+            color: themeData.color,
+            order: themeData.order,
+            sessions: themeData.sessions || 0,
+            keywords: themeData.keywords.map(kw => ({
+                id: Number.isInteger(kw.id) && kw.id < 1000000 ? kw.id : undefined,
+                keyword_fr: kw.keywordFr,
+                keyword_en: kw.keywordEn,
+                order: kw.order,
+            })),
+        };
+        console.log("Payload sent to API:", JSON.stringify(payload, null, 2));
+
+        let response;
+        if (themeData.id) {
+            response = await fetch(`http://localhost:8000/api/Theme/${themeData.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+        } else {
+            response = await fetch('http://localhost:8000/api/Theme/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+        }
+
+        console.log("Response status:", response.status);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Erreur lors de ${themeData.id ? 'la mise à jour' : 'la création'} du thème: ${errorData.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        if (data.success) {
+            const updatedTheme = {
+                id: data.data.id,
+                titleFr: data.data.title_fr,
+                titleEn: data.data.title_en,
+                descriptionFr: data.data.description_fr,
+                descriptionEn: data.data.description_en,
+                icon: data.data.icon,
+                color: data.data.color,
+                order: data.data.order,
+                sessions: data.data.sessions,
+                lastUpdated: data.data.updated_at,
+                keywords: data.data.mots_cles.map((kw: any) => ({
+                    id: kw.id,
+                    keywordFr: kw.keyword_fr,
+                    keywordEn: kw.keyword_en,
+                    order: kw.order,
+                })),
+            };
+
+            if (themeData.id) {
+                setThemes(themes.map(t => t.id === themeData.id ? updatedTheme : t));
+            } else {
+                setThemes([...themes, updatedTheme]);
+            }
+
+            toast({
+                title: "Succès",
+                description: `Thème ${themeData.id ? 'mis à jour' : 'créé'} avec succès`,
+                variant: "default",
+            });
+            handleCloseForm();
+        } else {
+            throw new Error(data.message || 'Erreur dans la réponse de l\'API');
+        }
+    } catch (err) {
+        console.error("Error in handleSaveTheme:", err);
+        toast({
+            title: "Erreur",
+            description: err instanceof Error ? err.message : 'Erreur inconnue',
+            variant: "destructive",
+        });
     }
-    handleCloseForm();
-  };
+};
 
   const filteredThemes = themes.filter(theme => {
-    const matchesSearch = theme.titleFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    return theme.titleFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
       theme.titleEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
       theme.keywords.some(k =>
         k.keywordFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
         k.keywordEn.toLowerCase().includes(searchTerm.toLowerCase())
       );
-
-    const matchesFilter = filterStatus === "all" ||
-      (filterStatus === "active" && theme.isActive) ||
-      (filterStatus === "inactive" && !theme.isActive);
-
-    return matchesSearch && matchesFilter;
   });
 
   const sortedThemes = [...filteredThemes].sort((a, b) => {
     switch (sortBy) {
       case "name": return a.titleFr.localeCompare(b.titleFr);
-      case "popularity": return b.popularity - a.popularity;
       case "sessions": return b.sessions - a.sessions;
       case "updated": return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
       default: return a.order - b.order;
@@ -196,15 +287,44 @@ export default function ThemesManager() {
 
   const stats = {
     total: themes.length,
-    active: themes.filter(t => t.isActive).length,
     keywords: themes.reduce((acc, t) => acc + t.keywords.length, 0),
     sessions: themes.reduce((acc, t) => acc + t.sessions, 0),
   };
 
+  const isFontAwesomeIcon = (icon: string) => icon && Object.keys(fontAwesomeIcons).includes(icon);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <p className="text-gray-600">Chargement des thèmes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <p className="text-red-600 font-semibold">Erreur</p>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Header moderne */}
         <div className="mb-12">
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
             <div className="flex items-center justify-between">
@@ -225,8 +345,7 @@ export default function ThemesManager() {
           </div>
         </div>
 
-        {/* Statistiques élégantes */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {[
             {
               label: "Total Thèmes",
@@ -236,15 +355,6 @@ export default function ThemesManager() {
               iconBg: "bg-indigo-100",
               iconColor: "text-indigo-600",
               change: "+2 ce mois"
-            },
-            {
-              label: "Thèmes Actifs",
-              value: stats.active,
-              icon: Activity,
-              gradient: "from-emerald-500 to-emerald-600",
-              iconBg: "bg-emerald-100",
-              iconColor: "text-emerald-600",
-              change: "+1 cette semaine"
             },
             {
               label: "Mots-clés",
@@ -258,7 +368,7 @@ export default function ThemesManager() {
             {
               label: "Sessions",
               value: stats.sessions,
-              icon: Zap,
+              icon: Calendar,
               gradient: "from-rose-500 to-rose-600",
               iconBg: "bg-rose-100",
               iconColor: "text-rose-600",
@@ -278,13 +388,12 @@ export default function ThemesManager() {
               <div className="text-sm font-medium text-gray-700">{stat.label}</div>
               <div className="mt-3 h-1 bg-gray-100 rounded-full overflow-hidden">
                 <div className={`h-full bg-gradient-to-r ${stat.gradient} rounded-full transition-all duration-1000 ease-out`}
-                  style={{ width: `${(stat.value / Math.max(...[stats.total, stats.active, stats.keywords, stats.sessions])) * 100}%` }}></div>
+                  style={{ width: `${(stat.value / Math.max(...[stats.total, stats.keywords, stats.sessions])) * 100}%` }}></div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Barre d'outils raffinée */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-8 shadow-sm">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
             <div className="flex flex-1 items-center space-x-4">
@@ -321,7 +430,6 @@ export default function ThemesManager() {
                 >
                   <option value="order">Trier par ordre</option>
                   <option value="name">Trier par nom</option>
-                  <option value="popularity">Trier par popularité</option>
                   <option value="sessions">Trier par sessions</option>
                   <option value="updated">Trier par date</option>
                 </select>
@@ -329,39 +437,8 @@ export default function ThemesManager() {
               </div>
             </div>
           </div>
-
-          {/* Filtres avancés avec animation */}
-          {showFilters && (
-            <div className="mt-6 pt-6 border-t border-gray-200 animate-in slide-in-from-top-2 duration-300">
-              <div className="flex flex-wrap gap-3">
-                {[
-                  { key: "all", label: "Tous les thèmes", count: themes.length },
-                  { key: "active", label: "Actifs", count: themes.filter(t => t.isActive).length },
-                  { key: "inactive", label: "Inactifs", count: themes.filter(t => !t.isActive).length }
-                ].map((filter) => (
-                  <button
-                    key={filter.key}
-                    onClick={() => setFilterStatus(filter.key)}
-                    className={`px-4 py-2 rounded-xl transition-all duration-200 flex items-center space-x-2 ${filterStatus === filter.key
-                        ? 'bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-sm'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent'
-                      }`}
-                  >
-                    <span>{filter.label}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${filterStatus === filter.key
-                        ? 'bg-indigo-200 text-indigo-800'
-                        : 'bg-gray-200 text-gray-600'
-                      }`}>
-                      {filter.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Actions groupées */}
         {selectedThemes.length > 0 && (
           <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 mb-8 animate-in slide-in-from-top-2 duration-300">
             <div className="flex items-center justify-between">
@@ -375,28 +452,6 @@ export default function ThemesManager() {
               </div>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => {
-                    setThemes(themes.map(t =>
-                      selectedThemes.includes(t.id) ? { ...t, isActive: true } : t
-                    ));
-                    setSelectedThemes([]);
-                  }}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-                >
-                  Activer
-                </button>
-                <button
-                  onClick={() => {
-                    setThemes(themes.map(t =>
-                      selectedThemes.includes(t.id) ? { ...t, isActive: false } : t
-                    ));
-                    setSelectedThemes([]);
-                  }}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm"
-                >
-                  Désactiver
-                </button>
-                <button
                   onClick={deleteSelectedThemes}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
                 >
@@ -407,7 +462,6 @@ export default function ThemesManager() {
           </div>
         )}
 
-        {/* Liste des thèmes redesignée */}
         <div className="space-y-6">
           {sortedThemes.map((theme, index) => (
             <div
@@ -418,7 +472,6 @@ export default function ThemesManager() {
               <div className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-5 flex-1">
-                    {/* Checkbox */}
                     <div className="flex items-center pt-2">
                       <input
                         type="checkbox"
@@ -428,60 +481,40 @@ export default function ThemesManager() {
                       />
                     </div>
 
-                    {/* Icône améliorée */}
                     <div className="relative flex-shrink-0">
                       <div
                         className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-lg group-hover:shadow-xl transition-shadow duration-300"
                         style={{
-                          backgroundColor: theme.color + '15',
-                          border: `2px solid ${theme.color}40`,
+                          backgroundColor: theme.color ? `${theme.color}15` : '#e5e7eb',
+                          border: theme.color ? `2px solid ${theme.color}40` : '2px solid #d1d5db',
                         }}
                       >
-                        {theme.icon}
+                        {isFontAwesomeIcon(theme.icon) ? (
+                          <FontAwesomeIcon icon={fontAwesomeIcons[theme.icon]} className="w-8 h-8 text-gray-700" />
+                        ) : (
+                          <span className="text-2xl">{theme.icon}</span>
+                        )}
                       </div>
                       <div
                         className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white shadow-lg"
-                        style={{ backgroundColor: theme.color }}
+                        style={{ backgroundColor: theme.color ?? '#6b7280' }}
                       >
                         {theme.order}
                       </div>
                     </div>
 
-                    {/* Contenu principal */}
                     <div className="flex-1 space-y-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             <h3 className="text-xl font-bold text-gray-900">{theme.titleFr}</h3>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${theme.isActive
-                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                                : 'bg-gray-100 text-gray-600 border border-gray-200'
-                              }`}>
-                              {theme.isActive ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                              <span>{theme.isActive ? 'Actif' : 'Inactif'}</span>
-                            </span>
                           </div>
                           <p className="text-gray-500 text-sm mb-1">{theme.titleEn}</p>
                           <p className="text-gray-700 mb-2">{theme.descriptionFr}</p>
                           <p className="text-sm text-gray-500 italic">{theme.descriptionEn}</p>
                         </div>
-
-                        {/* Toggle switch */}
-                        <div className="flex items-center ml-4">
-                          <button
-                            onClick={() => toggleTheme(theme.id)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${theme.isActive ? 'bg-indigo-600' : 'bg-gray-300'
-                              }`}
-                          >
-                            <span
-                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 shadow-lg ${theme.isActive ? 'translate-x-6' : 'translate-x-1'
-                                }`}
-                            />
-                          </button>
-                        </div>
                       </div>
 
-                      {/* Métriques redesignées */}
                       <div className="flex items-center space-x-6 text-sm">
                         <div className="flex items-center space-x-2 text-gray-600">
                           <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -495,15 +528,8 @@ export default function ThemesManager() {
                           </div>
                           <span>{new Date(theme.lastUpdated).toLocaleDateString('fr-FR')}</span>
                         </div>
-                        <div className="flex items-center space-x-2 text-gray-600">
-                          <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <TrendingUp className="w-4 h-4 text-purple-600" />
-                          </div>
-                          <span><span className="font-semibold">{theme.popularity}%</span> popularité</span>
-                        </div>
                       </div>
 
-                      {/* Mots-clés redesignés */}
                       <div>
                         <div className="flex items-center space-x-2 mb-3">
                           <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -517,9 +543,9 @@ export default function ThemesManager() {
                               <span
                                 className="inline-flex items-center px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer hover:shadow-md hover:-translate-y-0.5"
                                 style={{
-                                  backgroundColor: theme.color + '15',
-                                  color: theme.color,
-                                  border: `1px solid ${theme.color}30`
+                                  backgroundColor: theme.color ? `${theme.color}15` : '#e5e7eb',
+                                  color: theme.color ?? '#6b7280',
+                                  border: theme.color ? `1px solid ${theme.color}30` : '1px solid #d1d5db'
                                 }}
                               >
                                 {keyword.keywordFr}
@@ -535,7 +561,6 @@ export default function ThemesManager() {
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex flex-col items-center space-y-2 ml-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <div className="flex space-x-2">
                       <button
@@ -557,22 +582,10 @@ export default function ThemesManager() {
                   </div>
                 </div>
               </div>
-
-              {/* Barre de popularité */}
-              <div className="h-1 bg-gray-100">
-                <div
-                  className="h-full transition-all duration-1000 ease-out"
-                  style={{
-                    width: `${theme.popularity}%`,
-                    backgroundColor: theme.color
-                  }}
-                ></div>
-              </div>
             </div>
           ))}
         </div>
 
-        {/* Message vide amélioré */}
         {sortedThemes.length === 0 && (
           <div className="text-center py-16">
             <div className="w-24 h-24 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 border-2 border-dashed border-gray-300">
@@ -588,17 +601,16 @@ export default function ThemesManager() {
             </button>
           </div>
         )}
-      </div>
 
-      {/* Formulaire de thème */}
-      {isFormOpen && (
-        <ThemeForm
-          theme={currentTheme}
-          onSave={handleSaveTheme}
-          onClose={handleCloseForm}
-          nextOrder={Math.max(...themes.map(t => t.order), 0) + 1}
-        />
-      )}
+        {isFormOpen && (
+          <ThemeForm
+            theme={currentTheme}
+            onSave={handleSaveTheme}
+            onClose={handleCloseForm}
+            nextOrder={Math.max(...themes.map(t => t.order), 0) + 1}
+          />
+        )}
+      </div>
     </div>
   );
 }
