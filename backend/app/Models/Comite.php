@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Comite extends Model
 {
-       protected $fillable = [
+    protected $fillable = [
         'name_fr',
         'name_en',
         'institute_fr',
@@ -15,7 +15,8 @@ class Comite extends Model
         'job_en',
         'committee_type',
         'special_role',
-        'order'
+        'order',
+        'image_path'
     ];
 
     protected $casts = [
