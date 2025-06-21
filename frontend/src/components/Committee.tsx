@@ -8,9 +8,12 @@ interface CommitteeProps {
 
 interface Member {
   id: number;
-  name: string;
-  institute?: string;
-  job?: string;
+  name_fr: string;
+  name_en: string;
+  institute_fr?: string;
+  institute_en?: string;
+  job_fr?: string;
+  job_en?: string;
   special_role: 'chair' | 'co-chair' | 'member';
   order: number;
   image_path?: string;
@@ -60,8 +63,12 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
         const response = await fetch(`http://localhost:8000/api/Comite/all?lang=${language}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const result: ApiResponse = await response.json();
-        if (result.success) setCommitteeData(result.data);
-        else throw new Error('API returned success: false');
+        if (result.success) {
+          setCommitteeData(result.data);
+          console.log('Committee data fetched successfully:', result.data);
+        } else {
+          throw new Error('API returned success: false');
+        }
       } catch (err) {
         console.error('Error fetching committee data:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -73,17 +80,30 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
   }, [language]);
 
   const renderMember = (member: Member, index: number, isChair: boolean = false) => (
-    <div key={member.id || index} className={`${isChair ? 'border-l-4 border-primary pl-4 bg-primary/5 p-4 rounded-r-lg' : 'border-l-3 border-primary/30 pl-4 py-2 hover:border-primary/60 hover:bg-primary/5 transition-all duration-200 rounded-r-md'}`}>
+    <div
+      key={member.id || index}
+      className={`${isChair ? 'border-l-4 border-primary pl-4 bg-primary/5 p-4 rounded-r-lg' : 'border-l-3 border-primary/30 pl-4 py-2 hover:border-primary/60 hover:bg-primary/5 transition-all duration-200 rounded-r-md'}`}
+    >
       <div className="flex flex-col">
         {member.image_path && (
-          <img src={member.image_path} alt={member.name} className="w-16 h-16 rounded-full mb-2 object-cover" />
+          <img
+            src={`http://localhost:8000/storage/${member.image_path}`}
+            alt={language === 'en' ? member.name_en || member.name_fr : member.name_fr || member.name_en}
+            className="w-16 h-16 rounded-full mb-2 object-cover"
+          />
         )}
-        <span className={`font-semibold text-foreground ${isChair ? 'text-lg' : 'text-sm'} leading-tight`}>{member.name}</span>
-        {member.institute && (
-          <span className={`text-muted-foreground italic mt-1 opacity-80 ${isChair ? 'text-sm' : 'text-xs'}`}>{member.institute}</span>
+        <span className={`font-semibold text-foreground ${isChair ? 'text-lg' : 'text-sm'} leading-tight`}>
+          {language === 'en' ? member.name_en || member.name_fr : member.name_fr || member.name_en}
+        </span>
+        {(language === 'en' ? member.institute_en : member.institute_fr) && (
+          <span className={`text-muted-foreground italic mt-1 opacity-80 ${isChair ? 'text-sm' : 'text-xs'}`}>
+            {language === 'en' ? member.institute_en || member.institute_fr : member.institute_fr || member.institute_en}
+          </span>
         )}
-        {isChair && member.job && (
-          <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1 w-fit">{member.job}</span>
+        {isChair && (language === 'en' ? member.job_en : member.job_fr) && (
+          <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1 w-fit">
+            {language === 'en' ? member.job_en || member.job_fr : member.job_fr || member.job_en}
+          </span>
         )}
       </div>
     </div>
@@ -126,7 +146,7 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-primary mb-12">{content[language].title}</h2>
-          
+
           <div className="grid md:grid-cols-2 gap-8">
             {/* Scientific Committee */}
             <Card className="hover:shadow-lg transition-shadow">
@@ -142,9 +162,19 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
                   {committeeData.scientific.co_chair && (
                     <div className="border-l-4 border-primary/60 pl-4 bg-primary/3 p-4 rounded-r-lg">
                       <div className="flex flex-col">
-                        <span className="font-semibold text-foreground text-lg leading-tight">{committeeData.scientific.co_chair.name}</span>
-                        {committeeData.scientific.co_chair.institute && <span className="text-sm text-muted-foreground italic mt-1 opacity-80">{committeeData.scientific.co_chair.institute}</span>}
-                        {committeeData.scientific.co_chair.job && <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1 w-fit">{committeeData.scientific.co_chair.job}</span>}
+                        <span className="font-semibold text-foreground text-lg leading-tight">
+                          {language === 'en' ? committeeData.scientific.co_chair.name_en || committeeData.scientific.co_chair.name_fr : committeeData.scientific.co_chair.name_fr || committeeData.scientific.co_chair.name_en}
+                        </span>
+                        {(language === 'en' ? committeeData.scientific.co_chair.institute_en : committeeData.scientific.co_chair.institute_fr) && (
+                          <span className="text-sm text-muted-foreground italic mt-1 opacity-80">
+                            {language === 'en' ? committeeData.scientific.co_chair.institute_en || committeeData.scientific.co_chair.institute_fr : committeeData.scientific.co_chair.institute_fr || committeeData.scientific.co_chair.institute_en}
+                          </span>
+                        )}
+                        {(language === 'en' ? committeeData.scientific.co_chair.job_en : committeeData.scientific.co_chair.job_fr) && (
+                          <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1 w-fit">
+                            {language === 'en' ? committeeData.scientific.co_chair.job_en || committeeData.scientific.co_chair.job_fr : committeeData.scientific.co_chair.job_fr || committeeData.scientific.co_chair.job_en}
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}
