@@ -95,6 +95,12 @@ class PartnerController extends Controller
 
     return response()->json(['message' => 'Partenaire supprimé avec succès']);
   }
+  public function count()
+  {
+    $count = Partner::count();
+    return response()->json(['total_partners' => $count]);
+  }
+
 
 
 }

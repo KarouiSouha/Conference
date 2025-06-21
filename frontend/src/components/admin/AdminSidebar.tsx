@@ -1,24 +1,8 @@
-import { useState } from "react";
-import { 
-  BarChart3, 
-  Users, 
-  Mic, 
-  Building2, 
-  Newspaper, 
-  Archive, 
-  Calendar, 
-  Tags, 
-  UserCheck,
-  ChevronLeft,
-  ChevronRight,
-  Bell,
-  Settings,
-  User,
-  LogOut,
-  Home,
-  Search,
-  Menu,
-  X
+import { useEffect, useState } from "react";
+import axios from "axios";
+import {
+  BarChart3, Users, Mic, Building2, Newspaper, Archive, Calendar, Tags, UserCheck,
+  ChevronLeft, ChevronRight, Bell, Settings, User, LogOut, Home, Search, Menu, X
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -32,16 +16,45 @@ interface AdminSidebarProps {
   onSectionChange?: (section: string) => void;
 }
 
-export function AdminSidebar({ 
-  language = 'fr', 
-  user, 
-  onLogout, 
+export function AdminSidebar({
+  language = 'fr',
+  user,
+  onLogout,
   activeSection = '/admin',
-  onSectionChange 
+  onSectionChange
 }: AdminSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [counts, setCounts] = useState({
+    partners: null,
+    speakers: null,
+    news: null,
+    participants: null
+  });
+
+  useEffect(() => {
+    async function fetchCounts() {
+      try {
+        const [partners, speakers, news, participants] = await Promise.all([
+          axios.get("http://localhost:8000/api/Partners/count"),
+          axios.get("http://localhost:8000/api/Speakers/count"),
+          axios.get("http://localhost:8000/api/News/count"),
+          axios.get("http://localhost:8000/api/Registration/count")
+        ]);
+        setCounts({
+          partners: partners.data.total_partners,
+          speakers: speakers.data.total_speakers,
+          news: news.data.total_news,
+          participants: participants.data.total_registrations
+        });
+      } catch (error) {
+        console.error("Erreur lors du chargement des statistiques :", error);
+      }
+    }
+
+    fetchCounts();
+  }, []);
 
   const content = {
     fr: {
@@ -53,14 +66,14 @@ export function AdminSidebar({
       confirmLogout: "Êtes-vous sûr de vouloir vous déconnecter ?",
       menuItems: [
         { title: "Tableau de bord", url: "dashboard", icon: BarChart3, badge: null, description: "Vue d'ensemble" },
-        { title: "Partenaires", url: "partners", icon: Building2, badge: "12", description: "Gestion des partenaires" },
-        { title: "Intervenants", url: "speakers", icon: Mic, badge: "8", description: "Conférenciers et experts" },
+        { title: "Partenaires", url: "partners", icon: Building2, badge: counts.partners?.toString() || null, description: "Gestion des partenaires" },
+        { title: "Intervenants", url: "speakers", icon: Mic, badge: counts.speakers?.toString() || null, description: "Conférenciers et experts" },
         { title: "Comités", url: "comitee", icon: Users, badge: null, description: "Équipes organisatrices" },
-        { title: "Actualités", url: "news", icon: Newspaper, badge: "3", description: "Articles et annonces" },
+        { title: "Actualités", url: "news", icon: Newspaper, badge: counts.news?.toString() || null, description: "Articles et annonces" },
         { title: "Archives", url: "archives", icon: Archive, badge: null, description: "Données historiques" },
         { title: "Programme", url: "program", icon: Calendar, badge: "NEW", description: "Planning des événements" },
         { title: "Thèmes", url: "themes", icon: Tags, badge: null, description: "Sujets de recherche" },
-        { title: "Participants", url: "participants", icon: UserCheck, badge: "156", description: "Inscrits à l'événement" },
+        { title: "Participants", url: "participants", icon: UserCheck, badge: counts.participants?.toString() || null, description: "Inscrits à l'événement" },
       ]
     },
     en: {
@@ -68,21 +81,18 @@ export function AdminSidebar({
       subtitle: "Conference 2024",
       search: "Search...",
       navigation: "Navigation",
-      quickActions: "Quick Actions",
-      notifications: "Notifications",
-      settings: "Settings",
       logout: "Logout",
       confirmLogout: "Are you sure you want to logout?",
       menuItems: [
         { title: "Dashboard", url: "dashboard", icon: BarChart3, badge: null, description: "Overview" },
-        { title: "Partners", url: "partners", icon: Building2, badge: "12", description: "Partners management" },
-        { title: "Speakers", url: "speakers", icon: Mic, badge: "8", description: "Speakers and experts" },
+        { title: "Partners", url: "partners", icon: Building2, badge: counts.partners?.toString() || null, description: "Partners management" },
+        { title: "Speakers", url: "speakers", icon: Mic, badge: counts.speakers?.toString() || null, description: "Speakers and experts" },
         { title: "Committee", url: "comitee", icon: Users, badge: null, description: "Organizing teams" },
-        { title: "News", url: "news", icon: Newspaper, badge: "3", description: "Articles and announcements" },
+        { title: "News", url: "news", icon: Newspaper, badge: counts.news?.toString() || null, description: "Articles and announcements" },
         { title: "Archives", url: "archives", icon: Archive, badge: null, description: "Historical data" },
         { title: "Program", url: "program", icon: Calendar, badge: "NEW", description: "Event schedule" },
         { title: "Themes", url: "themes", icon: Tags, badge: null, description: "Research topics" },
-        { title: "Participants", url: "participants", icon: UserCheck, badge: "156", description: "Event registrants" },
+        { title: "Participants", url: "participants", icon: UserCheck, badge: counts.participants?.toString() || null, description: "Event registrants" },
       ]
     }
   };

@@ -40,6 +40,8 @@ Route::prefix('Speakers')->controller(SpeakerController::class)->group(function 
     Route::put('/update/{id}', [SpeakerController::class, 'update']);
     // hthy
     Route::delete('/destroy/{id}', [SpeakerController::class, 'destroy']);
+    Route::get('/count', 'count');
+
 });
 Route::post('login', [AuthController::class, 'login']);
 
@@ -62,6 +64,8 @@ Route::prefix('Partners')->controller(PartnerController::class)->group(function 
     Route::post('/store', [PartnerController::class, 'store']);
     Route::post('/update/{id}', [PartnerController::class, 'update']);
     Route::delete('/destroy/{id}', [PartnerController::class, 'destroy']);
+    Route::get('/count', 'count');
+
 });
 Route::prefix('Gallery')->controller(GalleryController::class)->group(function () {
     Route::get('/all', 'displayAll');           // GET /api/Gallery/all
@@ -81,14 +85,16 @@ Route::prefix('Programme')->controller(ProgrammeController::class)->group(functi
 });
 // Routes pour les inscriptions
 Route::prefix('Registration')->controller(RegistrationController::class)->group(function () {
-    Route::get('/all', 'index');                    // GET /api/Registration/all
-    Route::get('/statistics', 'statistics');        // GET /api/Registration/statistics
-    Route::get('/{id}', 'show');                   // GET /api/Registration/{id}
-    Route::post('/', 'store');                     // POST /api/Registration
-    Route::put('/{id}', 'update');                 // PUT /api/Registration/{id}
-    Route::delete('/{id}', 'destroy');             // DELETE /api/Registration/{id}
-    Route::patch('/{id}/mark-as-paid', 'markAsPaid'); // PATCH /api/Registration/{id}/mark-as-paid
+    Route::get('/all', 'index');
+    Route::get('/count', 'count');               // 👈 Mettre AVANT /{id}
+    Route::get('/statistics', 'statistics');     // 👈 Mettre AVANT /{id}
+    Route::get('/{id}', 'show');
+    Route::post('/', 'store');
+    Route::put('/{id}', 'update');
+    Route::delete('/{id}', 'destroy');
+    Route::patch('/{id}/mark-as-paid', 'markAsPaid');
 });
+
 
 Route::prefix('Archive')->controller(ArchiveController::class)->group(function () {
     Route::get('/all', 'displayAll');
@@ -105,5 +111,6 @@ Route::prefix('News')->controller(NewsController::class)->group(function () {
     Route::put('/update/{id}', [NewsController::class, 'update']);
     Route::delete('/destroy/{id}', [NewsController::class, 'destroy']);
     Route::get('/published', [NewsController::class, 'getPublished']);
+    Route::get('/count', 'count');
 
 });

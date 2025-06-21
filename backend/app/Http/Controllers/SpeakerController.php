@@ -106,5 +106,11 @@ class SpeakerController extends Controller
 
         return response()->json(['message' => 'Speaker supprimé avec succès']);
     }
+    public function count()
+    {
+        $count = Speaker::count();
+        return response()->json(['total_speakers' => $count]);
+    }
+
 
 }
