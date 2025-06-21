@@ -113,7 +113,7 @@ class RegistrationController extends Controller
             $registration->update(['amount' => $amount]);
 
             // TODO: Envoyer un email de confirmation avec le mot de passe temporaire
-            Mail::to($registration->email)->send(new RegistrationConfirmation($registration->first_name.' '.$registration->last_name,'http://localhost:8080',$request->language));
+            Mail::to($registration->email)->send(new RegistrationConfirmation($registration->first_name . ' ' . $registration->last_name, 'http://localhost:8080', $request->language));
 
             return response()->json([
                 'success' => true,
@@ -188,18 +188,30 @@ class RegistrationController extends Controller
             $updateData = [];
 
             // Mapping des champs
-            if ($request->has('firstName')) $updateData['first_name'] = $request->firstName;
-            if ($request->has('lastName')) $updateData['last_name'] = $request->lastName;
-            if ($request->has('establishment')) $updateData['establishment'] = $request->establishment;
-            if ($request->has('title')) $updateData['title'] = $request->title;
-            if ($request->has('email')) $updateData['email'] = $request->email;
-            if ($request->has('phone')) $updateData['phone'] = $request->phone;
-            if ($request->has('participationType')) $updateData['participation_type'] = $request->participationType;
-            if ($request->has('hasAccompanying')) $updateData['has_accompanying'] = $request->hasAccompanying;
-            if ($request->has('accompanyingDetails')) $updateData['accompanying_details'] = $request->accompanyingDetails;
-            if ($request->has('accommodationType')) $updateData['accommodation_type'] = $request->accommodationType;
-            if ($request->has('paymentMethod')) $updateData['payment_method'] = $request->paymentMethod;
-            if ($request->has('status')) $updateData['status'] = $request->status;
+            if ($request->has('firstName'))
+                $updateData['first_name'] = $request->firstName;
+            if ($request->has('lastName'))
+                $updateData['last_name'] = $request->lastName;
+            if ($request->has('establishment'))
+                $updateData['establishment'] = $request->establishment;
+            if ($request->has('title'))
+                $updateData['title'] = $request->title;
+            if ($request->has('email'))
+                $updateData['email'] = $request->email;
+            if ($request->has('phone'))
+                $updateData['phone'] = $request->phone;
+            if ($request->has('participationType'))
+                $updateData['participation_type'] = $request->participationType;
+            if ($request->has('hasAccompanying'))
+                $updateData['has_accompanying'] = $request->hasAccompanying;
+            if ($request->has('accompanyingDetails'))
+                $updateData['accompanying_details'] = $request->accompanyingDetails;
+            if ($request->has('accommodationType'))
+                $updateData['accommodation_type'] = $request->accommodationType;
+            if ($request->has('paymentMethod'))
+                $updateData['payment_method'] = $request->paymentMethod;
+            if ($request->has('status'))
+                $updateData['status'] = $request->status;
 
             // Traitement du nouveau fichier de justificatif
             if ($request->hasFile('paymentProof')) {
@@ -317,4 +329,10 @@ class RegistrationController extends Controller
             ], 500);
         }
     }
+    public function count(): JsonResponse
+    {
+        $count = Registration::count();
+        return response()->json(['total_registrations' => $count]);
+    }
+
 }

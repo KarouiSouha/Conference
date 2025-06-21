@@ -97,4 +97,10 @@ class NewsController extends Controller
 
         return response()->json(['message' => 'News deleted successfully']);
     }
+    public function count(): JsonResponse
+    {
+        $count = News::count();
+        return response()->json(['total_news' => $count]);
+    }
+
 }
