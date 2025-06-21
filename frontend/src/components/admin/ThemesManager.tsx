@@ -3,6 +3,7 @@ import { Search, Plus, Edit, Trash, Tag, ArrowUpDown, Filter, MoreVertical, Star
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCogs, faCode, faRecycle, faChartLine, faChalkboardTeacher, faBook, faRobot, faLeaf, faBookOpen, faFlask, faLightbulb, faGlobe, faVial, faBrain, faSearch, faChartBar, faLock, faPaintBrush, faRocket, faLaptopCode, faDna } from "@fortawesome/free-solid-svg-icons";
 import ThemeForm from "./ThemeForm";
+import DeleteConfirmationModal from "./DeleteThemeModal";
 import { useToast } from "../../hooks/use-toast";
 
 interface Keyword {
@@ -61,6 +62,9 @@ export default function ThemesManager() {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [themeToDelete, setThemeToDelete] = useState<number | null>(null);
+  const [isBulkDelete, setIsBulkDelete] = useState(false);
 
   useEffect(() => {
     const fetchThemes = async () => {
@@ -90,62 +94,78 @@ export default function ThemesManager() {
     fetchThemes();
   }, [toast]);
 
-  const deleteTheme = async (id: number) => {
-    try {
-      const response = await fetch(`http://localhost:8000/api/Theme/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        throw new Error('Erreur lors de la suppression du thème');
-      }
-      const data = await response.json();
-      if (data.success) {
-        setThemes(themes.filter(theme => theme.id !== id));
-        setSelectedThemes(selectedThemes.filter(themeId => themeId !== id));
-        toast({
-          title: "Succès",
-          description: "Thème supprimé avec succès",
-          variant: "default",
-        });
-      } else {
-        throw new Error(data.message || 'Erreur lors de la suppression');
-      }
-    } catch (err) {
-      toast({
-        title: "Erreur",
-        description: err instanceof Error ? err.message : 'Erreur inconnue',
-        variant: "destructive",
-      });
+  const handleDeleteTheme = (id: number) => {
+    setThemeToDelete(id);
+    setIsBulkDelete(false);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteSelectedThemes = () => {
+    if (selectedThemes.length > 0) {
+      setIsBulkDelete(true);
+      setIsDeleteModalOpen(true);
     }
   };
 
-  const deleteSelectedThemes = async () => {
-    try {
-      const deletePromises = selectedThemes.map(id =>
-        fetch(`http://localhost:8000/api/Theme/${id}`, {
+  const confirmDelete = async () => {
+    if (isBulkDelete) {
+      try {
+        const deletePromises = selectedThemes.map(id =>
+          fetch(`http://localhost:8000/api/Theme/${id}`, {
+            method: 'DELETE',
+          }).then(response => {
+            if (!response.ok) {
+              throw new Error(`Erreur lors de la suppression du thème ${id}`);
+            }
+            return response.json();
+          })
+        );
+        await Promise.all(deletePromises);
+        setThemes(themes.filter(theme => !selectedThemes.includes(theme.id)));
+        setSelectedThemes([]);
+        toast({
+          title: "Succès",
+          description: "Thèmes sélectionnés supprimés avec succès",
+          variant: "default",
+        });
+      } catch (err) {
+        toast({
+          title: "Erreur",
+          description: err instanceof Error ? err.message : 'Erreur inconnue',
+          variant: "destructive",
+        });
+      }
+    } else if (themeToDelete !== null) {
+      try {
+        const response = await fetch(`http://localhost:8000/api/Theme/${themeToDelete}`, {
           method: 'DELETE',
-        }).then(response => {
-          if (!response.ok) {
-            throw new Error(`Erreur lors de la suppression du thème ${id}`);
-          }
-          return response.json();
-        })
-      );
-      await Promise.all(deletePromises);
-      setThemes(themes.filter(theme => !selectedThemes.includes(theme.id)));
-      setSelectedThemes([]);
-      toast({
-        title: "Succès",
-        description: "Thèmes sélectionnés supprimés avec succès",
-        variant: "default",
-      });
-    } catch (err) {
-      toast({
-        title: "Erreur",
-        description: err instanceof Error ? err.message : 'Erreur inconnue',
-        variant: "destructive",
-      });
+        });
+        if (!response.ok) {
+          throw new Error('Erreur lors de la suppression du thème');
+        }
+        const data = await response.json();
+        if (data.success) {
+          setThemes(themes.filter(theme => theme.id !== themeToDelete));
+          setSelectedThemes(selectedThemes.filter(themeId => themeId !== themeToDelete));
+          toast({
+            title: "Succès",
+            description: "Thème supprimé avec succès",
+            variant: "default",
+          });
+        } else {
+          throw new Error(data.message || 'Erreur lors de la suppression');
+        }
+      } catch (err) {
+        toast({
+          title: "Erreur",
+          description: err instanceof Error ? err.message : 'Erreur inconnue',
+          variant: "destructive",
+        });
+      }
     }
+    setIsDeleteModalOpen(false);
+    setThemeToDelete(null);
+    setIsBulkDelete(false);
   };
 
   const toggleSelectTheme = (id: number) => {
@@ -174,98 +194,98 @@ export default function ThemesManager() {
     setCurrentTheme(null);
   };
 
- const handleSaveTheme = async (themeData: Theme) => {
+  const handleSaveTheme = async (themeData: Theme) => {
     try {
-        const payload = {
-            titleFr: themeData.titleFr,
-            titleEn: themeData.titleEn,
-            descriptionFr: themeData.descriptionFr,
-            descriptionEn: themeData.descriptionEn,
-            icon: themeData.icon,
-            color: themeData.color,
-            order: themeData.order,
-            sessions: themeData.sessions || 0,
-            keywords: themeData.keywords.map(kw => ({
-                id: Number.isInteger(kw.id) && kw.id < 1000000 ? kw.id : undefined,
-                keyword_fr: kw.keywordFr,
-                keyword_en: kw.keywordEn,
-                order: kw.order,
-            })),
-        };
-        console.log("Payload sent to API:", JSON.stringify(payload, null, 2));
+      const payload = {
+        titleFr: themeData.titleFr,
+        titleEn: themeData.titleEn,
+        descriptionFr: themeData.descriptionFr,
+        descriptionEn: themeData.descriptionEn,
+        icon: themeData.icon,
+        color: themeData.color,
+        order: themeData.order,
+        sessions: themeData.sessions || 0,
+        keywords: themeData.keywords.map(kw => ({
+          id: Number.isInteger(kw.id) && kw.id < 1000000 ? kw.id : undefined,
+          keyword_fr: kw.keywordFr,
+          keyword_en: kw.keywordEn,
+          order: kw.order,
+        })),
+      };
+      console.log("Payload sent to API:", JSON.stringify(payload, null, 2));
 
-        let response;
-        if (themeData.id) {
-            response = await fetch(`http://localhost:8000/api/Theme/${themeData.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-        } else {
-            response = await fetch('http://localhost:8000/api/Theme/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-        }
-
-        console.log("Response status:", response.status);
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Erreur lors de ${themeData.id ? 'la mise à jour' : 'la création'} du thème: ${errorData.message || response.statusText}`);
-        }
-
-        const data = await response.json();
-        if (data.success) {
-            const updatedTheme = {
-                id: data.data.id,
-                titleFr: data.data.title_fr,
-                titleEn: data.data.title_en,
-                descriptionFr: data.data.description_fr,
-                descriptionEn: data.data.description_en,
-                icon: data.data.icon,
-                color: data.data.color,
-                order: data.data.order,
-                sessions: data.data.sessions,
-                lastUpdated: data.data.updated_at,
-                keywords: data.data.mots_cles.map((kw: any) => ({
-                    id: kw.id,
-                    keywordFr: kw.keyword_fr,
-                    keywordEn: kw.keyword_en,
-                    order: kw.order,
-                })),
-            };
-
-            if (themeData.id) {
-                setThemes(themes.map(t => t.id === themeData.id ? updatedTheme : t));
-            } else {
-                setThemes([...themes, updatedTheme]);
-            }
-
-            toast({
-                title: "Succès",
-                description: `Thème ${themeData.id ? 'mis à jour' : 'créé'} avec succès`,
-                variant: "default",
-            });
-            handleCloseForm();
-        } else {
-            throw new Error(data.message || 'Erreur dans la réponse de l\'API');
-        }
-    } catch (err) {
-        console.error("Error in handleSaveTheme:", err);
-        toast({
-            title: "Erreur",
-            description: err instanceof Error ? err.message : 'Erreur inconnue',
-            variant: "destructive",
+      let response;
+      if (themeData.id) {
+        response = await fetch(`http://localhost:8000/api/Theme/${themeData.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(payload),
         });
+      } else {
+        response = await fetch('http://localhost:8000/api/Theme/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      console.log("Response status:", response.status);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Erreur lors de ${themeData.id ? 'la mise à jour' : 'la création'} du thème: ${errorData.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        const updatedTheme = {
+          id: data.data.id,
+          titleFr: data.data.title_fr,
+          titleEn: data.data.title_en,
+          descriptionFr: data.data.description_fr,
+          descriptionEn: data.data.description_en,
+          icon: data.data.icon,
+          color: data.data.color,
+          order: data.data.order,
+          sessions: data.data.sessions,
+          lastUpdated: data.data.updated_at,
+          keywords: data.data.mots_cles.map((kw: any) => ({
+            id: kw.id,
+            keywordFr: kw.keyword_fr,
+            keywordEn: kw.keyword_en,
+            order: kw.order,
+          })),
+        };
+
+        if (themeData.id) {
+          setThemes(themes.map(t => t.id === themeData.id ? updatedTheme : t));
+        } else {
+          setThemes([...themes, updatedTheme]);
+        }
+
+        toast({
+          title: "Succès",
+          description: `Thème ${themeData.id ? 'mis à jour' : 'créé'} avec succès`,
+          variant: "default",
+        });
+        handleCloseForm();
+      } else {
+        throw new Error(data.message || 'Erreur dans la réponse de l\'API');
+      }
+    } catch (err) {
+      console.error("Error in handleSaveTheme:", err);
+      toast({
+        title: "Erreur",
+        description: err instanceof Error ? err.message : 'Erreur inconnue',
+        variant: "destructive",
+      });
     }
-};
+  };
 
   const filteredThemes = themes.filter(theme => {
     return theme.titleFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -452,7 +472,7 @@ export default function ThemesManager() {
               </div>
               <div className="flex space-x-2">
                 <button
-                  onClick={deleteSelectedThemes}
+                  onClick={handleDeleteSelectedThemes}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
                 >
                   Supprimer
@@ -570,7 +590,7 @@ export default function ThemesManager() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => deleteTheme(theme.id)}
+                        onClick={() => handleDeleteTheme(theme.id)}
                         className="w-9 h-9 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center hover:scale-110 duration-200"
                       >
                         <Trash className="w-4 h-4" />
@@ -608,6 +628,19 @@ export default function ThemesManager() {
             onSave={handleSaveTheme}
             onClose={handleCloseForm}
             nextOrder={Math.max(...themes.map(t => t.order), 0) + 1}
+          />
+        )}
+
+        {isDeleteModalOpen && (
+          <DeleteConfirmationModal
+            isOpen={isDeleteModalOpen}
+            onClose={() => {
+              setIsDeleteModalOpen(false);
+              setThemeToDelete(null);
+              setIsBulkDelete(false);
+            }}
+            onConfirm={confirmDelete}
+            themeName={isBulkDelete ? `${selectedThemes.length} thèmes sélectionnés` : themes.find(t => t.id === themeToDelete)?.titleFr || 'ce thème'}
           />
         )}
       </div>
