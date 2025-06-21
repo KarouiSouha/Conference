@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { User, Building, Mail, Phone, FileText, CreditCard, Upload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { User, Building, Mail, Phone, FileText, CreditCard, Upload, CheckCircle, AlertCircle, Loader2, Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import PricingInfo from './PricingInfo'; // Adjust path as needed
 
 interface RegistrationProps {
   language: 'fr' | 'en';
@@ -16,7 +17,7 @@ interface RegistrationProps {
 
 // Configuration de l'API
 const API_CONFIG = {
-  baseUrl: 'http://localhost:8000/api', // Ajustez selon votre configuration
+  baseUrl: 'http://localhost:8000/api',
   endpoints: {
     registration: '/Registration'
   }
@@ -69,14 +70,14 @@ const InputField: React.FC<InputFieldProps> = ({
       type={type}
       value={value}
       onChange={onChange}
-      className={`h-10 border rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-200 ${error ? 'border-red-500' : 'border-gray-300'
-        }`}
+      className={`h-10 border rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-200 ${error ? 'border-red-500' : 'border-gray-300'}`}
       required={required}
       {...props}
     />
     {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
 );
+
 interface SelectFieldProps {
   id: string;
   label: string;
@@ -89,8 +90,8 @@ interface SelectFieldProps {
   options: { value: string; label: string }[];
 }
 
-const SelectField: React.FC<SelectFieldProps> = ({ 
-  id, label, icon: Icon, required = false, value, onValueChange, error, placeholder, options 
+const SelectField: React.FC<SelectFieldProps> = ({
+  id, label, icon: Icon, required = false, value, onValueChange, error, placeholder, options
 }) => {
   const getIconForOption = (optionValue: string) => {
     switch(optionValue) {
@@ -98,6 +99,8 @@ const SelectField: React.FC<SelectFieldProps> = ({
       case 'teacher': return <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white text-xs font-bold">P</div>;
       case 'engineer': return <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold">I</div>;
       case 'other': return <div className="w-6 h-6 bg-gradient-to-br from-gray-500 to-slate-600 rounded-full flex items-center justify-center text-white text-xs font-bold">A</div>;
+      case 'Tunisia': return <div className="w-6 h-6 bg-gradient-to-br from-red-600 to-white rounded-full flex items-center justify-center text-white text-xs font-bold">TN</div>;
+      case 'International': return <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-white rounded-full flex items-center justify-center text-white text-xs font-bold">INT</div>;
       default: return <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">?</div>;
     }
   };
@@ -113,20 +116,20 @@ const SelectField: React.FC<SelectFieldProps> = ({
         <SelectTrigger className={`h-12 border-2 rounded-xl transition-all duration-200 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-gradient-to-r from-white to-gray-50 ${
           error ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-300'
         } ${value ? 'bg-blue-50/30' : ''}`}>
-          <SelectValue 
+          <SelectValue
             placeholder={
               <span className="text-gray-500 font-medium">
                 {placeholder}
               </span>
-            } 
+            }
             className="font-medium"
           />
         </SelectTrigger>
         <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-xl backdrop-blur-sm">
           <div className="p-1">
-            {options.map((option, index) => (
-              <SelectItem 
-                key={option.value} 
+            {options.map((option) => (
+              <SelectItem
+                key={option.value}
                 value={option.value}
                 className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 focus:bg-gradient-to-r focus:from-blue-50 focus:to-indigo-50 cursor-pointer hover:scale-[1.02] focus:scale-[1.02] my-1"
               >
@@ -190,6 +193,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     title: '',
     email: '',
     phone: '',
+    country: '',
     participationType: '',
     hasAccompanying: '',
     accompanyingDetails: '',
@@ -227,6 +231,11 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         },
         email: 'Adresse e-mail',
         phone: 'Numéro de téléphone',
+        country: 'Pays',
+        countryOptions: {
+          tunisia: 'Tunisie',
+          international: 'International'
+        },
         participationWithoutArticle: 'Participation sans soumission d\'article',
         participationWithArticle: 'Participation avec soumission d\'article',
         withAccompanying: 'Avec personne accompagnante',
@@ -234,8 +243,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         no: 'Non',
         accompanyingDetails: 'Détails des accompagnateurs (noms et âges)',
         registrationFees: 'Frais d\'inscription',
-        withoutAccommodation: 'Sans hébergement : 50€',
-        withAccommodation: 'Avec hébergement : 120€ (2 nuits incluses)',
+        withoutAccommodation: 'Sans hébergement',
+        withAccommodation: 'Avec hébergement (2 nuits incluses)',
         bankTransfer: 'Virement bancaire',
         administrativeOrder: 'Mandat administratif',
         checkPayment: 'Paiement par chèque',
@@ -251,7 +260,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         submitError: 'Erreur lors de l\'inscription. Veuillez réessayer.',
         networkError: 'Erreur de connexion. Vérifiez votre connexion internet.',
         validationError: 'Veuillez corriger les erreurs dans le formulaire.',
-        emailExists: 'Cette adresse e-mail est déjà utilisée.'
+        emailExists: 'Cette adresse e-mail est déjà utilisée.',
+        countryRequired: 'Pays requis'
       }
     },
     en: {
@@ -274,6 +284,11 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         },
         email: 'Email Address',
         phone: 'Phone Number',
+        country: 'Country',
+        countryOptions: {
+          tunisia: 'Tunisia',
+          international: 'International'
+        },
         participationWithoutArticle: 'Participation without article submission',
         participationWithArticle: 'Participation with article submission',
         withAccompanying: 'With accompanying person',
@@ -281,8 +296,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         no: 'No',
         accompanyingDetails: 'Accompanying persons details (names and ages)',
         registrationFees: 'Registration Fees',
-        withoutAccommodation: 'Without accommodation: 50€',
-        withAccommodation: 'With accommodation: 120€ (2 nights included)',
+        withoutAccommodation: 'Without accommodation',
+        withAccommodation: 'With accommodation (2 nights included)',
         bankTransfer: 'Bank Transfer',
         administrativeOrder: 'Administrative Order',
         checkPayment: 'Check Payment',
@@ -298,15 +313,39 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         submitError: 'Error during registration. Please try again.',
         networkError: 'Connection error. Check your internet connection.',
         validationError: 'Please correct the errors in the form.',
-        emailExists: 'This email address is already in use.'
+        emailExists: 'This email address is already in use.',
+        countryRequired: 'Country required'
       }
     }
   }), []);
 
+  // Pricing data from PricingInfo
+  const getRegistrationFees = () => {
+    const participantType = formData.title === 'student' ? 'student' :
+                           formData.title === 'teacher' ? 'academic' :
+                           'professional';
+    const isTunisia = formData.country === 'Tunisia';
+
+    const fees = {
+      withAccommodation: {
+        academic: isTunisia ? '700 TND' : '450 €',
+        student: isTunisia ? '650 TND' : '400 €',
+        professional: isTunisia ? '750 TND' : '500 €'
+      },
+      withoutAccommodation: isTunisia ? '450 TND' : '150 €'
+    };
+
+    return {
+      withAccommodation: fees.withAccommodation[participantType],
+      withoutAccommodation: fees.withoutAccommodation
+    };
+  };
+
+  const fees = getRegistrationFees();
+
   // Fonctions de mise à jour mémorisées
   const updateFormData = useCallback((field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Effacer l'erreur pour ce champ
     if (errors[field]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -332,13 +371,14 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     const newErrors: Record<string, string> = {};
 
     if (step === 1) {
-      if (!formData.firstName.trim()) newErrors.firstName = 'Prénom requis';
-      if (!formData.lastName.trim()) newErrors.lastName = 'Nom requis';
-      if (!formData.establishment.trim()) newErrors.establishment = 'Établissement requis';
-      if (!formData.title.trim()) newErrors.title = 'Titre requis';
-      if (!formData.email.trim()) newErrors.email = 'Email requis';
+      if (!formData.firstName.trim()) newErrors.firstName = content[language].form.firstName + ' requis';
+      if (!formData.lastName.trim()) newErrors.lastName = content[language].form.lastName + ' requis';
+      if (!formData.establishment.trim()) newErrors.establishment = content[language].form.establishment + ' requis';
+      if (!formData.title.trim()) newErrors.title = content[language].form.title + ' requis';
+      if (!formData.email.trim()) newErrors.email = content[language].form.email + ' requis';
       else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email invalide';
-      if (!formData.phone.trim()) newErrors.phone = 'Téléphone requis';
+      if (!formData.phone.trim()) newErrors.phone = content[language].form.phone + ' requis';
+      if (!formData.country.trim()) newErrors.country = content[language].errors.countryRequired;
     } else if (step === 2) {
       if (!formData.participationType) newErrors.participationType = 'Type de participation requis';
       if (!formData.hasAccompanying) newErrors.hasAccompanying = 'Réponse requise';
@@ -348,11 +388,14 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     } else if (step === 3) {
       if (!formData.accommodationType) newErrors.accommodationType = 'Type d\'hébergement requis';
       if (!formData.paymentMethod) newErrors.paymentMethod = 'Mode de paiement requis';
+      if (!formData.paymentProof && formData.paymentMethod !== 'administrative-order') {
+        newErrors.paymentProof = content[language].form.paymentProof + ' requis';
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [formData]);
+  }, [formData, content, language]);
 
   const handleSubmit = useCallback(async () => {
     if (!validateStep(3)) return;
@@ -361,43 +404,43 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     setSubmitError('');
 
     try {
-      // Préparer les données pour l'API
       const submitData = new FormData();
-      submitData.append('first_name', formData.firstName);
-      submitData.append('last_name', formData.lastName);
+      submitData.append('firstName', formData.firstName); // Use 'first_name' if server expects snake_case
+      submitData.append('lastName', formData.lastName); // Use 'last_name'
       submitData.append('establishment', formData.establishment);
       submitData.append('title', formData.title);
       submitData.append('email', formData.email);
       submitData.append('phone', formData.phone);
-      submitData.append('participation_type', formData.participationType);
-      submitData.append('has_accompanying', formData.hasAccompanying);
-      submitData.append('accompanying_details', formData.accompanyingDetails);
-      submitData.append('accommodation_type', formData.accommodationType);
-      submitData.append('payment_method', formData.paymentMethod);
+      submitData.append('country', formData.country);
+      submitData.append('participationType', formData.participationType); // Use 'participation_type'
+      submitData.append('hasAccompanying', formData.hasAccompanying); // Use 'has_accompanying'
+      submitData.append('accompanyingDetails', formData.accompanyingDetails || ''); // Use 'accompanying_details'
+      submitData.append('accommodationType', formData.accommodationType); // Use 'accommodation_type'
+      submitData.append('paymentMethod', formData.paymentMethod); // Use 'payment_method'
       submitData.append('language', language);
-
       if (formData.paymentProof) {
-        submitData.append('payment_proof', formData.paymentProof);
+        submitData.append('paymentProof', formData.paymentProof); // Use 'payment_proof'
       }
+
+      console.log('Submitting data:', Object.fromEntries(submitData));
 
       const response = await fetch(`${baseUrl}${API_CONFIG.endpoints.registration}`, {
         method: 'POST',
         body: submitData,
         headers: {
           'Accept': 'application/json',
-          // Ne pas définir Content-Type pour FormData, le browser le fera automatiquement
         }
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        console.log('Server error:', response.status, data);
         if (response.status === 422) {
-          // Erreurs de validation
           const validationErrors: Record<string, string> = {};
           if (data.errors) {
             Object.keys(data.errors).forEach(key => {
-              validationErrors[key] = data.errors[key][0]; // Premier message d'erreur
+              validationErrors[key] = data.errors[key][0];
             });
           }
           setErrors(validationErrors);
@@ -410,7 +453,6 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         return;
       }
 
-      // Succès
       console.log('Registration successful:', data);
       setIsSubmitted(true);
 
@@ -458,6 +500,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                     title: '',
                     email: '',
                     phone: '',
+                    country: '',
                     participationType: '',
                     hasAccompanying: '',
                     accompanyingDetails: '',
@@ -470,7 +513,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
               >
-                Nouvelle inscription
+                {language === 'fr' ? 'Nouvelle inscription' : 'New Registration'}
               </Button>
             </div>
           </div>
@@ -509,7 +552,6 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     <section className="min-h-screen bg-white py-12" id="registration">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto">
-
           {/* Header */}
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
@@ -519,6 +561,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
               {content[language].subtitle}
             </p>
           </div>
+          <PricingInfo language={language} />
 
           <StepIndicator />
 
@@ -529,7 +572,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
           {currentStep === 1 && (
             <FormSection icon={User} title={content[language].personalInfo}>
               <div className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-3">
                   <InputField
                     id="lastName"
                     label={content[language].form.lastName}
@@ -560,24 +603,40 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                   error={errors.establishment}
                 />
 
-                <SelectField
-  id="title"
-  label={content[language].form.title}
-  icon={FileText}
-  required
-  value={formData.title}
-  onValueChange={(value) => updateFormData('title', value)}
-  error={errors.title}
-  placeholder={language === 'fr' ? 'Sélectionnez votre fonction' : 'Select your position'}
-  options={[
-    { value: 'student', label: content[language].form.titleOptions.student },
-    { value: 'teacher', label: content[language].form.titleOptions.teacher },
-    { value: 'engineer', label: content[language].form.titleOptions.engineer },
-    { value: 'other', label: content[language].form.titleOptions.other }
-  ]}
-/>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <SelectField
+                    id="title"
+                    label={content[language].form.title}
+                    icon={FileText}
+                    required
+                    value={formData.title}
+                    onValueChange={(value) => updateFormData('title', value)}
+                    error={errors.title}
+                    placeholder={language === 'fr' ? 'Sélectionnez votre fonction' : 'Select your position'}
+                    options={[
+                      { value: 'student', label: content[language].form.titleOptions.student },
+                      { value: 'teacher', label: content[language].form.titleOptions.teacher },
+                      { value: 'engineer', label: content[language].form.titleOptions.engineer },
+                      { value: 'other', label: content[language].form.titleOptions.other }
+                    ]}
+                  />
+                  <SelectField
+                    id="country"
+                    label={content[language].form.country}
+                    icon={Globe}
+                    required
+                    value={formData.country}
+                    onValueChange={(value) => updateFormData('country', value)}
+                    error={errors.country}
+                    placeholder={language === 'fr' ? 'Sélectionnez votre pays' : 'Select your country'}
+                    options={[
+                      { value: 'Tunisia', label: content[language].form.countryOptions.tunisia },
+                      { value: 'International', label: content[language].form.countryOptions.international }
+                    ]}
+                  />
+                </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-3">
                   <InputField
                     id="email"
                     label={content[language].form.email}
@@ -680,12 +739,17 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                       rows={3}
                       className={`border rounded-lg ${errors.accompanyingDetails ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    <p className="text-xs text-gray-600 mt-2">
+                      {language === 'fr'
+                        ? 'Frais supplémentaires: 120 TND/80 € par nuit par adulte accompagnant.'
+                        : 'Additional fees: 120 TND/80 € per night per accompanying adult.'}
+                    </p>
                     {errors.accompanyingDetails && <p className="text-red-500 text-xs mt-1">{errors.accompanyingDetails}</p>}
                   </div>
                 )}
               </div>
 
-              <div className="flex justify-between mt-6">
+              <div className="flex justify-between items-center mt-6">
                 <Button
                   onClick={prevStep}
                   variant="outline"
@@ -719,13 +783,13 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                     <RadioOption
                       value="without-accommodation"
                       id="without-accommodation"
-                      label={content[language].form.withoutAccommodation}
+                      label={`${content[language].form.withoutAccommodation}: ${fees.withoutAccommodation}`}
                       isSelected={formData.accommodationType === 'without-accommodation'}
                     />
                     <RadioOption
                       value="with-accommodation"
                       id="with-accommodation"
-                      label={content[language].form.withAccommodation}
+                      label={`${content[language].form.withAccommodation}: ${fees.withAccommodation}`}
                       isSelected={formData.accommodationType === 'with-accommodation'}
                     />
                   </RadioGroup>
@@ -765,7 +829,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
 
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                   <Label htmlFor="paymentProof" className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                    <Upload className="w-4 h-4 mr-2" />
+                    <Upload className="w-4 h-4 mr-2 text-blue-600" />
                     {content[language].form.paymentProof}
                   </Label>
                   <Input
@@ -778,14 +842,14 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                   <p className="text-xs text-gray-600 mt-2">
                     {language === 'fr'
                       ? 'Formats acceptés: PDF, JPG, PNG (max 5MB)'
-                      : 'Accepted formats: PDF, JPG, PNG (max 5MB)'
-                    }
+                      : 'Accepted formats: PDF, JPG, PNG (max 5MB)'}
                   </p>
                   {formData.paymentProof && (
-                    <p className="text-xs text-green-600 mt-1">
+                    <p className="text-green-600 text-xs mt-1">
                       Fichier sélectionné: {formData.paymentProof.name}
                     </p>
                   )}
+                  {errors.paymentProof && <p className="text-red-500 text-xs mt-1">{errors.paymentProof}</p>}
                 </div>
               </div>
 
@@ -800,7 +864,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                 </Button>
                 <Button
                   onClick={handleSubmit}
-                  disabled={isLoading}
+                  disabled={isLoading || isSubmitted}
                   className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center"
                 >
                   {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
