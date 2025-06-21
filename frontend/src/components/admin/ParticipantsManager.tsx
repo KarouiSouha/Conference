@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Edit, Trash, Download, Filter, Users, CheckCircle, Clock, DollarSign, ChevronLeft, ChevronRight } from "lucide-react";
 import ParticipantForm from "./ParticipantForm";
+import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import axios from "axios";
 
 interface Participant {
@@ -46,6 +47,10 @@ export default function ParticipantsManager() {
     pending: 0,
     paid_amount: 0,
   });
+
+  // États pour le modal de suppression
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [participantToDelete, setParticipantToDelete] = useState<Participant | null>(null);
 
   // Fetch participants and statistics from API
   useEffect(() => {
@@ -114,10 +119,27 @@ export default function ParticipantsManager() {
     }
   };
 
-  const handleDeleteParticipant = async (id: number) => {
+  // Ouvrir le modal de confirmation de suppression
+  const handleDeleteClick = (participant: Participant) => {
+    setParticipantToDelete(participant);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Fermer le modal de suppression
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setParticipantToDelete(null);
+  };
+
+  // Confirmer la suppression
+  const handleConfirmDelete = async () => {
+    if (!participantToDelete) return;
+
     try {
-      await axios.delete(`http://localhost:8000/api/Registration/${id}`);
-      setParticipants((prev) => prev.filter((p) => p.id !== id));
+      await axios.delete(`http://localhost:8000/api/Registration/${participantToDelete.id}`);
+      setParticipants((prev) => prev.filter((p) => p.id !== participantToDelete.id));
+      await fetchStatistics(); // Mettre à jour les statistiques
+      handleCloseDeleteModal();
     } catch (error) {
       console.error("Error deleting participant:", error);
     }
@@ -345,7 +367,7 @@ export default function ParticipantsManager() {
                             size="sm"
                             variant="ghost"
                             className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
-                            onClick={() => handleDeleteParticipant(participant.id)}
+                            onClick={() => handleDeleteClick(participant)}
                           >
                             <Trash className="w-4 h-4" />
                           </Button>
@@ -432,6 +454,14 @@ export default function ParticipantsManager() {
           onSave={handleSaveParticipant}
         />
       )}
+
+      {/* Modal de confirmation de suppression */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        Name={participantToDelete ? `${participantToDelete.first_name} ${participantToDelete.last_name}` : ""}
+      />
     </div>
   );
 }

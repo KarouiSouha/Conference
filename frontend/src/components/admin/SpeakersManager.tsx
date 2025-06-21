@@ -8,7 +8,7 @@ import { Search, Plus, Edit, Trash, Mail, Users, Award, Globe, BookOpen, Filter,
 // Import du composant SpeakerForm
 import SpeakerForm from "./SpeakerForm";
 // Import du composant DeleteConfirmationModal
-import DeleteSpeakerModal from "./DeleteSpeakerModal";
+import DeleteConfirmationModal from "./DeleteConfirmationModal";
 
 export default function SpeakersManager() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -555,11 +555,11 @@ export default function SpeakersManager() {
       />
 
       {/* Modal de confirmation de suppression */}
-      <DeleteSpeakerModal
+      <DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={cancelDeleteSpeaker}
         onConfirm={confirmDeleteSpeaker}
-        speakerName={speakerToDelete?.name || ''}
+        Name={speakerToDelete?.name || ''}
       />
     </div>
   );

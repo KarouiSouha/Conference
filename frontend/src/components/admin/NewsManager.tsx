@@ -299,7 +299,7 @@ export default function NewsManager() {
           isOpen={isDeleteModalOpen}
           onClose={handleCloseDeleteModal}
           onConfirm={handleConfirmDelete}
-          partnerName={newsToDelete?.titleFr || ""}
+          Name={newsToDelete?.titleFr || ""}
         />
 
         {/* Statistiques */}
