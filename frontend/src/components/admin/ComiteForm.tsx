@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, Save, User, AlertCircle, Crown, Star, UserCheck } from "lucide-react";
+import { X, Save, User, AlertCircle, Crown, Star, UserCheck, Upload, ImageIcon } from "lucide-react";
 
 interface Member {
   id?: number;
@@ -18,18 +18,17 @@ interface Member {
   special_role: string;
   committee_type: string;
   order: number;
-  country: string;
-  email: string;
+  image_path?: string;
 }
 
 interface ComiteFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (member: Member) => void;
+  onSave: (member: Member, imageFile?: File) => void;
   member?: Member | null;
 }
 
-type FormErrors = Partial<Record<keyof Member | 'submit', string>>;
+type FormErrors = Partial<Record<keyof Member | 'submit' | 'image', string>>;
 
 export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFormProps) {
   const [formData, setFormData] = useState<Member>({
@@ -37,39 +36,59 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
     name_en: "",
     institute_fr: "",
     institute_en: "",
-    job_fr: "",
-    job_en: "",
+    job_fr: "Membre",
+    job_en: "Member",
     special_role: "member",
     committee_type: "scientific",
-    order: 1,
-    country: "",
-    email: "",
+    order: 0,
+    image_path: "",
     ...member
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
 
-  useEffect(() => {
-    if (member) {
-      setFormData(member);
-    } else {
-      setFormData({
-        name_fr: "",
-        name_en: "",
-        institute_fr: "",
-        institute_en: "",
-        job_fr: "",
-        job_en: "",
-        special_role: "member",
-        committee_type: "scientific",
-        order: 1,
-        country: "",
-        email: ""
-      });
+useEffect(() => {
+  console.log('Membre reçu:', member); // Vérifie les données brutes
+  if (member) {
+    const newFormData = {
+      id: member.id,
+      name_fr: member.name_fr || '',
+      name_en: member.name_en || '',
+      institute_fr: member.institute_fr || '',
+      institute_en: member.institute_en || '',
+      job_fr: member.job_fr || 'Membre',
+      job_en: member.job_en || 'Member',
+      special_role: member.special_role || 'member',
+      committee_type: member.committee_type || 'scientific',
+      order: member.order || 0,
+      image_path: member.image_path || ''
+    };
+    setFormData(newFormData);
+    console.log('FormData défini:', newFormData); // Vérifie les données normalisées
+    if (member.image_path) {
+      setImagePreview(`http://localhost:8000/storage/${member.image_path}`);
     }
-  }, [member]);
-
+  } else {
+    const defaultFormData = {
+      name_fr: "",
+      name_en: "",
+      institute_fr: "",
+      institute_en: "",
+      job_fr: "Membre",
+      job_en: "Member",
+      special_role: "member",
+      committee_type: "scientific",
+      order: 0,
+      image_path: ""
+    };
+    setFormData(defaultFormData);
+    setImagePreview("");
+  }
+  setImageFile(null);
+}, [member]);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: name === "order" ? parseInt(value) : value }));
@@ -85,6 +104,43 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validation du fichier
+      if (!file.type.startsWith('image/')) {
+        setErrors(prev => ({ ...prev, image: "Veuillez sélectionner un fichier image valide" }));
+        return;
+      }
+      
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        setErrors(prev => ({ ...prev, image: "L'image ne doit pas dépasser 2MB" }));
+        return;
+      }
+
+      setImageFile(file);
+      setErrors(prev => ({ ...prev, image: undefined }));
+
+      // Créer un aperçu
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    setFormData(prev => ({ ...prev, image_path: "" }));
+    // Reset file input
+    const fileInput = document.getElementById('image-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
   const validateForm = () => {
     const newErrors: FormErrors = {};
 
@@ -94,10 +150,7 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
     if (!formData.institute_en.trim()) newErrors.institute_en = "L'institut en anglais est requis";
     if (!formData.job_fr.trim()) newErrors.job_fr = "La fonction en français est requise";
     if (!formData.job_en.trim()) newErrors.job_en = "La fonction en anglais est requise";
-    if (!formData.country.trim()) newErrors.country = "Le pays est requis";
-    if (!formData.email.trim()) newErrors.email = "L'email est requis";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "L'email doit être valide";
-    if (formData.order < 1) newErrors.order = "L'ordre doit être un nombre positif";
+    if (formData.order < 0) newErrors.order = "L'ordre doit être un nombre positif ou zéro";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -114,7 +167,7 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
 
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      onSave(formData);
+      onSave(formData, imageFile || undefined);
       onClose();
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
@@ -154,7 +207,7 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <Card className="bg-white shadow-2xl border-0 rounded-2xl">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-t-2xl border-b border-blue-100">
@@ -184,7 +237,82 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="p-6 space-y-6">
+            {/* Image Upload Section */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <ImageIcon className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-700">Photo du membre</h3>
+              </div>
+              
+              <div className="flex items-start space-x-6">
+                {/* Image Preview */}
+                <div className="flex-shrink-0">
+                  <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center bg-gray-50 overflow-hidden">
+                    {imagePreview ? (
+                      <img 
+                        src={imagePreview} 
+                        alt="Aperçu" 
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <span className="text-xs text-gray-500">Aucune image</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Upload Controls */}
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <Label htmlFor="image-upload" className="block text-sm font-semibold text-gray-700 mb-2">
+                      Télécharger une image
+                    </Label>
+                    <div className="flex space-x-3">
+                      <label className="cursor-pointer">
+                        <input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                        <div className="inline-flex items-center px-4 py-2 border-2 border-blue-300 text-blue-700 rounded-xl hover:bg-blue-50 transition-colors duration-200">
+                          <Upload className="w-4 h-4 mr-2" />
+                          Choisir une image
+                        </div>
+                      </label>
+                      {imagePreview && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={removeImage}
+                          className="border-red-300 text-red-600 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Supprimer
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Formats acceptés: JPG, PNG, GIF (max. 2MB)
+                    </p>
+                  </div>
+                  {errors.image && (
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.image}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Personal Information */}
             <div className="space-y-3">
               <div className="flex items-center space-x-3 mb-3">
@@ -225,41 +353,6 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
                     <div className="flex items-center space-x-2 text-red-600 text-sm">
                       <AlertCircle className="w-4 h-4" />
                       <span>{errors.name_en}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="block text-sm font-semibold text-gray-700">Email *</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="email@exemple.com"
-                    className={`border-2 ${errors.email ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
-                  />
-                  {errors.email && (
-                    <div className="flex items-center space-x-2 text-red-600 text-sm">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{errors.email}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="country" className="block text-sm font-semibold text-gray-700">Pays *</Label>
-                  <Input
-                    id="country"
-                    name="country"
-                    value={formData.country}
-                    onChange={handleChange}
-                    placeholder="Pays"
-                    className={`border-2 ${errors.country ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
-                  />
-                  {errors.country && (
-                    <div className="flex items-center space-x-2 text-red-600 text-sm">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{errors.country}</span>
                     </div>
                   )}
                 </div>
@@ -401,6 +494,7 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
                     <SelectContent>
                       <SelectItem value="scientific">Comité Scientifique</SelectItem>
                       <SelectItem value="organizing">Comité d'Organisation</SelectItem>
+                      <SelectItem value="honorary">Comité d'Honneur</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.committee_type && (
@@ -416,10 +510,10 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
                     id="order"
                     name="order"
                     type="number"
-                    min="1"
+                    min="0"
                     value={formData.order}
                     onChange={handleChange}
-                    placeholder="1"
+                    placeholder="0"
                     className={`border-2 ${errors.order ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                   />
                   {errors.order && (
@@ -437,12 +531,21 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Aperçu</h3>
               <Card className="p-4 bg-white border-2 border-gray-200">
                 <div className="text-center space-y-3">
-                  <div className="w-12 h-12 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
-                    <User className="w-6 h-6 text-gray-600" />
+                  <div className="w-16 h-16 mx-auto rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                    {imagePreview ? (
+                      <img 
+                        src={imagePreview} 
+                        alt="Aperçu" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-8 h-8 text-gray-600" />
+                    )}
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-800">{formData.name_fr || "Nom du membre"}</h4>
                     <p className="text-sm text-gray-500 italic">{formData.name_en || "Member name"}</p>
+                    <p className="text-xs text-gray-400 mt-1">{formData.institute_fr || "Institut"}</p>
                   </div>
                   {getRoleBadge()}
                 </div>
@@ -471,7 +574,7 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
                 Annuler
               </Button>
               <Button
-                type="submit"
+                onClick={handleSubmit}
                 disabled={isSubmitting}
                 className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-300"
               >
@@ -488,7 +591,7 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
                 )}
               </Button>
             </div>
-          </form>
+          </div>
         </Card>
       </div>
     </div>
