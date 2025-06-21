@@ -15,8 +15,8 @@ class ThemeController extends Controller
 
         // Récupérer tous les thèmes avec leurs mots-clés (pas de filtre actif)
         $themes = Theme::ordered()
-                       ->with('motsCles')
-                       ->get();
+            ->with('motsCles')
+            ->get();
 
         $formatted_themes = $themes->map(function ($theme) use ($language) {
             $keywords = $theme->motsCles->map(function ($motCle) use ($language) {
@@ -205,8 +205,8 @@ class ThemeController extends Controller
                 }
 
                 MotsCles::where('theme_id', $theme->id)
-                        ->whereNotIn('id', $existingKeywordIds)
-                        ->delete();
+                    ->whereNotIn('id', $existingKeywordIds)
+                    ->delete();
             }
 
             DB::commit();
@@ -251,4 +251,23 @@ class ThemeController extends Controller
             ], 500);
         }
     }
+
+    public function deleteKeyword($id)
+    {
+        try {
+            $keyword = MotsCles::findOrFail($id);
+            $keyword->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Mot clé supprimé avec succès.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression du mot clé : ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

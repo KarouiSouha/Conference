@@ -49,7 +49,6 @@ const iconMapping: { [key: string]: string } = {
   "📈": "fa-chart-line"       // ajouté
 };
 
-
 export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFormProps) {
   const [formData, setFormData] = useState<Theme>({
     titleFr: "",
@@ -153,11 +152,24 @@ export default function ThemeForm({ theme, onSave, onClose, nextOrder }: ThemeFo
     }
   };
 
-  const removeKeyword = (id: number) => {
-    setFormData(prev => ({
-      ...prev,
-      keywords: prev.keywords.filter(k => k.id !== id)
-    }));
+  const removeKeyword = async (id: number) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/Theme/keyword/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete keyword');
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        keywords: prev.keywords.filter(k => k.id !== id)
+      }));
+    } catch (error) {
+      console.error('Error deleting keyword:', error);
+      // Optionally, show an error message to the user
+    }
   };
 
   const reverseIconMapping: { [key: string]: string } = Object.fromEntries(

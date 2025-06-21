@@ -570,10 +570,6 @@ export default function ThemesManager() {
                               >
                                 {keyword.keywordFr}
                               </span>
-                              <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                                {keyword.keywordEn}
-                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                              </div>
                             </div>
                           ))}
                         </div>

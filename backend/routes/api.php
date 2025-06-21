@@ -57,6 +57,8 @@ Route::prefix('Theme')->controller(ThemeController::class)->group(function () {
     Route::post('/', 'store');           // POST /api/Theme
     Route::put('/{id}', 'update');       // PUT /api/Theme/{id}
     Route::delete('/{id}', 'destroy');   // DELETE /api/Theme/{id}
+    Route::delete('/keyword/{id}', 'deleteKeyword');  // DELETE /api/Theme/keyword/{id}
+
 });
 Route::prefix('Partners')->controller(PartnerController::class)->group(function () {
     Route::get('/all', 'displayAll');
