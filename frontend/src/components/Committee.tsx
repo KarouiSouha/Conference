@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Award, Loader2 } from 'lucide-react';
+import { Users, Award, Loader2, MapPin, Briefcase } from 'lucide-react';
 
 interface CommitteeProps {
   language: 'fr' | 'en';
@@ -82,41 +82,73 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
   const renderMember = (member: Member, index: number, isChair: boolean = false) => (
     <div
       key={member.id || index}
-      className={`${isChair ? 'border-l-4 border-primary pl-4 bg-primary/5 p-4 rounded-r-lg' : 'border-l-3 border-primary/30 pl-4 py-2 hover:border-primary/60 hover:bg-primary/5 transition-all duration-200 rounded-r-md'}`}
+      className={`group transition-all duration-300 ${
+        isChair 
+          ? 'border-l-4 border-blue-500 pl-6 bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-950/20 p-6 rounded-r-xl shadow-sm hover:shadow-md' 
+          : 'border-l-2 border-gray-200 dark:border-gray-700 pl-4 py-3 hover:border-blue-400 hover:bg-blue-50/30 dark:hover:bg-blue-950/10 rounded-r-lg hover:shadow-sm'
+      }`}
     >
-      <div className="flex flex-col">
+      <div className="flex items-start gap-4">
         {member.image_path && (
-          <img
-            src={`http://localhost:8000/storage/${member.image_path}`}
-            alt={language === 'en' ? member.name_en || member.name_fr : member.name_fr || member.name_en}
-            className="w-16 h-16 rounded-full mb-2 object-cover"
-          />
+          <div className="flex-shrink-0">
+            <img
+              src={`http://localhost:8000/storage/${member.image_path}`}
+              alt={language === 'en' ? member.name_en || member.name_fr : member.name_fr || member.name_en}
+              className={`${
+                isChair ? 'w-20 h-20' : 'w-14 h-14'
+              } rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-md group-hover:shadow-lg transition-shadow`}
+            />
+          </div>
         )}
-        <span className={`font-semibold text-foreground ${isChair ? 'text-lg' : 'text-sm'} leading-tight`}>
-          {language === 'en' ? member.name_en || member.name_fr : member.name_fr || member.name_en}
-        </span>
-        {(language === 'en' ? member.institute_en : member.institute_fr) && (
-          <span className={`text-muted-foreground italic mt-1 opacity-80 ${isChair ? 'text-sm' : 'text-xs'}`}>
-            {language === 'en' ? member.institute_en || member.institute_fr : member.institute_fr || member.institute_en}
-          </span>
-        )}
-        {isChair && (language === 'en' ? member.job_en : member.job_fr) && (
-          <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1 w-fit">
-            {language === 'en' ? member.job_en || member.job_fr : member.job_fr || member.job_en}
-          </span>
-        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between mb-2">
+            <h4 className={`font-semibold text-gray-900 dark:text-white leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors ${
+              isChair ? 'text-lg' : 'text-sm'
+            }`}>
+              {language === 'en' ? member.name_en || member.name_fr : member.name_fr || member.name_en}
+            </h4>
+            {isChair && (
+              <span className="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full">
+                <Award className="w-3 h-3 mr-1" />
+                {member.special_role === 'chair' ? content[language].scientific.chairRole.split(' ')[0] : 'Co-Chair'}
+              </span>
+            )}
+          </div>
+          
+          {(language === 'en' ? member.institute_en : member.institute_fr) && (
+            <div className="flex items-center gap-1 mb-2">
+              <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+              <span className={`text-gray-600 dark:text-gray-400 italic leading-relaxed ${
+                isChair ? 'text-sm' : 'text-xs'
+              }`}>
+                {language === 'en' ? member.institute_en || member.institute_fr : member.institute_fr || member.institute_en}
+              </span>
+            </div>
+          )}
+          
+          {isChair && (language === 'en' ? member.job_en : member.job_fr) && (
+            <div className="flex items-center gap-1">
+              <Briefcase className="w-3 h-3 text-blue-500 flex-shrink-0" />
+              <span className="text-xs text-blue-700 dark:text-blue-300 font-medium bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md">
+                {language === 'en' ? member.job_en || member.job_fr : member.job_fr || member.job_en}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 
   if (loading) return (
-    <section id="committee" className="py-20 bg-background">
+    <section id="committee" className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30 dark:from-gray-900 dark:to-blue-950/30">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-center h-64">
-            <div className="flex items-center gap-2 text-primary">
-              <Loader2 className="w-6 h-6 animate-spin" />
-              <span className="text-lg">{content[language].loading}</span>
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white dark:bg-gray-800 rounded-full shadow-lg mb-4">
+                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+              </div>
+              <span className="text-lg font-medium text-gray-700 dark:text-gray-300">{content[language].loading}</span>
             </div>
           </div>
         </div>
@@ -125,13 +157,13 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
   );
 
   if (error) return (
-    <section id="committee" className="py-20 bg-background">
+    <section id="committee" className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30 dark:from-gray-900 dark:to-blue-950/30">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-center h-64">
-            <div className="text-center text-red-500">
-              <p className="text-lg">{content[language].error}</p>
-              <p className="text-sm text-muted-foreground mt-2">{error}</p>
+            <div className="text-center bg-red-50 dark:bg-red-950/30 p-8 rounded-xl border border-red-200 dark:border-red-800 shadow-sm">
+              <p className="text-lg font-medium text-red-700 dark:text-red-300">{content[language].error}</p>
+              <p className="text-sm text-red-600 dark:text-red-400 mt-2">{error}</p>
             </div>
           </div>
         </div>
@@ -142,46 +174,77 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
   if (!committeeData) return null;
 
   return (
-    <section id="committee" className="py-20 bg-background">
+    <section id="committee" className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30 dark:from-gray-900 dark:to-blue-950/30">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-primary mb-12">{content[language].title}</h2>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              {content[language].title}
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 mx-auto rounded-full"></div>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Scientific Committee */}
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-primary">
-                  <Award className="w-5 h-5" />
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3 text-gray-900 dark:text-white">
+                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
+                    <Award className="w-5 h-5 text-white" />
+                  </div>
                   {content[language].scientific.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 <div className="space-y-6">
                   {committeeData.scientific.chair && renderMember(committeeData.scientific.chair, 0, true)}
                   {committeeData.scientific.co_chair && (
-                    <div className="border-l-4 border-primary/60 pl-4 bg-primary/3 p-4 rounded-r-lg">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-foreground text-lg leading-tight">
-                          {language === 'en' ? committeeData.scientific.co_chair.name_en || committeeData.scientific.co_chair.name_fr : committeeData.scientific.co_chair.name_fr || committeeData.scientific.co_chair.name_en}
-                        </span>
-                        {(language === 'en' ? committeeData.scientific.co_chair.institute_en : committeeData.scientific.co_chair.institute_fr) && (
-                          <span className="text-sm text-muted-foreground italic mt-1 opacity-80">
-                            {language === 'en' ? committeeData.scientific.co_chair.institute_en || committeeData.scientific.co_chair.institute_fr : committeeData.scientific.co_chair.institute_fr || committeeData.scientific.co_chair.institute_en}
-                          </span>
+                    <div className="border-l-4 border-indigo-400 pl-6 bg-gradient-to-r from-indigo-50/50 to-transparent dark:from-indigo-950/20 p-6 rounded-r-xl shadow-sm">
+                      <div className="flex items-start gap-4">
+                        {committeeData.scientific.co_chair.image_path && (
+                          <img
+                            src={`http://localhost:8000/storage/${committeeData.scientific.co_chair.image_path}`}
+                            alt={language === 'en' ? committeeData.scientific.co_chair.name_en || committeeData.scientific.co_chair.name_fr : committeeData.scientific.co_chair.name_fr || committeeData.scientific.co_chair.name_en}
+                            className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-md"
+                          />
                         )}
-                        {(language === 'en' ? committeeData.scientific.co_chair.job_en : committeeData.scientific.co_chair.job_fr) && (
-                          <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full inline-block mt-1 w-fit">
-                            {language === 'en' ? committeeData.scientific.co_chair.job_en || committeeData.scientific.co_chair.job_fr : committeeData.scientific.co_chair.job_fr || committeeData.scientific.co_chair.job_en}
-                          </span>
-                        )}
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-2">
+                            <span className="font-semibold text-gray-900 dark:text-white text-lg leading-tight">
+                              {language === 'en' ? committeeData.scientific.co_chair.name_en || committeeData.scientific.co_chair.name_fr : committeeData.scientific.co_chair.name_fr || committeeData.scientific.co_chair.name_en}
+                            </span>
+                            <span className="inline-flex items-center px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-medium rounded-full">
+                              <Award className="w-3 h-3 mr-1" />
+                              Co-Chair
+                            </span>
+                          </div>
+                          {(language === 'en' ? committeeData.scientific.co_chair.institute_en : committeeData.scientific.co_chair.institute_fr) && (
+                            <div className="flex items-center gap-1 mb-2">
+                              <MapPin className="w-3 h-3 text-gray-400" />
+                              <span className="text-sm text-gray-600 dark:text-gray-400 italic">
+                                {language === 'en' ? committeeData.scientific.co_chair.institute_en || committeeData.scientific.co_chair.institute_fr : committeeData.scientific.co_chair.institute_fr || committeeData.scientific.co_chair.institute_en}
+                              </span>
+                            </div>
+                          )}
+                          {(language === 'en' ? committeeData.scientific.co_chair.job_en : committeeData.scientific.co_chair.job_fr) && (
+                            <div className="flex items-center gap-1">
+                              <Briefcase className="w-3 h-3 text-indigo-500" />
+                              <span className="text-xs text-indigo-700 dark:text-indigo-300 font-medium bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded-md">
+                                {language === 'en' ? committeeData.scientific.co_chair.job_en || committeeData.scientific.co_chair.job_fr : committeeData.scientific.co_chair.job_fr || committeeData.scientific.co_chair.job_en}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
                   {committeeData.scientific.members.length > 0 && (
-                    <div className="max-h-96 overflow-y-auto space-y-3">
-                      <h5 className="font-semibold text-sm text-muted-foreground mb-4 uppercase tracking-wide">{content[language].scientific.membersTitle}</h5>
-                      <div className="grid gap-3">{committeeData.scientific.members.map((member, index) => renderMember(member, index))}</div>
+                    <div className="max-h-96 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+                      <h5 className="font-semibold text-sm text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-wide flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        {content[language].scientific.membersTitle}
+                      </h5>
+                      <div className="space-y-2">{committeeData.scientific.members.map((member, index) => renderMember(member, index))}</div>
                     </div>
                   )}
                 </div>
@@ -189,20 +252,25 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
             </Card>
 
             {/* Organizing Committee */}
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-primary">
-                  <Users className="w-5 h-5" />
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3 text-gray-900 dark:text-white">
+                  <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
                   {content[language].organizing.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 <div className="space-y-6">
                   {committeeData.organizing.chair && renderMember(committeeData.organizing.chair, 0, true)}
                   {committeeData.organizing.members.length > 0 && (
-                    <div className="max-h-96 overflow-y-auto space-y-3">
-                      <h5 className="font-semibold text-sm text-muted-foreground mb-4 uppercase tracking-wide">{content[language].organizing.membersTitle}</h5>
-                      <div className="grid gap-3">{committeeData.organizing.members.map((member, index) => renderMember(member, index))}</div>
+                    <div className="max-h-96 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+                      <h5 className="font-semibold text-sm text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-wide flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        {content[language].organizing.membersTitle}
+                      </h5>
+                      <div className="space-y-2">{committeeData.organizing.members.map((member, index) => renderMember(member, index))}</div>
                     </div>
                   )}
                 </div>
@@ -210,18 +278,23 @@ const Committee: React.FC<CommitteeProps> = ({ language }) => {
             </Card>
 
             {/* Honorary Committee */}
-            <Card className="hover:shadow-lg transition-shadow md:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-primary">
-                  <Award className="w-5 h-5" />
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm md:col-span-2">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3 text-gray-900 dark:text-white">
+                  <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+                    <Award className="w-5 h-5 text-white" />
+                  </div>
                   {content[language].honorary.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {committeeData.honorary.members.length > 0 && (
-                  <div className="max-h-96 overflow-y-auto space-y-3">
-                    <h5 className="font-semibold text-sm text-muted-foreground mb-4 uppercase tracking-wide">{content[language].honorary.membersTitle}</h5>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  <div className="max-h-96 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+                    <h5 className="font-semibold text-sm text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-wide flex items-center gap-2">
+                      <Award className="w-4 h-4" />
+                      {content[language].honorary.membersTitle}
+                    </h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                       {committeeData.honorary.members.map((member, index) => renderMember(member, index))}
                     </div>
                   </div>
