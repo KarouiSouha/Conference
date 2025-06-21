@@ -21,7 +21,7 @@ import {
   Trophy,
 } from "lucide-react";
 import ProgramForm from "./ProgramForm";
-import DeleteProgramModal from "./DeleteProgramModal";
+import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import axios from "axios";
 
 interface Program {
@@ -338,11 +338,11 @@ export default function ProgramManager() {
 
         {/* Delete Confirmation Modal */}
         {showDeleteModal && programToDelete && (
-          <DeleteProgramModal
+          <DeleteConfirmationModal
             isOpen={showDeleteModal}
             onClose={handleCloseDeleteModal}
             onConfirm={handleDeleteProgram}
-            programName={programToDelete.evenement}
+            Name={programToDelete.evenement}
           />
         )}
       </div>

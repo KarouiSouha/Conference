@@ -3,7 +3,7 @@ import { Search, Plus, Edit, Trash, Tag, ArrowUpDown, Filter, MoreVertical, Star
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCogs, faCode, faRecycle, faChartLine, faChalkboardTeacher, faBook, faRobot, faLeaf, faBookOpen, faFlask, faLightbulb, faGlobe, faVial, faBrain, faSearch, faChartBar, faLock, faPaintBrush, faRocket, faLaptopCode, faDna } from "@fortawesome/free-solid-svg-icons";
 import ThemeForm from "./ThemeForm";
-import DeleteConfirmationModal from "./DeleteThemeModal";
+import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import { useToast } from "../../hooks/use-toast";
 
 interface Keyword {
@@ -636,7 +636,7 @@ export default function ThemesManager() {
               setIsBulkDelete(false);
             }}
             onConfirm={confirmDelete}
-            themeName={isBulkDelete ? `${selectedThemes.length} thèmes sélectionnés` : themes.find(t => t.id === themeToDelete)?.titleFr || 'ce thème'}
+            Name={isBulkDelete ? `${selectedThemes.length} thèmes sélectionnés` : themes.find(t => t.id === themeToDelete)?.titleFr || 'ce thème'}
           />
         )}
       </div>

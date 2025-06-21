@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Trash } from "lucide-react";
 
-export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, partnerName }) {
+export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, Name }) {
   if (!isOpen) return null;
 
   return (
@@ -19,7 +19,7 @@ export default function DeleteConfirmationModal({ isOpen, onClose, onConfirm, pa
               Confirmer la suppression
             </h3>
             <p className="text-gray-600">
-              Êtes-vous sûr de vouloir supprimer <span className="font-semibold">{partnerName}</span> ?
+              Êtes-vous sûr de vouloir supprimer <span className="font-semibold">{Name}</span> ?
               Cette action est irréversible.
             </p>
           </div>

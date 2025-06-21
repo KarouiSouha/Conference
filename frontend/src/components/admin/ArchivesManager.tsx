@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Edit, Trash, ExternalLink, Camera, Users, FileText, Globe, Archive, Calendar, MapPin, Loader2 } from "lucide-react";
 import ArchiveForm from "./ArchiveForm";
-import DeleteArchveModal from "./DeleteArchiveModal";
+import DeleteConfirmationModal from "./DeleteConfirmationModal";
 
 type ArchiveFormData = {
   id?: number;
@@ -412,11 +412,11 @@ export default function ArchivesManager() {
         )}
       </div>
 
-      <DeleteArchveModal
+      <DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={cancelDeleteArchive}
         onConfirm={confirmDeleteArchive}
-        archiveName={archiveToDelete?.event_name || ''}
+        Name={archiveToDelete?.event_name || ''}
       />
     </div>
   );
