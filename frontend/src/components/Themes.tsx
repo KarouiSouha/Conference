@@ -310,6 +310,20 @@ const Themes: React.FC<ThemesProps> = ({
     }
   };
 
+  const handleDownloadGuideline = () => {
+    const link = document.createElement('a');
+    link.href = '/assets/Template_SITE2023.pdf';
+    link.download = 'Template_SITE2023.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: language === 'fr' ? 'Téléchargement' : 'Download',
+      description: language === 'fr' ? 'Téléchargement du guide de rédaction en cours...' : 'Downloading writing guideline...',
+    });
+  };
+
   const canGoNext = currentIndex < themes.length - visibleItems;
   const canGoPrev = currentIndex > 0;
 
@@ -343,6 +357,7 @@ const Themes: React.FC<ThemesProps> = ({
       subtitle: 'Explorez nos thèmes de recherche et découvrez les domaines d\'innovation qui façonnent l\'avenir',
       inscription: 'Inscription',
       deposit: 'Déposer',
+      downloadGuideline: 'Guide de rédaction',
       modalTitle: 'Déposer votre soumission',
       nom: 'Nom',
       prenom: 'Prénom',
@@ -368,6 +383,7 @@ const Themes: React.FC<ThemesProps> = ({
       subtitle: 'Explore our research themes and discover the innovation domains shaping the future',
       inscription: 'Registration',
       deposit: 'Submit',
+      downloadGuideline: 'Writing Guide',
       modalTitle: 'Submit your paper',
       nom: 'Last Name',
       prenom: 'First Name',
@@ -575,24 +591,37 @@ const Themes: React.FC<ThemesProps> = ({
                           </div>
                         </Modal>
 
-                        <div className="flex gap-3 pt-2">
-                          <Button
-                            size="sm"
-                            onClick={() => scrollToSection('registration')}
-                            className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
-                          >
-                            <Users className="w-4 h-4 mr-2" />
-                            {content[language].inscription}
-                          </Button>
+                        <div className="flex flex-col gap-3 pt-2">
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => scrollToSection('registration')}
+                              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                            >
+                              <Users className="w-4 h-4 mr-2" />
+                              {content[language].inscription}
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => window.location.href = 'https://cmt3.research.microsoft.com/User/Login?ReturnUrl=%2FConference%2FRecent'}
+                              className="flex-1 bg-secondary hover:bg-secondary/80 text-secondary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                            >
+                              <Upload className="w-4 h-4 mr-2" />
+                              {content[language].deposit}
+                            </Button>
+                          </div>
 
                           <Button
                             size="sm"
-                            variant="secondary"
-                            onClick={() => window.location.href = 'https://cmt3.research.microsoft.com/User/Login?ReturnUrl=%2FConference%2FRecent'}
-                            className="flex-1 bg-secondary hover:bg-secondary/80 text-secondary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
+                            variant="outline"
+                            onClick={handleDownloadGuideline}
+                            className="w-full bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border-emerald-500/30 hover:border-emerald-500/50 text-emerald-700 dark:text-emerald-400 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
                           >
-                            <Upload className="w-4 h-4 mr-2" />
-                            {content[language].deposit}
+                            <Download className="w-4 h-4 mr-2 group-hover:animate-bounce" />
+                            {content[language].downloadGuideline}
+                            <FileText className="w-4 h-4 ml-2 opacity-60" />
                           </Button>
                         </div>
                       </CardContent>
