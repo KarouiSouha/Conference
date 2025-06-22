@@ -14,6 +14,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Image,
+  Eye,
+  Star,
+  Calendar,
+  Users,
 } from "lucide-react";
 import PartnerForm from "./PartnerForm";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
@@ -24,10 +28,11 @@ export default function PartnersManager() {
   const [showPartnerForm, setShowPartnerForm] = useState(false);
   const [partners, setPartners] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(4);
+  const [itemsPerPage] = useState(6);
   const [imageErrors, setImageErrors] = useState({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [partnerToDelete, setPartnerToDelete] = useState(null);
+  const [viewMode, setViewMode] = useState("grid"); // "grid" ou "list"
 
   // Fetch partners from API
   useEffect(() => {
@@ -130,24 +135,24 @@ export default function PartnersManager() {
   const getTypeBadge = (type) => {
     const badgeConfig = {
       Institutionnels: {
-        className: "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md",
+        className: "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm",
         icon: <Building2 className="w-3 h-3 mr-1" />,
       },
       "Industriels & Technologiques": {
-        className: "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md",
+        className: "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-sm",
         icon: <Cpu className="w-3 h-3 mr-1" />,
       },
       "Centres de Recherche & Innovation": {
-        className: "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md",
+        className: "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-sm",
         icon: <Microscope className="w-3 h-3 mr-1" />,
       },
     };
     const config = badgeConfig[type] || {
-      className: "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md",
+      className: "bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-sm",
       icon: <Building2 className="w-3 h-3 mr-1" />,
     };
     return (
-      <Badge className={`${config.className} px-3 py-1 flex items-center justify-center font-medium`}>
+      <Badge className={`${config.className} px-3 py-1 flex items-center justify-center font-medium text-xs rounded-full border-0`}>
         {config.icon}
         {type}
       </Badge>
@@ -181,19 +186,20 @@ export default function PartnersManager() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
       <div className="container mx-auto px-6 py-8 space-y-8">
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
+        {/* Header Section */}
+        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-3xl p-8 shadow-xl border border-blue-200">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent mb-2">
+            <div className="text-white">
+              <h1 className="text-4xl font-bold mb-2 drop-shadow-sm">
                 Gestion des Partenaires
               </h1>
-              <p className="text-gray-600 text-lg">Gérez et organisez vos partenariats stratégiques</p>
+              <p className="text-blue-100 text-lg opacity-90">Gérez et organisez vos partenariats stratégiques</p>
             </div>
             <Button
               onClick={() => setShowPartnerForm(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg"
+              className="bg-white text-blue-700 hover:bg-blue-50 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg font-semibold border-0"
             >
               <Plus className="w-5 h-5 mr-2" />
               Nouveau Partenaire
@@ -201,8 +207,9 @@ export default function PartnersManager() {
           </div>
         </div>
 
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6 bg-white border-2 border-gray-100 hover:border-blue-200 transition-all duration-300 hover:shadow-lg group">
+          <Card className="p-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group rounded-2xl">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
@@ -210,25 +217,25 @@ export default function PartnersManager() {
                 </p>
                 <p className="text-gray-600 font-medium">Institutionnels</p>
               </div>
-              <div className="p-3 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
+              <div className="p-4 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl group-hover:from-blue-200 group-hover:to-blue-300 transition-all duration-300">
                 <Building2 className="w-8 h-8 text-blue-600" />
               </div>
             </div>
           </Card>
-          <Card className="p-6 bg-white border-2 border-gray-100 hover:border-green-200 transition-all duration-300 hover:shadow-lg group">
+          <Card className="p-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group rounded-2xl">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">
+                <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
                   {stats.industriels}
                 </p>
-                <p className="text-gray-600 font-medium">Industriels & Technologiques</p>
+                <p className="text-gray-600 font-medium">Industriels & Tech.</p>
               </div>
-              <div className="p-3 bg-green-50 rounded-full group-hover:bg-green-100 transition-colors">
-                <Cpu className="w-8 h-8 text-green-600" />
+              <div className="p-4 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl group-hover:from-emerald-200 group-hover:to-emerald-300 transition-all duration-300">
+                <Cpu className="w-8 h-8 text-emerald-600" />
               </div>
             </div>
           </Card>
-          <Card className="p-6 bg-white border-2 border-gray-100 hover:border-purple-200 transition-all duration-300 hover:shadow-lg group">
+          <Card className="p-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group rounded-2xl">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">
@@ -236,25 +243,26 @@ export default function PartnersManager() {
                 </p>
                 <p className="text-gray-600 font-medium">Centres de Recherche</p>
               </div>
-              <div className="p-3 bg-purple-50 rounded-full group-hover:bg-purple-100 transition-colors">
+              <div className="p-4 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300">
                 <Microscope className="w-8 h-8 text-purple-600" />
               </div>
             </div>
           </Card>
         </div>
 
-        <Card className="p-6 bg-white border-2 border-gray-100 shadow-sm">
+        {/* Search Bar */}
+        <Card className="p-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <Input
               placeholder="Rechercher par nom ou type..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 pr-4 py-3 text-lg border-2 border-gray-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200"
+              className="pl-12 pr-4 py-4 text-lg border-0 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 shadow-inner"
             />
             {searchTerm && (
               <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                <Badge className="bg-blue-500 text-white px-3 py-1 rounded-full">
                   {filteredPartners.length} résultat{filteredPartners.length > 1 ? "s" : ""}
                 </Badge>
               </div>
@@ -262,74 +270,108 @@ export default function PartnersManager() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {currentPartners.map((partner) => (
-            <Card
-              key={partner.id}
-              className="group p-0 bg-white border-2 border-gray-100 hover:border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer overflow-hidden"
-            >
-              <div className="flex flex-col h-full">
-                <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 group-hover:from-blue-50 group-hover:to-indigo-50 transition-all duration-300">
+        {/* Partners Grid - Design Amélioré */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-800">Nos Partenaires</h2>
+            <div className="text-sm text-gray-600 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full">
+              {filteredPartners.length} partenaire{filteredPartners.length > 1 ? "s" : ""}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {currentPartners.map((partner) => (
+              <Card
+                key={partner.id}
+                className="group relative bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden transform hover:-translate-y-2"
+              >
+                {/* Decorative Top Border */}
+                <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
+                
+                {/* Logo Section */}
+                <div className="relative h-48 bg-gradient-to-br from-gray-50 to-white p-8 flex items-center justify-center">
                   {getImageUrl(partner) ? (
                     <img
                       src={getImageUrl(partner)}
                       alt={partner.nameFr}
-                      className="w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+                      className="max-w-full max-h-full object-contain filter drop-shadow-lg transition-transform duration-300 group-hover:scale-105"
                       onError={() => handleImageError(partner.id)}
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="flex flex-col items-center text-gray-400">
-                        <Image className="w-12 h-12 mb-2" />
-                        <span className="text-sm">Image non disponible</span>
+                    <div className="flex flex-col items-center text-gray-300">
+                      <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full mb-4">
+                        <Image className="w-12 h-12" strokeWidth={1} />
                       </div>
+                      <span className="text-sm text-gray-400 font-medium">Logo non disponible</span>
                     </div>
                   )}
-                  <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full" />
-                    </div>
-                  </div>
+                  
+                  {/* Status Indicator */}
+                  <div className="absolute top-4 right-4 w-3 h-3 bg-green-400 rounded-full shadow-sm animate-pulse"></div>
                 </div>
 
-                <div className="flex-1 p-6 flex flex-col justify-between">
-                  <div className="space-y-3 text-center">
-                    <h3 className="font-bold text-lg text-gray-800 group-hover:text-blue-700 transition-colors duration-200 line-clamp-2">
+                {/* Content Section */}
+                <div className="p-6 space-y-4">
+                  {/* Partner Name */}
+                  <div className="text-center">
+                    <h3 className="font-bold text-lg text-gray-800 mb-2 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">
                       {partner.nameFr}
                     </h3>
-                    <div className="flex justify-center">
-                      {getTypeBadge(partner.type)}
+                    {partner.nameEn && partner.nameEn !== partner.nameFr && (
+                      <p className="text-sm text-gray-500 italic">{partner.nameEn}</p>
+                    )}
+                  </div>
+
+                  {/* Type Badge */}
+                  <div className="flex justify-center">
+                    {getTypeBadge(partner.type)}
+                  </div>
+
+                  {/* Quick Info */}
+                  <div className="flex items-center justify-center space-x-4 text-xs text-gray-500 pt-2">
+                    <div className="flex items-center">
+                      <Calendar className="w-3 h-3 mr-1" />
+                      <span>Partenaire</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Star className="w-3 h-3 mr-1 text-yellow-500" />
+                      <span>Actif</span>
                     </div>
                   </div>
 
-                  <div className="flex justify-center space-x-2 pt-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                  {/* Action Buttons */}
+                  <div className="flex justify-center space-x-3 pt-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
                     <Button
                       size="sm"
-                      variant="outline"
                       onClick={() => handleEditPartner(partner)}
-                      className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                      className="h-9 px-4 bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-4 h-4 mr-1" />
+                      Modifier
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
                       onClick={() => handleOpenDeleteModal(partner)}
-                      className="border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:text-red-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                      className="h-9 px-4 bg-red-500 hover:bg-red-600 text-white shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
                     >
-                      <Trash className="w-4 h-4" />
+                      <Trash className="w-4 h-4 mr-1" />
+                      Supprimer
                     </Button>
                   </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+
+                {/* Glow Effect */}
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+              </Card>
+            ))}
+          </div>
         </div>
 
+        {/* Pagination */}
         {totalPages > 1 && (
-          <Card className="p-6 bg-white border-2 border-gray-100 shadow-sm">
+          <Card className="p-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-full">
                 Affichage de {startIndex + 1} à {Math.min(endIndex, filteredPartners.length)} sur {filteredPartners.length} partenaires
               </div>
               
@@ -339,7 +381,7 @@ export default function PartnersManager() {
                   size="sm"
                   onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="border-0 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
@@ -347,10 +389,13 @@ export default function PartnersManager() {
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <Button
                     key={page}
-                    variant={currentPage === page ? "default" : "outline"}
                     size="sm"
                     onClick={() => goToPage(page)}
-                    className={`border-2 ${currentPage === page ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"} min-w-[40px]`}
+                    className={`min-w-[40px] rounded-xl border-0 ${
+                      currentPage === page 
+                        ? "bg-blue-500 text-white shadow-lg" 
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    }`}
                   >
                     {page}
                   </Button>
@@ -361,7 +406,7 @@ export default function PartnersManager() {
                   size="sm"
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="border-0 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
@@ -370,14 +415,26 @@ export default function PartnersManager() {
           </Card>
         )}
 
+        {/* Empty State */}
         {filteredPartners.length === 0 && searchTerm && (
-          <Card className="p-12 bg-white border-2 border-dashed border-gray-200 text-center">
-            <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">Aucun partenaire trouvé</h3>
-            <p className="text-gray-500">Essayez de modifier vos critères de recherche</p>
+          <Card className="p-16 bg-white/80 backdrop-blur-sm border-0 shadow-lg text-center rounded-3xl">
+            <div className="space-y-4">
+              <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto">
+                <Search className="w-10 h-10 text-gray-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-600">Aucun partenaire trouvé</h3>
+              <p className="text-gray-500 max-w-md mx-auto">Aucun partenaire ne correspond à vos critères de recherche. Essayez de modifier vos termes de recherche.</p>
+              <Button 
+                onClick={() => setSearchTerm("")}
+                className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl border-0"
+              >
+                Réinitialiser la recherche
+              </Button>
+            </div>
           </Card>
         )}
 
+        {/* Modals */}
         {showPartnerForm && (
           <PartnerForm
             onClose={handleCloseForm}
@@ -391,7 +448,7 @@ export default function PartnersManager() {
             isOpen={showDeleteModal}
             onClose={handleCloseDeleteModal}
             onConfirm={() => handleDeletePartner(partnerToDelete.id)}
-            partnerName={partnerToDelete.nameFr}
+            Name={partnerToDelete.nameFr}
           />
         )}
       </div>
