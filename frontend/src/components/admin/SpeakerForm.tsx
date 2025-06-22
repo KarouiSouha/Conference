@@ -15,8 +15,10 @@ import {
   Languages,
   MapPin,
   Check,
-  AlertCircle
+  AlertCircle,
+  Linkedin
 } from "lucide-react";
+import { link } from "fs";
 
 export default function SpeakerForm({
   isOpen = true,
@@ -33,7 +35,8 @@ export default function SpeakerForm({
     country_en: "",
     description_fr: "",
     description_en: "",
-    theme_id: ""
+    theme_id: "",
+    link: ""
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -103,7 +106,8 @@ export default function SpeakerForm({
         country_en: speaker.country_en || "",
         description_fr: speaker.description_fr || "",
         description_en: speaker.description_en || "",
-        theme_id: speaker.theme_id?.toString() || ""
+        theme_id: speaker.theme_id?.toString() || "",
+        link: speaker.link || ""
       });
     } else {
       // Reset pour nouveau speaker
@@ -116,7 +120,8 @@ export default function SpeakerForm({
         country_en: "",
         description_fr: "",
         description_en: "",
-        theme_id: ""
+        theme_id: "",
+        link: ""
       });
     }
     setErrors({});
@@ -216,7 +221,8 @@ export default function SpeakerForm({
           country_en: formData.country_en,
           description_fr: formData.description_fr,
           description_en: formData.description_en,
-          theme_id: parseInt(formData.theme_id)
+          theme_id: parseInt(formData.theme_id),
+          link: formData.link || null,
         }),
       });
 
@@ -331,6 +337,20 @@ export default function SpeakerForm({
                       <span>{errors.email}</span>
                     </div>
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <Linkedin className="w-4 h-4" />
+                    Lien LinkedIn
+                  </label>
+                  <Input
+                    type="url"
+                    value={formData.link}
+                    onChange={(e) => handleInputChange("link", e.target.value)}
+                    placeholder="https://linkedin.com/in/sophie-martin"
+                    className={`border-2 border-gray-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                  />
                 </div>
               </div>
             </div>
