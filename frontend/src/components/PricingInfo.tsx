@@ -219,22 +219,33 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
   }: { 
     title: string; 
     icon: React.ElementType;
-    price: string;
+    price: string | JSX.Element;
     description: string;
     gradient?: string;
     iconColor?: string;
     iconBg?: string;
   }) => (
-    <Card className={`border-0 shadow-lg bg-gradient-to-br ${gradient} hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}>
-      <CardContent className="p-6">
-        <div className="flex items-start space-x-4">
-          <div className={`w-12 h-12 ${iconBg} rounded-xl flex items-center justify-center flex-shrink-0`}>
-            <Icon className={`w-6 h-6 ${iconColor}`} />
+    <Card className={`border-0 shadow-lg bg-gradient-to-br ${gradient} hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-w-[250px]`}>
+      <CardContent className="p-8">
+        <div className="flex flex-col items-center space-y-4">
+          <div className={`w-14 h-14 ${iconBg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+            <Icon className={`w-7 h-7 ${iconColor}`} />
           </div>
-          <div className="flex-1">
-            <h4 className="font-bold text-gray-800 text-lg mb-2">{title}</h4>
-            <div className="text-2xl font-bold text-gray-900 mb-2">{price}</div>
-            <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
+          <div className="text-center w-full">
+            <h4 className="font-bold text-gray-800 text-lg mb-3">{title}</h4>
+            <div className="space-y-3">
+              {typeof price === 'string' ? (
+                <div className="p-4 bg-white rounded-lg border border-gray-200">
+                  <div className="text-xl font-bold text-gray-900">{price}</div>
+                  {title === content[language].airportTransfer && (
+                    <div className="text-xs text-gray-500 mt-1">{content[language].perNight}</div>
+                  )}
+                </div>
+              ) : (
+                price
+              )}
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed mt-3 max-w-full break-words">{description}</p>
           </div>
         </div>
       </CardContent>
@@ -381,164 +392,45 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
         
         <div className="grid md:grid-cols-3 gap-8">
           {/* Student Card */}
-          <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 shadow-lg border-0 bg-white">
-            <div className="absolute top-4 right-4 z-10">
-              <Badge className="bg-green-500 hover:bg-green-600 text-white font-semibold px-3 py-1">
-                {content[language].bestValue}
-              </Badge>
-            </div>
-            
-            <CardHeader className="text-center pb-4 pt-6 bg-gradient-to-br from-slate-50 to-gray-100">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center">
-                <GraduationCap className="w-8 h-8 text-green-600" />
-              </div>
-              <CardTitle className="text-xl font-bold text-gray-800 mb-2">{content[language].student}</CardTitle>
-            </CardHeader>
-            
-            <CardContent className="p-6 bg-white">
-              <div className="space-y-6">
-                {/* Tunisia Price */}
-                <div className="text-center p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border-2 border-orange-200">
-                  <div className="flex items-center justify-center mb-2">
-                    <div className="w-4 h-4 rounded-full bg-orange-500 mr-2"></div>
-                    <span className="font-semibold text-gray-700 text-sm">{content[language].fromTunisia}</span>
-                  </div>
-                  <div className="text-3xl font-bold text-orange-600">650 TND</div>
-                </div>
-                
-                {/* International Price */}
-                <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
-                  <div className="flex items-center justify-center mb-2">
-                    <Globe className="w-4 h-4 text-blue-500 mr-2" />
-                    <span className="font-semibold text-gray-700 text-sm">{content[language].fromOtherCountries}</span>
-                  </div>
-                  <div className="text-3xl font-bold text-blue-600">400 €</div>
-                </div>
-                
-                {/* Features */}
-                <div className="space-y-2">
-                  <h5 className="font-semibold text-gray-700 text-sm">{content[language].includes}:</h5>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>{content[language].registrationFeeCovers}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>{content[language].hotelDetails}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>Accès aux sessions spéciales étudiants</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <PricingCard
+            title={content[language].student}
+            icon={GraduationCap}
+            tunisiaPrice="650 TND"
+            internationalPrice="400 €"
+            isBestValue={true}
+            features={[
+              content[language].registrationFeeCovers,
+              content[language].hotelDetails,
+              "Accès aux sessions spéciales étudiants"
+            ]}
+          />
 
           {/* Academic Card */}
-          <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 shadow-lg border-0 bg-white ring-2 ring-blue-500 shadow-xl scale-105">
-            <div className="absolute top-0 left-0 right-0">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-2 text-sm font-semibold">
-                <Star className="w-4 h-4 inline mr-1" />
-                {content[language].mostPopular}
-              </div>
-            </div>
-            
-            <CardHeader className="text-center pb-4 pt-12 bg-gradient-to-br from-slate-50 to-gray-100">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
-                <UserCheck className="w-8 h-8 text-blue-600" />
-              </div>
-              <CardTitle className="text-xl font-bold text-gray-800 mb-2">{content[language].academic}</CardTitle>
-            </CardHeader>
-            
-            <CardContent className="p-6 bg-white">
-              <div className="space-y-6">
-                {/* Tunisia Price */}
-                <div className="text-center p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border-2 border-orange-200">
-                  <div className="flex items-center justify-center mb-2">
-                    <div className="w-4 h-4 rounded-full bg-orange-500 mr-2"></div>
-                    <span className="font-semibold text-gray-700 text-sm">{content[language].fromTunisia}</span>
-                  </div>
-                  <div className="text-3xl font-bold text-orange-600">700 TND</div>
-                </div>
-                
-                {/* International Price */}
-                <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
-                  <div className="flex items-center justify-center mb-2">
-                    <Globe className="w-4 h-4 text-blue-500 mr-2" />
-                    <span className="font-semibold text-gray-700 text-sm">{content[language].fromOtherCountries}</span>
-                  </div>
-                  <div className="text-3xl font-bold text-blue-600">450 €</div>
-                </div>
-                
-                {/* Features */}
-                <div className="space-y-2">
-                  <h5 className="font-semibold text-gray-700 text-sm">{content[language].includes}:</h5>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>{content[language].registrationFeeCovers}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>{content[language].hotelDetails}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>Accès réseau académique</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <PricingCard
+            title={content[language].academic}
+            icon={UserCheck}
+            tunisiaPrice="700 TND"
+            internationalPrice="450 €"
+            isPopular={true}
+            features={[
+              content[language].registrationFeeCovers,
+              content[language].hotelDetails,
+              "Accès réseau académique"
+            ]}
+          />
 
           {/* Professional Card */}
-          <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 shadow-lg border-0 bg-white">
-            <CardHeader className="text-center pb-4 pt-6 bg-gradient-to-br from-slate-50 to-gray-100">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
-                <Briefcase className="w-8 h-8 text-purple-600" />
-              </div>
-              <CardTitle className="text-xl font-bold text-gray-800 mb-2">{content[language].professional}</CardTitle>
-            </CardHeader>
-            
-            <CardContent className="p-6 bg-white">
-              <div className="space-y-6">
-                {/* Tunisia Price */}
-                <div className="text-center p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border-2 border-orange-200">
-                  <div className="flex items-center justify-center mb-2">
-                    <div className="w-4 h-4 rounded-full bg-orange-500 mr-2"></div>
-                    <span className="font-semibold text-gray-700 text-sm">{content[language].fromTunisia}</span>
-                  </div>
-                  <div className="text-3xl font-bold text-orange-600">750 TND</div>
-                </div>
-                
-                {/* International Price */}
-                <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
-                  <div className="flex items-center justify-center mb-2">
-                    <Globe className="w-4 h-4 text-blue-500 mr-2" />
-                    <span className="font-semibold text-gray-700 text-sm">{content[language].fromOtherCountries}</span>
-                  </div>
-                  <div className="text-3xl font-bold text-blue-600">500 €</div>
-                </div>
-                
-                {/* Features */}
-                <div className="space-y-2">
-                  <h5 className="font-semibold text-gray-700 text-sm">{content[language].includes}:</h5>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>{content[language].registrationFeeCovers}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>{content[language].hotelDetails}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>Sessions networking entreprises</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <PricingCard
+            title={content[language].professional}
+            icon={Briefcase}
+            tunisiaPrice="750 TND"
+            internationalPrice="500 €"
+            features={[
+              content[language].registrationFeeCovers,
+              content[language].hotelDetails,
+              "Sessions networking entreprises"
+            ]}
+          />
         </div>
       </div>
 
@@ -549,18 +441,14 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
           <p className="text-gray-600 text-lg">Services supplémentaires disponibles</p>
         </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
           {/* Adult Accompanying */}
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Users className="w-8 h-8 text-blue-600" />
-                </div>
-                <h4 className="font-bold text-gray-800 text-lg mb-3">{content[language].adultAccompanying}</h4>
-                
-                {/* Tunisia Price */}
-                <div className="mb-3 p-3 bg-white rounded-lg border border-blue-200">
+          <ServiceCard 
+            title={content[language].adultAccompanying}
+            icon={Users}
+            price={
+              <div className="space-y-3">
+                <div className="p-3 bg-white rounded-lg border border-blue-200">
                   <div className="flex items-center justify-center mb-1">
                     <div className="w-3 h-3 rounded-full bg-orange-500 mr-2"></div>
                     <span className="text-xs font-semibold text-gray-600">Tunisie</span>
@@ -568,8 +456,6 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
                   <div className="text-xl font-bold text-orange-600">120 TND</div>
                   <div className="text-xs text-gray-500">{content[language].perNight}</div>
                 </div>
-                
-                {/* International Price */}
                 <div className="p-3 bg-white rounded-lg border border-blue-200">
                   <div className="flex items-center justify-center mb-1">
                     <Globe className="w-3 h-3 text-blue-500 mr-2" />
@@ -579,20 +465,20 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
                   <div className="text-xs text-gray-500">{content[language].perNight}</div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            }
+            description={content[language].adultAccompanying}
+            gradient="from-blue-50 to-cyan-50"
+            iconColor="text-blue-600"
+            iconBg="bg-blue-100"
+          />
           
           {/* Single Supplement */}
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <Building className="w-8 h-8 text-purple-600" />
-                </div>
-                <h4 className="font-bold text-gray-800 text-lg mb-3">{content[language].singleSupplement}</h4>
-                
-                {/* Tunisia Price */}
-                <div className="mb-3 p-3 bg-white rounded-lg border border-purple-200">
+          <ServiceCard 
+            title={content[language].singleSupplement}
+            icon={Building}
+            price={
+              <div className="space-y-3">
+                <div className="p-3 bg-white rounded-lg border border-purple-200">
                   <div className="flex items-center justify-center mb-1">
                     <div className="w-3 h-3 rounded-full bg-orange-500 mr-2"></div>
                     <span className="text-xs font-semibold text-gray-600">Tunisie</span>
@@ -600,8 +486,6 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
                   <div className="text-xl font-bold text-orange-600">25 TND</div>
                   <div className="text-xs text-gray-500">{content[language].perNight}</div>
                 </div>
-                
-                {/* International Price */}
                 <div className="p-3 bg-white rounded-lg border border-purple-200">
                   <div className="flex items-center justify-center mb-1">
                     <Globe className="w-3 h-3 text-blue-500 mr-2" />
@@ -611,28 +495,26 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
                   <div className="text-xs text-gray-500">{content[language].perNight}</div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            }
+            description={content[language].singleSupplement}
+            gradient="from-purple-50 to-pink-50"
+            iconColor="text-purple-600"
+            iconBg="bg-purple-100"
+          />
           
           {/* Social Event */}
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-xl flex items-center justify-center">
-                  <Users className="w-8 h-8 text-green-600" />
-                </div>
-                <h4 className="font-bold text-gray-800 text-lg mb-3">{content[language].socialEvent}</h4>
-                
-                {/* Tunisia Price */}
-                <div className="mb-3 p-3 bg-white rounded-lg border border-green-200">
+          <ServiceCard 
+            title={content[language].socialEvent}
+            icon={Users}
+            price={
+              <div className="space-y-3">
+                <div className="p-3 bg-white rounded-lg border border-green-200">
                   <div className="flex items-center justify-center mb-1">
                     <div className="w-3 h-3 rounded-full bg-orange-500 mr-2"></div>
                     <span className="text-xs font-semibold text-gray-600">Tunisie</span>
                   </div>
                   <div className="text-xl font-bold text-orange-600">50 TND</div>
                 </div>
-                
-                {/* International Price */}
                 <div className="p-3 bg-white rounded-lg border border-green-200">
                   <div className="flex items-center justify-center mb-1">
                     <Globe className="w-3 h-3 text-blue-500 mr-2" />
@@ -640,32 +522,24 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
                   </div>
                   <div className="text-xl font-bold text-blue-600">100 €</div>
                 </div>
-                
-                <p className="text-xs text-gray-600 mt-3 leading-relaxed">Soirée de gala et networking</p>
               </div>
-            </CardContent>
-          </Card>
+            }
+            description="Soirée de gala et networking"
+            gradient="from-green-50 to-emerald-50"
+            iconColor="text-green-600"
+            iconBg="bg-green-100"
+          />
           
           {/* Airport Transfer */}
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-amber-50 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-orange-100 rounded-xl flex items-center justify-center">
-                  <MapPin className="w-8 h-8 text-orange-600" />
-                </div>
-                <h4 className="font-bold text-gray-800 text-lg mb-3">{content[language].airportTransfer}</h4>
-                
-                {/* Unified Price */}
-                <div className="p-4 bg-white rounded-lg border border-orange-200 mb-3">
-                  <div className="text-2xl font-bold text-orange-600">50 €</div>
-                </div>
-                
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Transfert aéroport (Tunis Carthage vers l'hôtel et vice versa) peut être organisé par les organisateurs pour 50 €.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <ServiceCard 
+            title={content[language].airportTransfer}
+            icon={MapPin}
+            price="50 €"
+            description={content[language].airportTransferDesc}
+            gradient="from-orange-50 to-amber-50"
+            iconColor="text-orange-600"
+            iconBg="bg-orange-100"
+          />
         </div>
       </div>
 
