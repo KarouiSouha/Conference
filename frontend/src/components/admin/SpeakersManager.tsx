@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Edit, Trash, Mail, Users, Award, Globe, BookOpen, Filter, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Search, Plus, Edit, Trash, Mail, Users, Award, Globe, BookOpen, Filter, ChevronLeft, ChevronRight, Loader2, Linkedin } from "lucide-react";
 
 // Import du composant SpeakerForm
 import SpeakerForm from "./SpeakerForm";
@@ -177,6 +177,12 @@ export default function SpeakersManager() {
     }
 
     return `https://flagcdn.com/w40/un.png`; // 🌍 par défaut
+  };
+
+  // Fonction pour vérifier si un lien est valide
+  const isValidLinkedInUrl = (url) => {
+    if (!url) return false;
+    return url.includes('linkedin.com') || url.startsWith('http');
   };
 
   // Filtrage des speakers
@@ -361,6 +367,9 @@ export default function SpeakersManager() {
                     Origine
                   </th>
                   <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    LinkedIn
+                  </th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Thème & Statut
                   </th>
                   <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -430,6 +439,23 @@ export default function SpeakersManager() {
                           <div className="text-xs text-gray-600 italic">{speaker.country_en}</div>
                         </div>
                       </div>
+                    </td>
+                    <td className="py-6 px-6">
+                      {isValidLinkedInUrl(speaker.link) ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 hover:bg-blue-50 transition-colors"
+                          onClick={() => window.open(speaker.link, '_blank')}
+                          title="Voir le profil LinkedIn"
+                        >
+                          <Linkedin className="w-4 h-4 text-blue-600" />
+                        </Button>
+                      ) : (
+                        <div className="flex items-center justify-center h-8 w-8">
+                          <span className="text-gray-400 text-xs">-</span>
+                        </div>
+                      )}
                     </td>
                     <td className="py-6 px-6">
                       {getThemeBadge(getThemeName(speaker.theme_id), speaker.is_keynote)}

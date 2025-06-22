@@ -36,6 +36,7 @@ class SpeakerController extends Controller
             'description_fr' => 'nullable|string',
             'description_en' => 'nullable|string',
             'theme_id' => 'nullable|exists:themes,id',
+            'link' => 'nullable|url|max:255', // Ajout de la validation pour le lien
         ]);
 
         // Créer le speaker
@@ -49,6 +50,7 @@ class SpeakerController extends Controller
             'description_fr' => $request->input('description_fr'),
             'description_en' => $request->input('description_en'),
             'theme_id' => $request->input('theme_id'),
+            'link' => $request->input('link'),
         ]);
 
         return response()->json([
@@ -76,6 +78,7 @@ class SpeakerController extends Controller
             'description_fr' => 'nullable|string',
             'description_en' => 'nullable|string',
             'theme_id' => 'nullable|exists:themes,id',
+            'link' => 'nullable|url|max:255',
         ]);
 
         // Mise à jour des champs
@@ -89,6 +92,7 @@ class SpeakerController extends Controller
             'description_fr' => $request->input('description_fr'),
             'description_en' => $request->input('description_en'),
             'theme_id' => $request->input('theme_id'),
+            'link' => $request->input('link'),
         ]);
 
         return response()->json([
