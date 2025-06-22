@@ -297,42 +297,42 @@ class RegistrationController extends Controller
         }
     }
 
-    /**
-     * Get registration statistics.
-     */
-    public function statistics(): JsonResponse
-    {
-        try {
-            $stats = [
-                'total' => Registration::count(),
-                'pending' => Registration::pending()->count(),
-                'confirmed' => Registration::confirmed()->count(),
-                'paid' => Registration::paid()->count(),
-                'with_accommodation' => Registration::where('accommodation_type', 'with-accommodation')->count(),
-                'without_accommodation' => Registration::where('accommodation_type', 'without-accommodation')->count(),
-                'with_article' => Registration::where('participation_type', 'with-article')->count(),
-                'without_article' => Registration::where('participation_type', 'without-article')->count(),
-                'total_amount' => Registration::sum('amount'),
-                'paid_amount' => Registration::paid()->sum('amount'),
-            ];
+/**
+ * Get registration statistics.
+ */
+public function statistics(): JsonResponse
+{
+    try {
+        $stats = [
+            'total' => Registration::count(),
+            'pending' => Registration::pending()->count(),
+            'confirmed' => Registration::confirmed()->count(),
+            'paid' => Registration::paid()->count(),
+            'with_accommodation' => Registration::where('accommodation_type', 'with-accommodation')->count(),
+            'without_accommodation' => Registration::where('accommodation_type', 'without-accommodation')->count(),
+            'with_article' => Registration::where('participation_type', 'with-article')->count(),
+            'without_article' => Registration::where('participation_type', 'without-article')->count(),
+            'total_amount' => Registration::sum('amount'),
+            'paid_amount' => Registration::paid()->sum('amount'),
+        ];
 
-            return response()->json([
-                'success' => true,
-                'data' => $stats,
-                'message' => 'Statistiques récupérées avec succès'
-            ]);
+        return response()->json([
+            'success' => true,
+            'data' => $stats,
+            'message' => 'Statistiques récupérées avec succès'
+        ]);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la récupération des statistiques: ' . $e->getMessage()
-            ], 500);
-        }
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors de la récupération des statistiques: ' . $e->getMessage()
+        ], 500);
     }
-    public function count(): JsonResponse
-    {
-        $count = Registration::count();
-        return response()->json(['total_registrations' => $count]);
-    }
+}
+public function count(): JsonResponse
+{
+    $count = Registration::count();
+    return response()->json(['total_registrations' => $count]);
+}
 
 }

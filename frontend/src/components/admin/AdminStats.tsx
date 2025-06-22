@@ -1,7 +1,110 @@
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { Card } from "@/components/ui/card";
 import { Users, Mic, Calendar, TrendingUp, Building2, Newspaper, Archive, Tags, ArrowUpRight, Activity, MoreVertical, Bell, Settings, Search, Filter, ChevronDown, Zap, Target, Clock, DollarSign } from "lucide-react";
 
+interface Stats {
+  participants: { count: number; previousMonth: number };
+  speakers: { count: number; activeThisMonth: number };
+  sessions: { count: number; thisWeek: number };
+  revenue: { total: number; thisMonth: number };
+  performance: { satisfaction: number };
+  goals: { achieved: number };
+  growth: { percentage: number };
+  partners: { count: number; thisMonth: number };
+  themes: { count: number };
+  news: { count: number; thisWeek: number };
+  archives: { count: number };
+  activities: Array<{ type: string; description: string; time: string }>;
+}
+
 export default function AdminStats() {
+  const [stats, setStats] = useState<Stats>({
+    participants: { count: 0, previousMonth: 0 },
+    speakers: { count: 0, activeThisMonth: 0 },
+    sessions: { count: 0, thisWeek: 0 },
+    revenue: { total: 0, thisMonth: 0 },
+    performance: { satisfaction: 94 },
+    goals: { achieved: 87 },
+    growth: { percentage: 24 },
+    partners: { count: 0, thisMonth: 0 },
+    themes: { count: 0 },
+    news: { count: 0, thisWeek: 0 },
+    archives: { count: 0 },
+    activities: [],
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const [
+          registrationStatsRes,
+          speakersStatsRes,
+          programmeRes,
+          partnersRes,
+          themesRes,
+          newsRes,
+          archivesRes,
+        ] = await Promise.all([
+          axios.get("/api/Registration/statistics"),
+          axios.get("/api/Speakers/statistics"),
+          axios.get("/api/Programme/all"),
+          axios.get("/api/Partners/count"),
+          axios.get("/api/Theme/all"),
+          axios.get("/api/News/all"),
+          axios.get("/api/Archive/all"),
+        ]);
+
+        // Extraire les données
+        const participantsCount = registrationStatsRes.data.data.total || 0;
+        const revenueTotal = registrationStatsRes.data.data.total_amount || 0;
+        const speakersCount = speakersStatsRes.data.data.total || 0;
+        const speakersActiveThisMonth = speakersStatsRes.data.data.active_this_month || 0;
+        const sessionsCount = programmeRes.data.length || 0;
+        const partnersCount = partnersRes.data.total_partners || 0; // Changé de count à total_partners
+        const themesCount = themesRes.data.length || 0;
+        const newsCount = newsRes.data.length || 0;
+        const archivesCount = archivesRes.data.length || 0;
+
+        // Définir un type pour les objets news
+        type NewsItem = { title_fr?: string; title_en?: string };
+        // Simuler des données pour les activités
+        const activities = newsRes.data.slice(0, 4).map((news: NewsItem) => ({
+          type: "Actualité",
+          description: news.title_fr || news.title_en,
+          time: `${Math.floor(Math.random() * 60)} min`,
+        }));
+
+        setStats({
+          participants: { count: participantsCount, previousMonth: Math.round(participantsCount * 0.88) }, // Simuler +12%
+          speakers: { count: speakersCount, activeThisMonth: speakersActiveThisMonth },
+          sessions: { count: sessionsCount, thisWeek: Math.round(sessionsCount * 0.15) }, // Simuler 15%
+          revenue: { total: revenueTotal, thisMonth: Math.round(revenueTotal * 0.82) }, // Simuler +18%
+          performance: { satisfaction: 94 }, // Statique
+          goals: { achieved: 87 }, // Statique
+          growth: { percentage: 24 }, // Statique
+          partners: { count: partnersCount, thisMonth: 2 }, // Simuler +2
+          themes: { count: themesCount },
+          news: { count: newsCount, thisWeek: 5 }, // Simuler +5
+          archives: { count: archivesCount },
+          activities,
+        });
+      } catch (error) {
+        console.error("Erreur lors du chargement des statistiques :", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return <div className="min-h-screen bg-white p-6">Chargement...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -32,9 +135,9 @@ export default function AdminStats() {
           <div className="flex items-center space-x-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input 
-                type="text" 
-                placeholder="Rechercher..." 
+              <input
+                type="text"
+                placeholder="Rechercher..."
                 className="pl-10 pr-4 py-3 bg-slate-50 rounded-2xl border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 w-64"
               />
             </div>
@@ -65,7 +168,7 @@ export default function AdminStats() {
                     <p className="text-blue-700 text-xs font-semibold tracking-wider uppercase">Participants</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-4xl font-bold text-slate-800">1,234</p>
+                    <p className="text-4xl font-bold text-slate-800">{stats.participants.count}</p>
                     <div className="flex items-center space-x-2">
                       <div className="flex items-center space-x-1 bg-emerald-100 px-3 py-1 rounded-full">
                         <ArrowUpRight className="h-3 w-3 text-emerald-600" />
@@ -93,13 +196,12 @@ export default function AdminStats() {
                     <p className="text-purple-700 text-xs font-semibold tracking-wider uppercase">Intervenants</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-4xl font-bold text-slate-800">89</p>
+                    <p className="text-4xl font-bold text-slate-800">{stats.speakers.count}</p>
                     <div className="flex items-center space-x-2">
                       <div className="flex items-center space-x-1 bg-emerald-100 px-3 py-1 rounded-full">
                         <ArrowUpRight className="h-3 w-3 text-emerald-600" />
-                        <span className="text-xs font-semibold text-emerald-600">+5%</span>
+                        <span className="text-xs font-semibold text-emerald-600">{stats.speakers.activeThisMonth} actifs ce mois</span>
                       </div>
-                      <span className="text-xs text-slate-500">actifs ce mois</span>
                     </div>
                   </div>
                 </div>
@@ -121,11 +223,11 @@ export default function AdminStats() {
                     <p className="text-indigo-700 text-xs font-semibold tracking-wider uppercase">Sessions</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-4xl font-bold text-slate-800">156</p>
+                    <p className="text-4xl font-bold text-slate-800">{stats.sessions.count}</p>
                     <div className="flex items-center space-x-2">
                       <div className="flex items-center space-x-1 bg-indigo-100 px-3 py-1 rounded-full">
                         <Clock className="h-3 w-3 text-indigo-600" />
-                        <span className="text-xs font-semibold text-indigo-600">24 cette semaine</span>
+                        <span className="text-xs font-semibold text-indigo-600">{stats.sessions.thisWeek} cette semaine</span>
                       </div>
                     </div>
                   </div>
@@ -148,7 +250,7 @@ export default function AdminStats() {
                     <p className="text-emerald-700 text-xs font-semibold tracking-wider uppercase">Revenus</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-4xl font-bold text-slate-800">€84,560</p>
+                    <p className="text-4xl font-bold text-slate-800">€{stats.revenue.total.toLocaleString()}</p>
                     <div className="flex items-center space-x-2">
                       <div className="flex items-center space-x-1 bg-emerald-100 px-3 py-1 rounded-full">
                         <ArrowUpRight className="h-3 w-3 text-emerald-600" />
@@ -176,12 +278,12 @@ export default function AdminStats() {
                   <h3 className="text-lg font-semibold text-slate-800">Performance</h3>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-slate-800">94%</p>
+                  <p className="text-2xl font-bold text-slate-800">{stats.performance.satisfaction}%</p>
                   <p className="text-xs text-slate-500">Satisfaction</p>
                 </div>
               </div>
               <div className="w-full bg-slate-200 rounded-full h-2">
-                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full" style={{width: '94%'}}></div>
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full" style={{ width: `${stats.performance.satisfaction}%` }}></div>
               </div>
             </div>
           </Card>
@@ -194,12 +296,12 @@ export default function AdminStats() {
                   <h3 className="text-lg font-semibold text-slate-800">Objectifs</h3>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-slate-800">87%</p>
+                  <p className="text-2xl font-bold text-slate-800">{stats.goals.achieved}%</p>
                   <p className="text-xs text-slate-500">Atteints</p>
                 </div>
               </div>
               <div className="w-full bg-slate-200 rounded-full h-2">
-                <div className="bg-gradient-to-r from-blue-400 to-indigo-500 h-2 rounded-full" style={{width: '87%'}}></div>
+                <div className="bg-gradient-to-r from-blue-400 to-indigo-500 h-2 rounded-full" style={{ width: `${stats.goals.achieved}%` }}></div>
               </div>
             </div>
           </Card>
@@ -212,12 +314,12 @@ export default function AdminStats() {
                   <h3 className="text-lg font-semibold text-slate-800">Croissance</h3>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-slate-800">+24%</p>
+                  <p className="text-2xl font-bold text-slate-800">+{stats.growth.percentage}%</p>
                   <p className="text-xs text-slate-500">Ce trimestre</p>
                 </div>
               </div>
               <div className="w-full bg-slate-200 rounded-full h-2">
-                <div className="bg-gradient-to-r from-emerald-400 to-green-500 h-2 rounded-full" style={{width: '76%'}}></div>
+                <div className="bg-gradient-to-r from-emerald-400 to-green-500 h-2 rounded-full" style={{ width: `${stats.growth.percentage}%` }}></div>
               </div>
             </div>
           </Card>
@@ -238,71 +340,28 @@ export default function AdminStats() {
                     <MoreVertical className="h-5 w-5 text-slate-500" />
                   </button>
                 </div>
-                
-                <div className="space-y-4">
-                  <div className="group flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-transparent rounded-2xl border border-emerald-200 hover:border-emerald-300 transition-all duration-300">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-full flex items-center justify-center">
-                          <Users className="h-4 w-4 text-white" />
-                        </div>
-                        <div>
-                          <span className="text-slate-800 font-medium">Nouveau participant</span>
-                          <p className="text-slate-500 text-sm">Marie Dubois - Formation React</p>
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">5 min</span>
-                  </div>
-                  
-                  <div className="group flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-transparent rounded-2xl border border-blue-200 hover:border-blue-300 transition-all duration-300">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center">
-                          <Calendar className="h-4 w-4 text-white" />
-                        </div>
-                        <div>
-                          <span className="text-slate-800 font-medium">Session programmée</span>
-                          <p className="text-slate-500 text-sm">Masterclass JavaScript Avancé</p>
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">12 min</span>
-                  </div>
-                  
-                  <div className="group flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-transparent rounded-2xl border border-amber-200 hover:border-amber-300 transition-all duration-300">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center">
-                          <DollarSign className="h-4 w-4 text-white" />
-                        </div>
-                        <div>
-                          <span className="text-slate-800 font-medium">Paiement reçu</span>
-                          <p className="text-slate-500 text-sm">Formation entreprise - 2,400€</p>
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">23 min</span>
-                  </div>
 
-                  <div className="group flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-transparent rounded-2xl border border-purple-200 hover:border-purple-300 transition-all duration-300">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full flex items-center justify-center">
-                          <Mic className="h-4 w-4 text-white" />
-                        </div>
-                        <div>
-                          <span className="text-slate-800 font-medium">Intervenant confirmé</span>
-                          <p className="text-slate-500 text-sm">Jean Martin - Conférence UX/UI</p>
+                <div className="space-y-4">
+                  {stats.activities.map((activity, index) => (
+                    <div
+                      key={index}
+                      className="group flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-transparent rounded-2xl border border-emerald-200 hover:border-emerald-300 transition-all duration-300"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-full flex items-center justify-center">
+                            <Users className="h-4 w-4 text-white" />
+                          </div>
+                          <div>
+                            <span className="text-slate-800 font-medium">{activity.type}</span>
+                            <p className="text-slate-500 text-sm">{activity.description}</p>
+                          </div>
                         </div>
                       </div>
+                      <span className="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">{activity.time}</span>
                     </div>
-                    <span className="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">35 min</span>
-                  </div>
+                  ))}
                 </div>
               </div>
             </Card>
@@ -316,7 +375,7 @@ export default function AdminStats() {
                   <h3 className="text-2xl font-bold text-slate-800">Ressources</h3>
                   <p className="text-slate-500 text-sm mt-1">Vue d'ensemble de vos assets</p>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div className="group hover:bg-slate-50 rounded-2xl p-4 transition-all duration-300 border border-transparent hover:border-slate-200">
                     <div className="flex items-center justify-between">
@@ -330,10 +389,10 @@ export default function AdminStats() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-slate-800">24</p>
+                        <p className="text-2xl font-bold text-slate-800">{stats.partners.count}</p>
                         <div className="flex items-center space-x-1">
                           <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-                          <p className="text-xs text-emerald-600">+2 ce mois</p>
+                          <p className="text-xs text-emerald-600">+{stats.partners.thisMonth} ce mois</p>
                         </div>
                       </div>
                     </div>
@@ -351,7 +410,7 @@ export default function AdminStats() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-slate-800">8</p>
+                        <p className="text-2xl font-bold text-slate-800">{stats.themes.count}</p>
                         <p className="text-xs text-slate-500">Actifs</p>
                       </div>
                     </div>
@@ -369,10 +428,10 @@ export default function AdminStats() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-slate-800">15</p>
+                        <p className="text-2xl font-bold text-slate-800">{stats.news.count}</p>
                         <div className="flex items-center space-x-1">
                           <ArrowUpRight className="h-3 w-3 text-blue-500" />
-                          <p className="text-xs text-blue-600">5 cette semaine</p>
+                          <p className="text-xs text-blue-600">{stats.news.thisWeek} cette semaine</p>
                         </div>
                       </div>
                     </div>
@@ -390,7 +449,7 @@ export default function AdminStats() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-slate-800">42</p>
+                        <p className="text-2xl font-bold text-slate-800">{stats.archives.count}</p>
                         <p className="text-xs text-slate-500">Disponibles</p>
                       </div>
                     </div>

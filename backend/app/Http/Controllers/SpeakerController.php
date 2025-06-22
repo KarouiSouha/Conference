@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Speaker;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class SpeakerController extends Controller
 {
@@ -12,6 +13,7 @@ class SpeakerController extends Controller
         $speakers = Speaker::with('realisations', 'theme')->get();
         return response()->json($speakers);
     }
+
     public function displayOne($id)
     {
         $speaker = Speaker::with('realisations')->find($id);
@@ -20,6 +22,7 @@ class SpeakerController extends Controller
         }
         return response()->json($speaker);
     }
+
     public function store(Request $request)
     {
         // Valider les données reçues
@@ -106,11 +109,36 @@ class SpeakerController extends Controller
 
         return response()->json(['message' => 'Speaker supprimé avec succès']);
     }
+
     public function count()
     {
         $count = Speaker::count();
         return response()->json(['total_speakers' => $count]);
     }
 
+    /**
+     * Get speaker statistics.
+     */
+    public function statistics(): JsonResponse
+    {
+        try {
+            $stats = [
+                'total' => Speaker::count(),
+                'active_this_month' => Speaker::where('created_at', '>=', now()->startOfMonth())
+                    ->orWhere('updated_at', '>=', now()->startOfMonth())
+                    ->count(),
+            ];
 
+            return response()->json([
+                'success' => true,
+                'data' => $stats,
+                'message' => 'Statistiques des intervenants récupérées avec succès'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des statistiques: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

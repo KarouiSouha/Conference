@@ -30,7 +30,7 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
 
   const content = {
     fr: {
-      title: 'Archives & Publications Précédentes',
+      title: 'Archives & Publications',
       subtitle: 'Consultez les actes et publications des éditions passées',
       stats: {
         participants: 'Participants',
@@ -46,7 +46,7 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
       noData: 'Aucune archive disponible'
     },
     en: {
-      title: 'Archives & Previous Publications',
+      title: 'Archives & Publications',
       subtitle: 'Browse proceedings and publications from past editions',
       stats: {
         participants: 'Participants',
@@ -123,13 +123,13 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
   // Affichage du loading
   if (loading) {
     return (
-      <section id="archives" className="py-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-        <div className="container mx-auto px-4">
+      <section id="archives" className="py-16 bg-slate-50">
+        <div className="container mx-auto px-6">
           <div className="max-w-6xl mx-auto">
             <div className="text-center">
-              <div className="flex items-center justify-center gap-3 text-gray-600">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                <span className="text-xl font-medium">{content[currentLanguage].loading}</span>
+              <div className="flex items-center justify-center gap-3 text-slate-600">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                <span className="text-lg font-medium">{content[currentLanguage].loading}</span>
               </div>
             </div>
           </div>
@@ -141,16 +141,16 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
   // Affichage d'erreur
   if (error) {
     return (
-      <section id="archives" className="py-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-        <div className="container mx-auto px-4">
+      <section id="archives" className="py-16 bg-slate-50">
+        <div className="container mx-auto px-6">
           <div className="max-w-6xl mx-auto">
             <div className="text-center">
-              <div className="p-6 bg-red-50 text-red-600 rounded-xl border border-red-200 shadow-sm">
+              <div className="p-6 bg-red-50 text-red-700 rounded-lg border border-red-100">
                 <div className="text-lg font-medium">{error}</div>
               </div>
               <Button 
                 onClick={fetchArchives}
-                className="mt-6 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-200"
+                className="mt-6 bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
               >
                 Réessayer / Retry
               </Button>
@@ -162,74 +162,73 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
   }
 
   return (
-    <section id="archives" className="py-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="container mx-auto px-4">
+    <section id="archives" className="py-16 bg-slate-50">
+      <div className="container mx-auto px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-700 mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          {/* Header Section */}
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
               {content[currentLanguage].title}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
               {content[currentLanguage].subtitle}
             </p>
             {actionStatus && (
-              <div className="mt-6 p-4 bg-blue-100 text-blue-700 rounded-xl border border-blue-200 inline-block shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {actionStatus}
-                </div>
+              <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-100">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm font-medium">{actionStatus}</span>
               </div>
             )}
           </div>
 
           {archives.length === 0 ? (
             <div className="text-center py-16">
-              <div className="bg-white rounded-2xl shadow-lg p-12 max-w-md mx-auto border border-gray-100">
-                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 text-xl font-medium">{content[currentLanguage].noData}</p>
+              <div className="bg-white rounded-lg shadow-sm p-12 max-w-md mx-auto border border-slate-200">
+                <FileText className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-600 text-lg">{content[currentLanguage].noData}</p>
               </div>
             </div>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {archives.map((archive) => (
-                <Card key={archive.id} className="border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-500 bg-white rounded-2xl overflow-hidden group hover:scale-[1.02]">
-                  <CardHeader className="bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 border-b border-gray-200 p-8">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <Card key={archive.id} className="border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white rounded-lg overflow-hidden">
+                  <CardHeader className="bg-white border-b border-slate-100 p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                       <div className="flex-1">
-                        <CardTitle className="text-2xl md:text-3xl font-bold mb-3 text-gray-800 group-hover:text-blue-700 transition-colors">
+                        <CardTitle className="text-xl md:text-2xl font-bold mb-2 text-slate-900">
                           {archive.event_name}
                         </CardTitle>
-                        <p className="text-gray-700 font-medium text-lg mb-2">
+                        <p className="text-slate-700 mb-1 text-base">
                           {currentLanguage === 'fr' ? archive.subject_fr : archive.subject_en}
                         </p>
-                        <p className="text-gray-600 text-sm font-medium">{archive.organizer}</p>
+                        <p className="text-slate-500 text-sm">{archive.organizer}</p>
                       </div>
                       
-                      <div className="flex gap-8 mt-6 lg:mt-0 lg:ml-8">
-                        <div className="text-center group-hover:scale-110 transition-transform duration-300">
-                          <div className="flex items-center justify-center gap-2 text-blue-600 mb-1">
-                            <Users className="w-5 h-5" />
-                            <span className="font-bold text-2xl">{archive.participants}</span>
+                      <div className="flex gap-8 lg:gap-6">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 text-blue-600 mb-1">
+                            <Users className="w-4 h-4" />
+                            <span className="font-semibold text-lg">{archive.participants}</span>
                           </div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                          <div className="text-xs text-slate-500 uppercase tracking-wide">
                             {content[currentLanguage].stats.participants}
                           </div>
                         </div>
-                        <div className="text-center group-hover:scale-110 transition-transform duration-300">
-                          <div className="flex items-center justify-center gap-2 text-indigo-600 mb-1">
-                            <FileText className="w-5 h-5" />
-                            <span className="font-bold text-2xl">{archive.articles}</span>
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 text-slate-600 mb-1">
+                            <FileText className="w-4 h-4" />
+                            <span className="font-semibold text-lg">{archive.articles}</span>
                           </div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                          <div className="text-xs text-slate-500 uppercase tracking-wide">
                             {content[currentLanguage].stats.papers}
                           </div>
                         </div>
-                        <div className="text-center group-hover:scale-110 transition-transform duration-300">
-                          <div className="flex items-center justify-center gap-2 text-purple-600 mb-1">
-                            <Calendar className="w-5 h-5" />
-                            <span className="font-bold text-2xl">{archive.countries}</span>
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 text-emerald-600 mb-1">
+                            <Calendar className="w-4 h-4" />
+                            <span className="font-semibold text-lg">{archive.countries}</span>
                           </div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                          <div className="text-xs text-slate-500 uppercase tracking-wide">
                             {content[currentLanguage].stats.countries}
                           </div>
                         </div>
@@ -237,24 +236,24 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="p-8 bg-gray-50">
-                    <div className="grid md:grid-cols-2 gap-6">
+                  <CardContent className="p-6 bg-slate-50/50">
+                    <div className="grid md:grid-cols-2 gap-4">
                       <Button
                         onClick={() => handleViewBestPapers(archive)}
-                        className="flex items-center justify-center gap-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-4 px-6 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                        className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white py-2.5 px-4 rounded-lg font-medium transition-colors"
                       >
-                        <Award className="w-5 h-5" />
+                        <Award className="w-4 h-4" />
                         {content[currentLanguage].actions.bestPapers}
-                        <ExternalLink className="w-4 h-4 ml-1" />
+                        <ExternalLink className="w-3 h-3" />
                       </Button>
                       
                       <Button
                         onClick={() => handleViewPhotos(archive)}
-                        className="flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white py-4 px-6 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                        className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-lg font-medium transition-colors"
                       >
-                        <Camera className="w-5 h-5" />
+                        <Camera className="w-4 h-4" />
                         {content[currentLanguage].actions.photos}
-                        <ExternalLink className="w-4 h-4 ml-1" />
+                        <ExternalLink className="w-3 h-3" />
                       </Button>
                     </div>
                   </CardContent>

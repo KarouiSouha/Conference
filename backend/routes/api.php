@@ -41,6 +41,7 @@ Route::prefix('Speakers')->controller(SpeakerController::class)->group(function 
     // hthy
     Route::delete('/destroy/{id}', [SpeakerController::class, 'destroy']);
     Route::get('/count', 'count');
+    Route::get('/statistics', 'statistics');
 
 });
 Route::post('login', [AuthController::class, 'login']);
@@ -58,6 +59,7 @@ Route::prefix('Theme')->controller(ThemeController::class)->group(function () {
     Route::put('/{id}', 'update');       // PUT /api/Theme/{id}
     Route::delete('/{id}', 'destroy');   // DELETE /api/Theme/{id}
     Route::delete('/keyword/{id}', 'deleteKeyword');  // DELETE /api/Theme/keyword/{id}
+    Route::get('/statistics', 'statistics');
 
 });
 Route::prefix('Partners')->controller(PartnerController::class)->group(function () {
@@ -95,6 +97,7 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
     Route::put('/{id}', 'update');
     Route::delete('/{id}', 'destroy');
     Route::patch('/{id}/mark-as-paid', 'markAsPaid');
+    Route::get('/statistics', 'statistics'); // GET /api/Registration/statistics
 });
 
 

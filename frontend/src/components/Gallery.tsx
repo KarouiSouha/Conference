@@ -1,237 +1,6 @@
-// import React, { useState, useEffect } from 'react';
-// import { Card, CardContent } from '@/components/ui/card';
-// import { Play, Image as ImageIcon, Eye } from 'lucide-react';
-// import { Button } from '@/components/ui/button';
-
-// interface GalleryItem {
-//   id: number;
-//   title_fr: string;
-//   title_en: string;
-//   description_fr: string;
-//   description_en: string;
-//   type: 'photo' | 'video';
-//   file_path: string;
-//   file_url: string;
-//   thumbnail_path?: string;
-//   thumbnail_url?: string;
-//   year: string;
-//   duration?: string;
-//   views: number;
-//   created_at: string;
-//   updated_at: string;
-// }
-
-// interface GalleryProps {
-//   language: 'fr' | 'en';
-// }
-
-// const Gallery: React.FC<GalleryProps> = ({ language }) => {
-//   const [photos, setPhotos] = useState<GalleryItem[]>([]);
-//   const [videos, setVideos] = useState<GalleryItem[]>([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-
-//   // Fonction pour récupérer les données depuis l'API
-//   const fetchGalleryData = async () => {
-//     try {
-//       setLoading(true);
-      
-//       // Récupérer les photos et vidéos en parallèle
-//       const [photosResponse, videosResponse] = await Promise.all([
-//         fetch('http://localhost:8000/api/Gallery/photos'),
-//         fetch('http://localhost:8000/api/Gallery/videos')
-//       ]);
-
-//       if (!photosResponse.ok || !videosResponse.ok) {
-//         throw new Error('Erreur lors du chargement des données');
-//       }
-
-//       const photosData = await photosResponse.json();
-//       const videosData = await videosResponse.json();
-
-//       setPhotos(photosData);
-//       setVideos(videosData);
-//     } catch (err) {
-//       setError(err instanceof Error ? err.message : 'Erreur inconnue');
-//       console.error('Erreur:', err);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchGalleryData();
-//   }, []);
-
-//   const handleWatch = (video: GalleryItem) => {
-//     window.open(video.file_url, '_blank');
-//   };
-
-//   const handleViewPhoto = (photo: GalleryItem) => {
-//     window.open(photo.file_url, '_blank');
-//   };
-
-//   if (loading) {
-//     return (
-//       <section className="py-20 bg-background">
-//         <div className="container mx-auto px-4">
-//           <div className="text-center">
-//             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-//             <p>Chargement de la galerie...</p>
-//           </div>
-//         </div>
-//       </section>
-//     );
-//   }
-
-//   if (error) {
-//     return (
-//       <section className="py-20 bg-background">
-//         <div className="container mx-auto px-4">
-//           <div className="text-center">
-//             <p className="text-red-500">Erreur: {error}</p>
-//             <Button onClick={fetchGalleryData} className="mt-4">
-//               Réessayer
-//             </Button>
-//           </div>
-//         </div>
-//       </section>
-//     );
-//   }
-
-//   return (
-//     <section id="gallery" className="py-20 bg-background">
-//       <div className="container mx-auto px-4">
-//         <div className="max-w-6xl mx-auto">
-//           <div className="text-center mb-12">
-//             <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
-//               {language === 'fr' ? 'Galerie Photos & Vidéos' : 'Photo & Video Gallery'}
-//             </h2>
-//             <p className="text-lg text-muted-foreground">
-//               {language === 'fr' ? 'Découvrez les moments forts des éditions précédentes' : 'Discover highlights from previous editions'}
-//             </p>
-//           </div>
-
-//           <div className="grid lg:grid-cols-2 gap-8">
-//             {/* Section Photos */}
-//             <div>
-//               <h3 className="text-2xl font-semibold text-primary mb-6 flex items-center gap-2">
-//                 <ImageIcon className="w-6 h-6" />
-//                 {language === 'fr' ? 'Photos' : 'Photos'}
-//               </h3>
-//               <div className="grid grid-cols-2 gap-4">
-//                 {photos.map((photo) => (
-//                   <Card key={photo.id} className="group cursor-pointer transition-all duration-300 hover:shadow-lg overflow-hidden">
-//                     <CardContent className="p-0">
-//                       <div className="aspect-video relative overflow-hidden">
-//                         <img
-//                           src={photo.file_url}
-//                           alt={language === 'fr' ? photo.title_fr : photo.title_en}
-//                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-//                         />
-//                         {/* Overlay avec bouton de visualisation */}
-//                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-//                           <Button
-//                             size="sm"
-//                             onClick={() => handleViewPhoto(photo)}
-//                             className="bg-white/90 text-black hover:bg-white"
-//                           >
-//                             <Eye className="w-4 h-4 mr-2" />
-//                             {language === 'fr' ? 'Voir' : 'View'}
-//                           </Button>
-//                         </div>
-//                       </div>
-//                       <div className="p-4">
-//                         <h4 className="font-medium text-sm mb-2 line-clamp-2">
-//                           {language === 'fr' ? photo.title_fr : photo.title_en}
-//                         </h4>
-//                         <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-//                           {language === 'fr' ? photo.description_fr : photo.description_en}
-//                         </p>
-//                         <div className="flex justify-between items-center">
-//                           <p className="text-xs text-muted-foreground font-medium">{photo.year}</p>
-//                           <p className="text-xs text-muted-foreground">
-//                             {photo.views} {language === 'fr' ? 'vues' : 'views'}
-//                           </p>
-//                         </div>
-//                       </div>
-//                     </CardContent>
-//                   </Card>
-//                 ))}
-//               </div>
-//             </div>
-
-//             {/* Section Vidéos */}
-//             <div>
-//               <h3 className="text-2xl font-semibold text-primary mb-6 flex items-center gap-2">
-//                 <Play className="w-6 h-6" />
-//                 {language === 'fr' ? 'Vidéos' : 'Videos'}
-//               </h3>
-//               <div className="space-y-4">
-//                 {videos.map((video) => (
-//                   <Card key={video.id} className="group cursor-pointer transition-all duration-300 hover:shadow-lg">
-//                     <CardContent className="p-4">
-//                       <div className="flex items-center gap-4">
-//                         <div className="w-24 h-18 bg-gradient-to-br from-primary/20 to-accent/30 rounded-lg flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-300">
-//                           {video.thumbnail_url ? (
-//                             <>
-//                               <img
-//                                 src={video.thumbnail_url}
-//                                 alt={language === 'fr' ? video.title_fr : video.title_en}
-//                                 className="w-full h-full object-cover"
-//                               />
-//                               <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-//                                 <Play className="w-8 h-8 text-white fill-current drop-shadow-lg" />
-//                               </div>
-//                             </>
-//                           ) : (
-//                             <Play className="w-8 h-8 text-primary fill-current" />
-//                           )}
-//                         </div>
-//                         <div className="flex-1">
-//                           <h4 className="font-medium text-base mb-2">
-//                             {language === 'fr' ? video.title_fr : video.title_en}
-//                           </h4>
-//                           <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-//                             {language === 'fr' ? video.description_fr : video.description_en}
-//                           </p>
-//                           <div className="flex justify-between items-center">
-//                             <div className="flex items-center gap-4">
-//                               <p className="text-xs text-muted-foreground font-medium">{video.duration}</p>
-//                               <p className="text-xs text-muted-foreground">{video.year}</p>
-//                             </div>
-//                             <p className="text-xs text-muted-foreground">
-//                               {video.views} {language === 'fr' ? 'vues' : 'views'}
-//                             </p>
-//                           </div>
-//                         </div>
-//                       </div>
-//                       <div className="mt-4">
-//                         <Button
-//                           className="w-full"
-//                           onClick={() => handleWatch(video)}
-//                         >
-//                           <Play className="w-4 h-4 mr-2" />
-//                           {language === 'fr' ? 'Regarder la vidéo' : 'Watch Video'}
-//                         </Button>
-//                       </div>
-//                     </CardContent>
-//                   </Card>
-//                 ))}
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </section>
-//   );
-// };
-
-// export default Gallery;
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Play, ImageIcon, Eye } from 'lucide-react';
+import { Play, Image, Eye, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface GalleryItem {
@@ -257,13 +26,15 @@ interface GalleryProps {
 }
 
 const Gallery: React.FC<GalleryProps> = ({ language }) => {
-  const [photos, setPhotos] = useState<GalleryItem[]>([]);
-  const [videos, setVideos] = useState<GalleryItem[]>([]);
+  const [allPhotos, setAllPhotos] = useState<GalleryItem[]>([]);
+  const [allVideos, setAllVideos] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<string>('2024');
 
-  // Données statiques pour les photos
+  // Données statiques pour les photos (2023 existantes + nouvelles pour 2024)
   const staticPhotos: GalleryItem[] = [
+    // Photos 2023 (existantes)
     {
       id: 1,
       title_fr: "Networking et pause café",
@@ -336,25 +107,9 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
     }
   ];
 
-  // Données statiques pour les vidéos
+  // Données statiques pour les vidéos (2023 existantes + nouvelles pour 2024)
   const staticVideos: GalleryItem[] = [
-    {
-      id: 7,
-      title_fr: "Site Web 2024",
-      title_en: "Web site 2024",
-      description_fr: "Site Web 2024",
-      description_en: "Web site 2024",
-      type: 'video',
-      file_path: '/asset/videos/gallery/website.mp4',
-      file_url: '/asset/videos/gallery/website.mp4',
-      thumbnail_path: '/asset/images/gallery/session.jpg',
-      thumbnail_url: '/asset/images/gallery/session.jpg',
-      year: '2024',
-      duration: '1:00',
-      views: 1456,
-      created_at: '2024-02-01',
-      updated_at: '2024-02-01'
-    },
+    // Vidéos 2023 (existantes)
     {
       id: 8,
       title_fr: "Nexus Eau-Énergie",
@@ -388,6 +143,24 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
       views: 2140,
       created_at: '2023-02-10',
       updated_at: '2023-02-10'
+    },
+    // Nouvelles vidéos 2024
+    {
+      id: 7,
+      title_fr: "Site Web 2024",
+      title_en: "Web site 2024",
+      description_fr: "Présentation du nouveau site web et des innovations digitales 2024.",
+      description_en: "Presentation of the new website and digital innovations 2024.",
+      type: 'video',
+      file_path: '/asset/videos/gallery/website.mp4',
+      file_url: '/asset/videos/gallery/website.mp4',
+      thumbnail_path: '/asset/images/gallery/session.jpg',
+      thumbnail_url: '/asset/images/gallery/session.jpg',
+      year: '2024',
+      duration: '2:30',
+      views: 3456,
+      created_at: '2024-02-01',
+      updated_at: '2024-02-01'
     }
   ];
 
@@ -400,8 +173,8 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
         // Simuler un délai de chargement
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        setPhotos(staticPhotos);
-        setVideos(staticVideos);
+        setAllPhotos(staticPhotos);
+        setAllVideos(staticVideos);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur inconnue');
         console.error('Erreur:', err);
@@ -412,6 +185,13 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
 
     loadGalleryData();
   }, []);
+
+  // Filtrer les données par année
+  const filteredPhotos = allPhotos.filter(photo => photo.year === selectedYear);
+  const filteredVideos = allVideos.filter(video => video.year === selectedYear);
+
+  // Obtenir les années disponibles
+  const availableYears = ['2024', '2023']; // On peut aussi le calculer dynamiquement
 
   const handleWatch = (video: GalleryItem) => {
     // Ouvrir la vidéo dans un nouvel onglet ou utiliser un lecteur vidéo
@@ -459,130 +239,160 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
             <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
               {language === 'fr' ? 'Galerie Photos & Vidéos' : 'Photo & Video Gallery'}
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-muted-foreground mb-8">
               {language === 'fr' ? 'Découvrez les moments forts des éditions précédentes' : 'Discover highlights from previous editions'}
             </p>
+            
+            {/* Onglets de filtrage par année */}
+            <div className="flex justify-center gap-2 mb-8">
+              {availableYears.map((year) => (
+                <Button
+                  key={year}
+                  variant={selectedYear === year ? "default" : "outline"}
+                  onClick={() => setSelectedYear(year)}
+                  className="flex items-center gap-2"
+                >
+                  <Calendar className="w-4 h-4" />
+                  {year}
+                </Button>
+              ))}
+            </div>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Section Photos */}
-            <div>
-              <h3 className="text-2xl font-semibold text-primary mb-6 flex items-center gap-2">
-                <ImageIcon className="w-6 h-6" />
-                {language === 'fr' ? 'Photos' : 'Photos'}
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                {photos.map((photo) => (
-                  <Card key={photo.id} className="group cursor-pointer transition-all duration-300 hover:shadow-lg overflow-hidden">
-                    <CardContent className="p-0">
-                      <div className="aspect-video relative overflow-hidden">
-                        <img
-                          src={photo.file_url}
-                          alt={language === 'fr' ? photo.title_fr : photo.title_en}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            // Image de fallback si l'image n'existe pas
-                            const target = e.target as HTMLImageElement;
-                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub24gZGlzcG9uaWJsZTwvdGV4dD48L3N2Zz4=';
-                          }}
-                        />
-                        {/* Overlay avec bouton de visualisation */}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                          <Button
-                            size="sm"
-                            onClick={() => handleViewPhoto(photo)}
-                            className="bg-white/90 text-black hover:bg-white"
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            {language === 'fr' ? 'Voir' : 'View'}
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <h4 className="font-medium text-sm mb-2 line-clamp-2">
-                          {language === 'fr' ? photo.title_fr : photo.title_en}
-                        </h4>
-                        <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                          {language === 'fr' ? photo.description_fr : photo.description_en}
-                        </p>
-                        <div className="flex justify-between items-center">
-                          <p className="text-xs text-muted-foreground font-medium">{photo.year}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {photo.views} {language === 'fr' ? 'vues' : 'views'}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+          {/* Affichage conditionnel si aucun contenu pour l'année sélectionnée */}
+          {filteredPhotos.length === 0 && filteredVideos.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground">
+                {language === 'fr' 
+                  ? `Aucun contenu disponible pour l'année ${selectedYear}` 
+                  : `No content available for year ${selectedYear}`}
+              </p>
             </div>
-
-            {/* Section Vidéos */}
-            <div>
-              <h3 className="text-2xl font-semibold text-primary mb-6 flex items-center gap-2">
-                <Play className="w-6 h-6" />
-                {language === 'fr' ? 'Vidéos' : 'Videos'}
-              </h3>
-              <div className="space-y-4">
-                {videos.map((video) => (
-                  <Card key={video.id} className="group cursor-pointer transition-all duration-300 hover:shadow-lg">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-24 h-18 bg-gradient-to-br from-primary/20 to-accent/30 rounded-lg flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-300">
-                          {video.thumbnail_url ? (
-                            <>
-                              <img
-                                src={video.thumbnail_url}
-                                alt={language === 'fr' ? video.title_fr : video.title_en}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  // Thumbnail de fallback si l'image n'existe pas
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                }}
-                              />
-                              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                <Play className="w-8 h-8 text-white fill-current drop-shadow-lg" />
-                              </div>
-                            </>
-                          ) : (
-                            <Play className="w-8 h-8 text-primary fill-current" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-base mb-2">
-                            {language === 'fr' ? video.title_fr : video.title_en}
-                          </h4>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                            {language === 'fr' ? video.description_fr : video.description_en}
-                          </p>
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-4">
-                              <p className="text-xs text-muted-foreground font-medium">{video.duration}</p>
-                              <p className="text-xs text-muted-foreground">{video.year}</p>
+          ) : (
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Section Photos */}
+              {filteredPhotos.length > 0 && (
+                <div>
+                  <h3 className="text-2xl font-semibold text-primary mb-6 flex items-center gap-2">
+                    <Image className="w-6 h-6" />
+                    {language === 'fr' ? `Photos ${selectedYear}` : `Photos ${selectedYear}`}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {filteredPhotos.map((photo) => (
+                      <Card key={photo.id} className="group cursor-pointer transition-all duration-300 hover:shadow-lg overflow-hidden">
+                        <CardContent className="p-0">
+                          <div className="aspect-video relative overflow-hidden">
+                            <img
+                              src={photo.file_url}
+                              alt={language === 'fr' ? photo.title_fr : photo.title_en}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              onError={(e) => {
+                                // Image de fallback si l'image n'existe pas
+                                const target = e.target as HTMLImageElement;
+                                target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub24gZGlzcG9uaWJsZTwvdGV4dD48L3N2Zz4=';
+                              }}
+                            />
+                            {/* Overlay avec bouton de visualisation */}
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                              <Button
+                                size="sm"
+                                onClick={() => handleViewPhoto(photo)}
+                                className="bg-white/90 text-black hover:bg-white"
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                {language === 'fr' ? 'Voir' : 'View'}
+                              </Button>
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                              {video.views} {language === 'fr' ? 'vues' : 'views'}
-                            </p>
                           </div>
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <Button
-                          className="w-full"
-                          onClick={() => handleWatch(video)}
-                        >
-                          <Play className="w-4 h-4 mr-2" />
-                          {language === 'fr' ? 'Regarder la vidéo' : 'Watch Video'}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                          <div className="p-4">
+                            <h4 className="font-medium text-sm mb-2 line-clamp-2">
+                              {language === 'fr' ? photo.title_fr : photo.title_en}
+                            </h4>
+                            <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                              {language === 'fr' ? photo.description_fr : photo.description_en}
+                            </p>
+                            <div className="flex justify-between items-center">
+                              <p className="text-xs text-muted-foreground font-medium">{photo.year}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {photo.views} {language === 'fr' ? 'vues' : 'views'}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Section Vidéos */}
+              {filteredVideos.length > 0 && (
+                <div>
+                  <h3 className="text-2xl font-semibold text-primary mb-6 flex items-center gap-2">
+                    <Play className="w-6 h-6" />
+                    {language === 'fr' ? `Vidéos ${selectedYear}` : `Videos ${selectedYear}`}
+                  </h3>
+                  <div className="space-y-4">
+                    {filteredVideos.map((video) => (
+                      <Card key={video.id} className="group cursor-pointer transition-all duration-300 hover:shadow-lg">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-24 h-18 bg-gradient-to-br from-primary/20 to-accent/30 rounded-lg flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                              {video.thumbnail_url ? (
+                                <>
+                                  <img
+                                    src={video.thumbnail_url}
+                                    alt={language === 'fr' ? video.title_fr : video.title_en}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      // Thumbnail de fallback si l'image n'existe pas
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                    <Play className="w-8 h-8 text-white fill-current drop-shadow-lg" />
+                                  </div>
+                                </>
+                              ) : (
+                                <Play className="w-8 h-8 text-primary fill-current" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-medium text-base mb-2">
+                                {language === 'fr' ? video.title_fr : video.title_en}
+                              </h4>
+                              <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                                {language === 'fr' ? video.description_fr : video.description_en}
+                              </p>
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-4">
+                                  <p className="text-xs text-muted-foreground font-medium">{video.duration}</p>
+                                  <p className="text-xs text-muted-foreground">{video.year}</p>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  {video.views} {language === 'fr' ? 'vues' : 'views'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-4">
+                            <Button
+                              className="w-full"
+                              onClick={() => handleWatch(video)}
+                            >
+                              <Play className="w-4 h-4 mr-2" />
+                              {language === 'fr' ? 'Regarder la vidéo' : 'Watch Video'}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>
