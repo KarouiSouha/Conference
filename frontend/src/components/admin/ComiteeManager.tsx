@@ -1,22 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search, Plus, Edit, Trash, Users, Award, Globe, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import ComiteForm from "./ComiteForm";
 
-interface Member {
-  id: number;
-  name_fr: string;
-  name_en: string;
-  institute_fr?: string;
-  institute_en?: string;
-  job_fr?: string;
-  job_en?: string;
-  special_role: 'chair' | 'co-chair' | 'member';
-  committee_type?: 'scientific' | 'organizing' | 'honorary';
-  order: number;
-  image_path?: string;
-}
+import type { Member } from "../../types";
 
 interface ComiteManagerProps {
   language: 'fr' | 'en';
@@ -85,7 +73,7 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
   const [organizingCommittee, setOrganizingCommittee] = useState<Member[]>([]);
   const [honoraryCommittee, setHonoraryCommittee] = useState<Member[]>([]);
 
-  const fetchComites = async () => {
+  const fetchComites = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -95,7 +83,7 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
       if (data.success) {
         const { scientific, organizing, honorary } = data.data;
 
-        const normalizeMember = (member: any): Member | null => {
+        const normalizeMember = (member: Partial<Member>): Member | null => {
           if (!member || (!member.name_fr && !member.name_en)) {
             console.warn('Membre invalide ignoré:', member);
             return null;
@@ -153,11 +141,11 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [language]);
 
   useEffect(() => {
     fetchComites();
-  }, [language]);
+  }, [language, fetchComites]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -387,30 +375,26 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
   const totalMembers = scientificCommittee.length + organizingCommittee.length + honoraryCommittee.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto p-6">
         {/* En-tête */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent mb-2">
                 Gestion des Comités
               </h1>
-              <p className="text-gray-600 text-lg mb-4">
+              <p className="text-gray-600 text-lg">
                 Organisez et gérez vos comités scientifiques, d'organisation et d'honneur
               </p>
-              <div className="flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full w-fit">
-                <Users className="w-4 h-4 text-blue-600" />
-                <span className="text-blue-800 font-medium">{totalMembers} membres au total</span>
-              </div>
             </div>
-            <button
-              className="mt-6 lg:mt-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg flex items-center gap-2 font-medium"
+            <Button
               onClick={() => handleOpenForm()}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-5 h-5 mr-2" />
               Nouveau membre
-            </button>
+            </Button>
           </div>
         </div>
 
