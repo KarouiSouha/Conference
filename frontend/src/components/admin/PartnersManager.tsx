@@ -88,7 +88,7 @@ export default function PartnersManager() {
       const response = await fetch(`http://localhost:8000/api/Partners/destroy/${partnerId}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to delete partner");
       }
@@ -189,17 +189,17 @@ export default function PartnersManager() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
       <div className="container mx-auto px-6 py-8 space-y-8">
         {/* Header Section */}
-        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-3xl p-8 shadow-xl border border-blue-200">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="text-white">
-              <h1 className="text-4xl font-bold mb-2 drop-shadow-sm">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent mb-2">
                 Gestion des Partenaires
               </h1>
-              <p className="text-blue-100 text-lg opacity-90">Gérez et organisez vos partenariats stratégiques</p>
+              <p className="text-gray-600 text-lg">Gérez et organisez vos partenariats stratégiques</p>
             </div>
             <Button
               onClick={() => setShowPartnerForm(true)}
-              className="bg-white text-blue-700 hover:bg-blue-50 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg font-semibold border-0"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg"
             >
               <Plus className="w-5 h-5 mr-2" />
               Nouveau Partenaire
@@ -287,7 +287,7 @@ export default function PartnersManager() {
               >
                 {/* Decorative Top Border */}
                 <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
-                
+
                 {/* Logo Section */}
                 <div className="relative h-48 bg-gradient-to-br from-gray-50 to-white p-8 flex items-center justify-center">
                   {getImageUrl(partner) ? (
@@ -305,7 +305,7 @@ export default function PartnersManager() {
                       <span className="text-sm text-gray-400 font-medium">Logo non disponible</span>
                     </div>
                   )}
-                  
+
                   {/* Status Indicator */}
                   <div className="absolute top-4 right-4 w-3 h-3 bg-green-400 rounded-full shadow-sm animate-pulse"></div>
                 </div>
@@ -374,7 +374,7 @@ export default function PartnersManager() {
               <div className="text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-full">
                 Affichage de {startIndex + 1} à {Math.min(endIndex, filteredPartners.length)} sur {filteredPartners.length} partenaires
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
@@ -385,22 +385,21 @@ export default function PartnersManager() {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                
+
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <Button
                     key={page}
                     size="sm"
                     onClick={() => goToPage(page)}
-                    className={`min-w-[40px] rounded-xl border-0 ${
-                      currentPage === page 
-                        ? "bg-blue-500 text-white shadow-lg" 
+                    className={`min-w-[40px] rounded-xl border-0 ${currentPage === page
+                        ? "bg-blue-500 text-white shadow-lg"
                         : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                    }`}
+                      }`}
                   >
                     {page}
                   </Button>
                 ))}
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -424,7 +423,7 @@ export default function PartnersManager() {
               </div>
               <h3 className="text-2xl font-bold text-gray-600">Aucun partenaire trouvé</h3>
               <p className="text-gray-500 max-w-md mx-auto">Aucun partenaire ne correspond à vos critères de recherche. Essayez de modifier vos termes de recherche.</p>
-              <Button 
+              <Button
                 onClick={() => setSearchTerm("")}
                 className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl border-0"
               >
