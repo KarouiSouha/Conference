@@ -64,7 +64,7 @@ export default function SpeakersManager() {
 
       const themesMap = {};
       data.data.forEach(theme => {
-        themesMap[theme.id] = theme.title; // Utilise "title" car c'est ce que l'API renvoie
+        themesMap[theme.id] = theme.titleFr; // Utilise "title" car c'est ce que l'API renvoie
       });
 
       setThemes(themesMap);
@@ -124,6 +124,7 @@ export default function SpeakersManager() {
   };
 
   const getThemeName = (themeId) => {
+    console.log("getThemeName called with themeId:", themeId,themes[themeId]);
     return themes[themeId] || "Thème inconnu";
   };
 
