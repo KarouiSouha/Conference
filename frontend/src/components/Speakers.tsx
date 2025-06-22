@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Mail, Globe, Award, Loader2, QrCode } from 'lucide-react';
+import { ExternalLink, Mail, Globe, Award, Loader2, QrCode, Linkedin } from 'lucide-react';
 import Modal from './Modal';
 import { useToast } from '@/hooks/use-toast';
 import 'keen-slider/keen-slider.min.css';
@@ -39,7 +39,7 @@ interface Speaker {
   theme?: Theme;
   realisations: Realisation[];
   email?: string;
-  website?: string;
+  link?: string;
 }
 
 interface SpeakersProps {
@@ -74,10 +74,11 @@ const Speakers: React.FC<SpeakersProps> = ({
     },
   });
 
-  // Générer le QR code pour un speaker
-  const generateQRCode = async (speakerId: number) => {
+  // Générer le QR code pour un speaker avec son lien spécifique
+  const generateQRCode = async (speaker: Speaker) => {
     try {
-      const url = "https://site-conf.com/";
+      // Utiliser le lien du speaker s'il existe, sinon utiliser une URL par défaut
+      const url = speaker.link || "https://site-conf.com/";
       const qrDataUrl = await QRCode.toDataURL(url, {
         width: 200,
         margin: 2,
@@ -105,9 +106,9 @@ const Speakers: React.FC<SpeakersProps> = ({
         const data = await response.json();
         setSpeakers(data);
 
-        // Générer les QR codes pour tous les speakers
+        // Générer les QR codes pour tous les speakers avec leurs liens spécifiques
         const qrPromises = data.map(async (speaker: Speaker) => {
-          const qrCode = await generateQRCode(speaker.id);
+          const qrCode = await generateQRCode(speaker);
           return { id: speaker.id, qrCode };
         });
 
@@ -141,7 +142,7 @@ const Speakers: React.FC<SpeakersProps> = ({
       subtitle: 'Des experts reconnus internationalement',
       actions: {
         contact: 'Contacter',
-        qrCode: 'QR Code',
+        qrCode: 'LinkedIn',
         bio: 'Biographie complète'
       },
       labels: {
@@ -150,8 +151,9 @@ const Speakers: React.FC<SpeakersProps> = ({
         talk: 'Domaine d\'expertise',
         loading: 'Chargement des speakers...',
         error: 'Erreur lors du chargement',
-        qrCodeTitle: 'Accès aux publications',
-        qrCodeDesc: 'Scannez pour accéder aux publications de ce conférencier'
+        qrCodeTitle: 'Profil LinkedIn',
+        qrCodeDesc: 'Scannez le QR code ou cliquez dessus pour accéder au profil LinkedIn professionnel',
+        qrCodeInstruction: 'Connectez-vous sur LinkedIn'
       }
     },
     en: {
@@ -159,7 +161,7 @@ const Speakers: React.FC<SpeakersProps> = ({
       subtitle: 'Internationally recognized experts',
       actions: {
         contact: 'Contact',
-        qrCode: 'QR Code',
+        qrCode: 'LinkedIn',
         bio: 'Full Biography'
       },
       labels: {
@@ -168,8 +170,9 @@ const Speakers: React.FC<SpeakersProps> = ({
         talk: 'Area of Expertise',
         loading: 'Loading speakers...',
         error: 'Error loading speakers',
-        qrCodeTitle: 'Access to Publications',
-        qrCodeDesc: 'Scan to access this speaker\'s publications'
+        qrCodeTitle: 'LinkedIn Profile',
+        qrCodeDesc: 'Scan the QR code or click on it to access the professional LinkedIn profile',
+        qrCodeInstruction: 'Connect on LinkedIn'
       }
     }
   };
@@ -186,8 +189,9 @@ const Speakers: React.FC<SpeakersProps> = ({
     }
   };
 
-  const handleQRCodeClick = (speakerId: number) => {
-    const url = `https://site-conf.com/`;
+  const handleQRCodeClick = (speaker: Speaker) => {
+    // Utiliser le lien du speaker s'il existe, sinon utiliser une URL par défaut
+    const url = speaker.link || `https://site-conf.com/`;
     window.open(url, '_blank');
   };
 
@@ -344,7 +348,6 @@ const Speakers: React.FC<SpeakersProps> = ({
                               </div>
                             )}
 
-                          
                           </div>
                         </Modal>
 
@@ -360,41 +363,81 @@ const Speakers: React.FC<SpeakersProps> = ({
                             {content[language].actions.contact}
                           </Button>
                           
-                          {/* Modal QR Code compacte */}
+                          {/* Modal LinkedIn QR Code */}
                           <Modal
                             trigger={
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="flex-1"
+                                className="flex-1 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                                disabled={!speaker.link}
                               >
-                                <QrCode className="w-3 h-3 mr-1" />
+                                <Linkedin className="w-3 h-3 mr-1" />
                                 {content[language].actions.qrCode}
                               </Button>
                             }
-                            title={content[language].labels.qrCodeTitle}
+                            title=""
                           >
-                            <div className="text-center space-y-4">
-                              <p className="text-sm text-muted-foreground">
-                                {content[language].labels.qrCodeDesc}
-                              </p>
-                              {qrCodes[speaker.id] ? (
-                                <div className="flex justify-center">
-                                  <img 
-                                    src={qrCodes[speaker.id]} 
-                                    alt={`QR Code pour ${speaker.name}`}
-                                    className="w-48 h-48 border rounded cursor-pointer hover:scale-105 transition-transform"
-                                    onClick={() => handleQRCodeClick(speaker.id)}
-                                  />
+                            <div className="text-center space-y-6 py-2">
+                              {/* En-tête avec icône LinkedIn */}
+                              <div className="flex items-center justify-center space-x-3 mb-4">
+                                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                                  <Linkedin className="w-6 h-6 text-white" />
                                 </div>
-                              ) : (
-                                <div className="w-48 h-48 bg-muted flex items-center justify-center mx-auto">
-                                  <Loader2 className="w-8 h-8 animate-spin" />
+                                <div className="text-left">
+                                  <h3 className="text-xl font-semibold text-gray-900">
+                                    {content[language].labels.qrCodeTitle}
+                                  </h3>
+                                  <p className="text-sm text-gray-600">{speaker.name}</p>
+                                </div>
+                              </div>
+
+                              {/* Description */}
+                              <div className="bg-blue-50 rounded-lg p-4">
+                                <p className="text-sm text-blue-800">
+                                  {content[language].labels.qrCodeDesc}
+                                </p>
+                              </div>
+
+                              {/* QR Code */}
+                              <div className="bg-white p-6 rounded-xl border-2 border-gray-100 shadow-sm">
+                                {qrCodes[speaker.id] ? (
+                                  <div className="flex flex-col items-center space-y-4">
+                                    <img 
+                                      src={qrCodes[speaker.id]} 
+                                      alt={`QR Code LinkedIn pour ${speaker.name}`}
+                                      className="w-48 h-48 cursor-pointer hover:scale-105 transition-transform duration-200 rounded-lg"
+                                      onClick={() => handleQRCodeClick(speaker)}
+                                    />
+                                    <div className="flex items-center space-x-2 text-blue-600">
+                                      <ExternalLink className="w-4 h-4" />
+                                      <span className="text-sm font-medium">
+                                        {content[language].labels.qrCodeInstruction}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="w-48 h-48 bg-gray-50 flex items-center justify-center mx-auto rounded-lg">
+                                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* URL cliquable si disponible */}
+                              {speaker.link && (
+                                <div className="pt-2 border-t border-gray-100">
+                                  <a 
+                                    href={speaker.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                                  >
+                                    <Linkedin className="w-4 h-4" />
+                                    <span>Ouvrir le profil LinkedIn</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
                                 </div>
                               )}
-                              <p className="text-xs text-muted-foreground">
-                                Cliquez sur le QR code pour ouvrir le lien
-                              </p>
                             </div>
                           </Modal>
                         </div>
