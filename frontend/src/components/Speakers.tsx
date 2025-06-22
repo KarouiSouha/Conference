@@ -344,25 +344,7 @@ const Speakers: React.FC<SpeakersProps> = ({
                               </div>
                             )}
 
-                            {/* QR Code dans la modal */}
-                            {qrCodes[speaker.id] && (
-                              <div className="text-center border-t pt-4">
-                                <h4 className="font-semibold mb-2">
-                                  {content[language].labels.qrCodeTitle}
-                                </h4>
-                                <p className="text-xs text-muted-foreground mb-3">
-                                  {content[language].labels.qrCodeDesc}
-                                </p>
-                                <div className="flex justify-center">
-                                  <img 
-                                    src={qrCodes[speaker.id]} 
-                                    alt={`QR Code pour ${speaker.name}`}
-                                    className="w-32 h-32 border rounded cursor-pointer hover:scale-105 transition-transform"
-                                    onClick={() => handleQRCodeClick(speaker.id)}
-                                  />
-                                </div>
-                              </div>
-                            )}
+                          
                           </div>
                         </Modal>
 

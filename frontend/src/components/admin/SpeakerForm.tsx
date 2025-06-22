@@ -67,7 +67,7 @@ export default function SpeakerForm({
         // Assumant que l'API retourne un tableau d'objets { id, name }
         setThemes(data.data.map(theme => ({
           id: theme.id,
-          name: theme.title,
+          name: theme.titleFr,
           color: getThemeColor(theme.id)
         })));
       } catch (error) {
