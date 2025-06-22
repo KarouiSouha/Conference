@@ -8,7 +8,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { User, Building, Mail, Phone, FileText, CreditCard, Upload, CheckCircle, AlertCircle, Loader2, Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import PricingInfo from './PricingInfo'; // Adjust path as needed
 
 interface RegistrationProps {
   language: 'fr' | 'en';
@@ -561,7 +560,6 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
               {content[language].subtitle}
             </p>
           </div>
-          <PricingInfo language={language} />
 
           <StepIndicator />
 
