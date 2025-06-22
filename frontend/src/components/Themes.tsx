@@ -42,7 +42,8 @@ import { Label } from '@/components/ui/label';
 
 interface Keyword {
   id: number;
-  keyword: string;
+  keywordFr: string;
+  keywordEn: string;
   order: number;
 }
 
@@ -124,7 +125,8 @@ const fontAwesomeToLucideMap: { [key: string]: React.ComponentType<React.SVGProp
   'fa-wifi': Globe,
   'fa-network-wired': Globe,
   'fa-ethernet': Globe,
-  'fa-satellite': Globe
+  'fa-satellite': Globe,
+  'fa-cogs': Target
 };
 
 // Fonction pour obtenir l'icône appropriée
@@ -188,7 +190,7 @@ const IconDisplay: React.FC<{ theme: Theme; language: 'fr' | 'en'; className?: s
             fallbackIcon.className = 'fallback-icon';
             parent.appendChild(fallbackIcon);
             const iconElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            iconElement.className = className;
+            iconElement.setAttribute('class', className);
             parent.replaceChild(iconElement, fallbackIcon);
           }
         }}
@@ -564,7 +566,7 @@ const Themes: React.FC<ThemesProps> = ({
                                       key={keyword.id}
                                       className="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-medium border border-primary/20 hover:bg-primary/20 transition-colors duration-200"
                                     >
-                                      {keyword.keyword}
+                                      {language === 'fr' ? keyword.keywordFr : keyword.keywordEn}
                                     </span>
                                   ))}
                                 </div>

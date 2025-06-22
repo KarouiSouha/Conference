@@ -77,14 +77,13 @@ const Speakers: React.FC<SpeakersProps> = ({
   // Générer le QR code pour un speaker
   const generateQRCode = async (speakerId: number) => {
     try {
-      // const url = `https://site-conf.com/proceedings?speaker=${speakerId}`;
       const url = "https://site-conf.com/";
       const qrDataUrl = await QRCode.toDataURL(url, {
         width: 200,
         margin: 2,
         color: {
-          dark: '#1f2937', // Couleur sombre
-          light: '#ffffff', // Fond blanc
+          dark: '#1f2937',
+          light: '#ffffff',
         },
         errorCorrectionLevel: 'M',
       });
@@ -364,25 +363,6 @@ const Speakers: React.FC<SpeakersProps> = ({
                                 </div>
                               </div>
                             )}
-
-                            <div className="flex gap-2 pt-4">
-                              <Button 
-                                onClick={() => handleContact(speaker)} 
-                                className="flex-1"
-                                disabled={!speaker.email}
-                              >
-                                <Mail className="w-4 h-4 mr-2" />
-                                {content[language].actions.contact}
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                onClick={() => handleQRCodeClick(speaker.id)} 
-                                className="flex-1"
-                              >
-                                <ExternalLink className="w-4 h-4 mr-2" />
-                                Publications
-                              </Button>
-                            </div>
                           </div>
                         </Modal>
 
