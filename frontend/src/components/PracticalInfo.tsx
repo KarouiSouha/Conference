@@ -3,24 +3,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CreditCard, MapPin, Users, Baby, Calendar, Info, Building, Phone, Mail, CheckCircle, Star, Globe, GraduationCap, Briefcase, UserCheck } from 'lucide-react';
 
-interface PricingInfoProps {
+interface PracticalInfoProps {
   language: 'fr' | 'en';
 }
 
-const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
+const PracticalInfo: React.FC<PracticalInfoProps> = ({ language = 'fr' }) => {
   const content = {
     fr: {
       title: 'Tarification SITE 2025',
-      subtitle: 'Informations sur les frais d’inscription et services supplémentaires',
-      registrationInfo: 'Informations d’inscription',
-      registrationDetails: 'Détails de l’inscription',
+      subtitle: 'Informations sur les frais d\'inscription et services supplémentaires',
+      registrationInfo: 'Informations d\'inscription',
+      registrationDetails: 'Détails de l\'inscription',
       withAccommodation: 'Avec hébergement',
       withoutAccommodation: 'Sans hébergement',
       additionalFees: 'Frais supplémentaires',
       paymentInfo: 'Informations de paiement',
       bankDetails: 'Coordonnées bancaires',
       fromTunisia: 'Depuis la Tunisie',
-      fromOtherCountries: 'Depuis d’autres pays',
+      fromOtherCountries: 'Depuis d\'autres pays',
       academic: 'Académique',
       student: 'Étudiant',
       professional: 'Professionnel',
@@ -36,31 +36,31 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
       perNight: '/nuit',
       socialEvent: 'Événement social',
       airportTransfer: 'Transfert aéroport',
-      airportTransferDesc: 'Transfert aéroport (Tunis Carthage vers l’hôtel et vice versa) peut être organisé pour 50 €.',
+      airportTransferDesc: 'Transfert aéroport (Tunis Carthage vers l\'hôtel et vice versa) peut être organisé pour 50 €.',
       checkIn: 'Arrivée',
       checkOut: 'Départ',
       checkInDate: '24 octobre après 12h00',
       checkOutDate: '26 octobre avant 12h00',
-      registrationFeeCovers: 'Les frais d’inscription couvrent tous les matériaux de conférence, déjeuners et pauses café.',
+      registrationFeeCovers: 'Les frais d\'inscription couvrent tous les matériaux de conférence, déjeuners et pauses café.',
       hotelDetails: 'Hébergement en chambre double (partagée avec un autre participant) pendant deux nuits.',
-      registerNote: 'Pour inclure un article accepté, au moins un auteur doit s’inscrire et payer avant la date limite.',
+      registerNote: 'Pour inclure un article accepté, au moins un auteur doit s\'inscrire et payer avant la date limite.',
       bankName: 'Union Internationale des Banques',
       address: 'Menzel Jemil',
       accountName: 'Association du développement technologique de Bizerte',
       accountNumber: '12202000009300393395',
       paymentPurpose: 'Inscription SITE 2025',
       swift: 'SWIFT',
-      taxId: 'N° d’identification fiscale',
+      taxId: 'N° d\'identification fiscale',
       rne: 'Registre National des Entreprises (RNE)',
-      downloadBankId: 'Télécharger l’identité bancaire',
+      downloadBankId: 'Télécharger l\'identité bancaire',
       downloadTaxId: 'Télécharger ID fiscal',
       downloadRne: 'Télécharger RNE',
       paymentMethods: 'Méthodes de paiement disponibles',
       bankTransferDesc: 'Payer le montant total sans déduction, tous les frais bancaires à la charge du bénéficiaire. Non remboursable.',
       adminOrderDesc: 'Bon de commande (uniquement pour les universités tunisiennes)',
-      contactEmail: 'Envoyez une copie scannée de l’ordre de virement à',
-      contactInfo: 'Pour plus d’informations, contactez les organisateurs.',
-      mainRegistration: 'Tarifs d’inscription principaux',
+      contactEmail: 'Envoyez une copie scannée de l\'ordre de virement à',
+      contactInfo: 'Pour plus d\'informations, contactez les organisateurs.',
+      mainRegistration: 'Tarifs d\'inscription principaux',
       bestValue: 'Meilleur rapport qualité-prix',
       mostPopular: 'Plus populaire',
       includes: 'Inclus',
@@ -135,21 +135,21 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
     perNight?: boolean;
   }) => (
     <>
-      <div className="mb-3 p-3 bg-white rounded-lg border border-orange-200">
+      <div className="mb-3 p-3 bg-green-50 rounded-lg border border-green-200">
         <div className="flex items-center justify-center mb-1">
-          <div className="w-3 h-3 rounded-full bg-orange-500 mr-2"></div>
-          <span className="text-xs font-semibold text-slate-600">{content[language].fromTunisia}</span>
+          <div className="w-3 h-3 rounded-full bg-green-400 mr-2"></div>
+          <span className="text-xs font-semibold text-green-700">{content[language].fromTunisia}</span>
         </div>
-        <div className="text-xl font-bold text-orange-600">{tunisiaPrice}</div>
-        {perNight && <div className="text-xs text-slate-500">{content[language].perNight}</div>}
+        <div className="text-xl font-bold text-green-600">{tunisiaPrice}</div>
+        {perNight && <div className="text-xs text-green-500">{content[language].perNight}</div>}
       </div>
-      <div className="p-3 bg-white rounded-lg border border-blue-200">
+      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
         <div className="flex items-center justify-center mb-1">
-          <Globe className="w-3 h-3 text-blue-500 mr-2" />
-          <span className="text-xs font-semibold text-slate-600">{content[language].fromOtherCountries}</span>
+          <Globe className="w-3 h-3 text-blue-400 mr-2" />
+          <span className="text-xs font-semibold text-blue-700">{content[language].fromOtherCountries}</span>
         </div>
         <div className="text-xl font-bold text-blue-600">{internationalPrice}</div>
-        {perNight && <div className="text-xs text-slate-500">{content[language].perNight}</div>}
+        {perNight && <div className="text-xs text-blue-500">{content[language].perNight}</div>}
       </div>
     </>
   );
@@ -173,9 +173,9 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
     description?: string;
     features?: string[];
   }) => (
-    <Card className={`relative border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${isPopular ? 'ring-2 ring-blue-500 scale-105' : ''}`}>
+    <Card className={`relative border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${isPopular ? 'ring-2 ring-blue-300 scale-105' : ''}`}>
       {isPopular && (
-        <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-2 text-sm font-semibold">
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-2 text-sm font-semibold">
           <Star className="w-4 h-4 inline mr-1" />
           {content[language].mostPopular}
         </div>
@@ -187,9 +187,9 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
           </Badge>
         </div>
       )}
-      <CardHeader className={`text-center pb-4 ${isPopular ? 'pt-12' : 'pt-6'} bg-slate-50`}>
-        <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
-          <Icon className="w-8 h-8 text-blue-600" />
+      <CardHeader className={`text-center pb-4 ${isPopular ? 'pt-12' : 'pt-6'}`}>
+        <div className={`w-16 h-16 mx-auto mb-4 ${isPopular ? 'bg-blue-100' : isBestValue ? 'bg-green-100' : 'bg-purple-100'} rounded-full flex items-center justify-center`}>
+          <Icon className={`w-8 h-8 ${isPopular ? 'text-blue-500' : isBestValue ? 'text-green-500' : 'text-purple-500'}`} />
         </div>
         <CardTitle className="text-xl font-bold text-slate-800">{title}</CardTitle>
         {description && <p className="text-sm text-slate-600 px-2">{description}</p>}
@@ -230,13 +230,13 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
     internationalPrice?: string;
     perNight?: boolean;
   }) => (
-    <Card className="border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+    <Card className="border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
       <CardContent className="p-6 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
-          <Icon className="w-8 h-8 text-blue-600" />
+        <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+          <Icon className="w-8 h-8 text-blue-500" />
         </div>
         <h4 className="font-bold text-slate-800 text-lg mb-3">{title}</h4>
-        {price && <div className="text-xl font-bold text-blue-600 mb-3">{price}</div>}
+        {price && <div className="text-xl font-bold text-indigo-600 mb-3">{price}</div>}
         {(tunisiaPrice && internationalPrice) && (
           <PriceDisplay tunisiaPrice={tunisiaPrice} internationalPrice={internationalPrice} perNight={perNight} />
         )}
@@ -246,7 +246,7 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
   );
 
   return (
-    <section id="pricing-info" className="py-20 bg-slate-50">
+    <section id="practical-info" className="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
@@ -258,54 +258,54 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
 
           {/* Registration and Payment Information */}
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
-            <Card className="border border-slate-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-slate-800">
+            <Card className="border shadow-lg">
+              <CardHeader className="bg-blue-500 text-white">
+                <CardTitle className="flex items-center gap-2">
                   <Info className="w-5 h-5" />
                   {content[language].registrationInfo}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center p-3 bg-slate-50 rounded-lg">
+              <CardContent className="bg-white">
+                <div className="space-y-4 mt-4">
+                  <div className="flex items-center p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <Calendar className="w-6 h-6 text-blue-600 mr-3" />
                     <div>
-                      <p className="font-semibold text-slate-700">{content[language].checkIn}</p>
-                      <p className="text-sm text-slate-600">{content[language].checkInDate}</p>
+                      <p className="font-semibold text-slate-800">{content[language].checkIn}</p>
+                      <p className="text-sm text-blue-600">{content[language].checkInDate}</p>
                     </div>
                   </div>
-                  <div className="flex items-center p-3 bg-slate-50 rounded-lg">
-                    <Calendar className="w-6 h-6 text-blue-600 mr-3" />
+                  <div className="flex items-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <Calendar className="w-6 h-6 text-purple-600 mr-3" />
                     <div>
-                      <p className="font-semibold text-slate-700">{content[language].checkOut}</p>
-                      <p className="text-sm text-slate-600">{content[language].checkOutDate}</p>
+                      <p className="font-semibold text-slate-800">{content[language].checkOut}</p>
+                      <p className="text-sm text-purple-600">{content[language].checkOutDate}</p>
                     </div>
                   </div>
-                  <div className="p-3 bg-slate-50 rounded-lg">
-                    <h4 className="font-semibold text-slate-700 mb-2">{content[language].withoutAccommodation}</h4>
-                    <p className="text-sm text-slate-600">{content[language].registrationFeeCovers}</p>
-                    <p className="text-lg font-bold text-blue-600 mt-2">450 TND</p>
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                    <h4 className="font-semibold text-slate-800 mb-2">{content[language].withoutAccommodation}</h4>
+                    <p className="text-sm text-slate-700">{content[language].registrationFeeCovers}</p>
+                    <p className="text-lg font-bold text-green-600 mt-2">450 TND</p>
                   </div>
-                  <div className="p-3 bg-slate-50 rounded-lg">
-                    <h4 className="font-semibold text-slate-700 mb-2">{content[language].withAccommodation}</h4>
-                    <p className="text-sm text-slate-600">{content[language].hotelDetails}</p>
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                    <h4 className="font-semibold text-slate-800 mb-2">{content[language].withAccommodation}</h4>
+                    <p className="text-sm text-slate-700">{content[language].hotelDetails}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border border-slate-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-slate-800">
+            <Card className="border shadow-lg">
+              <CardHeader className="bg-green-500 text-white">
+                <CardTitle className="flex items-center gap-2">
                   <CreditCard className="w-5 h-5" />
                   {content[language].paymentInfo}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="p-3 bg-slate-50 rounded-lg">
-                    <h4 className="font-semibold text-slate-700 mb-2">{content[language].bankDetails}</h4>
-                    <div className="space-y-2 text-sm text-slate-600">
+              <CardContent className="bg-white">
+                <div className="space-y-4 mt-4">
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <h4 className="font-semibold text-slate-800 mb-2">{content[language].bankDetails}</h4>
+                    <div className="space-y-2 text-sm text-slate-700">
                       <div className="flex justify-between">
                         <span className="font-semibold">Banque:</span>
                         <span>{content[language].bankName}</span>
@@ -328,27 +328,27 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
                       </div>
                     </div>
                   </div>
-                  <div className="p-3 bg-slate-50 rounded-lg">
-                    <h4 className="font-semibold text-slate-700 mb-2">{content[language].paymentMethods}</h4>
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                    <h4 className="font-semibold text-slate-800 mb-2">Virement bancaire</h4>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <CreditCard className="w-5 h-5 text-blue-600" />
-                        <p className="text-sm text-slate-600">{content[language].bankTransferDesc}</p>
+                        <CreditCard className="w-5 h-5 text-green-600" />
+                        <p className="text-sm text-slate-700">{content[language].bankTransferDesc}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Building className="w-5 h-5 text-blue-600" />
-                        <p className="text-sm text-slate-600">{content[language].adminOrderDesc}</p>
+                        <Building className="w-5 h-5 text-green-600" />
+                        <p className="text-sm text-slate-700">{content[language].adminOrderDesc}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="p-3 bg-slate-50 rounded-lg">
-                    <p className="text-sm text-slate-600">
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-sm text-slate-700">
                       {content[language].contactEmail}{' '}
-                      <a href="mailto:contact@site-conf.com" className="text-blue-600 hover:underline">
+                      <a href="mailto:contact@site-conf.com" className="text-blue-600 hover:underline font-semibold">
                         contact@site-conf.com
                       </a>
                     </p>
-                    <p className="text-sm text-slate-600 mt-2">{content[language].contactInfo}</p>
+                    <p className="text-sm text-slate-700 mt-2">{content[language].contactInfo}</p>
                   </div>
                 </div>
               </CardContent>
@@ -444,24 +444,38 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
               <p className="text-lg text-slate-600">{language === 'fr' ? 'Tarifs préférentiels pour les familles' : 'Preferential rates for families'}</p>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
-              <ServiceCard
-                title={content[language].childUnder2}
-                icon={Baby}
-                price={content[language].free}
-                description={language === 'fr' ? 'Aucun frais pour les tout-petits' : 'No fees for toddlers'}
-              />
-              <ServiceCard
-                title={content[language].childrenWith2Adults}
-                icon={Users}
-                price={content[language].discount50}
-                description={language === 'fr' ? 'Avec deux adultes inscrits' : 'With two registered adults'}
-              />
-              <ServiceCard
-                title={content[language].childrenSeparateRoom}
-                icon={UserCheck}
-                price={content[language].discount30}
-                description={language === 'fr' ? 'Chambre séparée ou avec un adulte' : 'Separate room or with one adult'}
-              />
+              <Card className="border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                    <Baby className="w-8 h-8 text-green-500" />
+                  </div>
+                  <h4 className="font-bold text-slate-800 text-lg mb-3">{content[language].childUnder2}</h4>
+                  <div className="text-2xl font-bold text-green-600 mb-3">{content[language].free}</div>
+                  <p className="text-sm text-slate-700 leading-relaxed">{language === 'fr' ? 'Aucun frais pour les tout-petits' : 'No fees for toddlers'}</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Users className="w-8 h-8 text-blue-500" />
+                  </div>
+                  <h4 className="font-bold text-slate-800 text-lg mb-3">{content[language].childrenWith2Adults}</h4>
+                  <div className="text-2xl font-bold text-blue-600 mb-3">{content[language].discount50}</div>
+                  <p className="text-sm text-slate-700 leading-relaxed">{language === 'fr' ? 'Avec deux adultes inscrits' : 'With two registered adults'}</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
+                    <UserCheck className="w-8 h-8 text-purple-500" />
+                  </div>
+                  <h4 className="font-bold text-slate-800 text-lg mb-3">{content[language].childrenSeparateRoom}</h4>
+                  <div className="text-2xl font-bold text-purple-600 mb-3">{content[language].discount30}</div>
+                  <p className="text-sm text-slate-700 leading-relaxed">{language === 'fr' ? 'Chambre séparée ou avec un adulte' : 'Separate room or with one adult'}</p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
@@ -470,4 +484,4 @@ const PricingInfo: React.FC<PricingInfoProps> = ({ language = 'fr' }) => {
   );
 };
 
-export default PricingInfo;
+export default PracticalInfo;

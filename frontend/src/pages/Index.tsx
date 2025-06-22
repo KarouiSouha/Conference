@@ -73,11 +73,11 @@ const Index = () => {
       <Speakers language={language} />
       <Committee language={language} />
       <Program language={language} />
+      <PracticalInfo language={language} />
       <Registration language={language} />
       <News language={language} />
       <Gallery language={language} />
       <Archives language={language} />
-      <PracticalInfo language={language} />
       <Partners language={language} />
       <Contact language={language} />
       <Footer language={language} />
