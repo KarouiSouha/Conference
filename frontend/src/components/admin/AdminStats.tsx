@@ -64,7 +64,7 @@ export default function AdminStats() {
         const speakersActiveThisMonth = speakersStatsRes.data.data.active_this_month || 0;
         const sessionsCount = programmeRes.data.length || 0;
         const partnersCount = partnersRes.data.total_partners || 0; // Changé de count à total_partners
-        const themesCount = themesRes.data.length || 0;
+        const themesCount = themesRes.data.data.length || 0;
         const newsCount = newsRes.data.length || 0;
         const archivesCount = archivesRes.data.length || 0;
 
