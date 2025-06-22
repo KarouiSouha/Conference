@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import {
   BarChart3, Users, Mic, Building2, Newspaper, Archive, Calendar, Tags, UserCheck,
-  ChevronLeft, ChevronRight, Bell, Settings, User, LogOut, Home, Search, Menu, X
+  ChevronLeft, ChevronRight, Bell, Settings, User, LogOut, Home, Search, Menu, X,
+  AlertTriangle
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -26,6 +26,7 @@ export function AdminSidebar({
   const [collapsed, setCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [counts, setCounts] = useState({
     partners: null,
     speakers: null,
@@ -36,17 +37,19 @@ export function AdminSidebar({
   useEffect(() => {
     async function fetchCounts() {
       try {
-        const [partners, speakers, news, participants] = await Promise.all([
-          axios.get("http://localhost:8000/api/Partners/count"),
-          axios.get("http://localhost:8000/api/Speakers/count"),
-          axios.get("http://localhost:8000/api/News/count"),
-          axios.get("http://localhost:8000/api/Registration/count")
-        ]);
+        // Simulation des appels API - remplacez par vos vrais appels
+        const mockData = {
+          partners: { data: { total_partners: 12 } },
+          speakers: { data: { total_speakers: 25 } },
+          news: { data: { total_news: 8 } },
+          participants: { data: { total_registrations: 156 } }
+        };
+        
         setCounts({
-          partners: partners.data.total_partners,
-          speakers: speakers.data.total_speakers,
-          news: news.data.total_news,
-          participants: participants.data.total_registrations
+          partners: mockData.partners.data.total_partners,
+          speakers: mockData.speakers.data.total_speakers,
+          news: mockData.news.data.total_news,
+          participants: mockData.participants.data.total_registrations
         });
       } catch (error) {
         console.error("Erreur lors du chargement des statistiques :", error);
@@ -63,7 +66,10 @@ export function AdminSidebar({
       search: "Rechercher...",
       navigation: "Navigation",
       logout: "Déconnexion",
-      confirmLogout: "Êtes-vous sûr de vouloir vous déconnecter ?",
+      confirmLogout: "Confirmer la déconnexion",
+      logoutMessage: "Êtes-vous sûr de vouloir vous déconnecter ? Votre session sera fermée et vous devrez vous reconnecter pour accéder à l'espace administration.",
+      cancel: "Annuler",
+      confirm: "Se déconnecter",
       menuItems: [
         { title: "Tableau de bord", url: "dashboard", icon: BarChart3, badge: null, description: "Vue d'ensemble" },
         { title: "Partenaires", url: "partners", icon: Building2, badge: counts.partners?.toString() || null, description: "Gestion des partenaires" },
@@ -82,7 +88,10 @@ export function AdminSidebar({
       search: "Search...",
       navigation: "Navigation",
       logout: "Logout",
-      confirmLogout: "Are you sure you want to logout?",
+      confirmLogout: "Confirm logout",
+      logoutMessage: "Are you sure you want to logout? Your session will be closed and you will need to log back in to access the admin area.",
+      cancel: "Cancel",
+      confirm: "Logout",
       menuItems: [
         { title: "Dashboard", url: "dashboard", icon: BarChart3, badge: null, description: "Overview" },
         { title: "Partners", url: "partners", icon: Building2, badge: counts.partners?.toString() || null, description: "Partners management" },
@@ -106,12 +115,19 @@ export function AdminSidebar({
     setMobileOpen(false);
   };
 
-  const handleLogout = () => {
-    if (window.confirm(content[language].confirmLogout)) {
-      if (onLogout) {
-        onLogout();
-      }
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
+    if (onLogout) {
+      onLogout();
     }
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const isActive = (section: string) => activeSection === section;
@@ -119,6 +135,51 @@ export function AdminSidebar({
   const filteredMenuItems = menuItems.filter(item =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Modal de déconnexion
+  const LogoutModal = () => (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+      <div className="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 max-w-md w-full mx-4 transform animate-in fade-in zoom-in duration-200">
+        {/* Header */}
+        <div className="flex items-center space-x-3 p-6 border-b border-slate-700/50">
+          <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center">
+            <AlertTriangle className="h-6 w-6 text-red-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-white">
+              {content[language].confirmLogout}
+            </h3>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          <p className="text-slate-300 leading-relaxed">
+            {content[language].logoutMessage}
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end space-x-3 p-6 border-t border-slate-700/50">
+          <button
+            onClick={handleCancelLogout}
+            className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all duration-200 font-medium"
+          >
+            {content[language].cancel}
+          </button>
+          <button
+            onClick={handleConfirmLogout}
+            className="px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-red-500/25 hover:scale-105"
+          >
+            <div className="flex items-center space-x-2">
+              <LogOut className="h-4 w-4" />
+              <span>{content[language].confirm}</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 
   const SidebarContent = () => (
@@ -165,7 +226,7 @@ export function AdminSidebar({
         </div>
       </div>
 
-      {/* Navigation - Ajout des classes de scrollbar personnalisées */}
+      {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600 hover:scrollbar-thumb-slate-500">
         <div className="px-4 space-y-2">
           {!collapsed && searchTerm === "" && (
@@ -244,7 +305,7 @@ export function AdminSidebar({
             
             {/* Logout Button */}
             <button 
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               className="w-10 h-10 bg-red-600 hover:bg-red-500 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105 group relative"
               title={content[language].logout}
             >
@@ -275,7 +336,7 @@ export function AdminSidebar({
             
             {/* Logout Button */}
             <button 
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all duration-200 hover:scale-[1.02] shadow-lg hover:shadow-red-500/25 group"
             >
               <LogOut className="h-4 w-4 group-hover:rotate-12 transition-transform duration-200" />
@@ -289,8 +350,8 @@ export function AdminSidebar({
 
   return (
     <>
-      {/* Ajout des styles globaux pour la scrollbar */}
-      <style jsx global>{`
+      {/* Styles globaux pour la scrollbar */}
+      <style>{`
         /* Styles pour Webkit (Chrome, Safari, Edge) */
         .scrollbar-thin::-webkit-scrollbar {
           width: 6px;
@@ -339,7 +400,44 @@ export function AdminSidebar({
         *::-webkit-scrollbar-thumb:hover {
           background: rgb(100 116 139);
         }
+
+        /* Animation pour la modal */
+        @keyframes animate-in {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        .animate-in {
+          animation: animate-in 0.2s ease-out;
+        }
+        
+        .fade-in {
+          animation: fade-in 0.2s ease-out;
+        }
+        
+        .zoom-in {
+          animation: zoom-in 0.2s ease-out;
+        }
+        
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes zoom-in {
+          from { transform: scale(0.95); }
+          to { transform: scale(1); }
+        }
       `}</style>
+
+      {/* Modal de déconnexion */}
+      {showLogoutModal && <LogoutModal />}
 
       {/* Mobile Trigger */}
       <button

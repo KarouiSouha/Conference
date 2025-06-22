@@ -17,6 +17,8 @@ import Contact from '@/components/Contact';
 import AdminDashboard from '@/components/AdminDashboard';
 import Footer from '@/components/Footer';
 import Admin from '@/pages/Admin';
+import axios from "axios";
+axios.defaults.baseURL = "http://localhost:8000"; // Ajustez selon votre serveur
 
 const Index = () => {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');

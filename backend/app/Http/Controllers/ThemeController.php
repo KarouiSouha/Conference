@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Theme;
 use App\Models\MotsCles;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class ThemeController extends Controller
@@ -270,4 +271,29 @@ class ThemeController extends Controller
         }
     }
 
+    /**
+     * Get theme statistics.
+     */
+    public function statistics(): JsonResponse
+    {
+        try {
+            $stats = [
+                'total' => Theme::count(),
+                'active_this_month' => Theme::where('created_at', '>=', now()->startOfMonth())
+                    ->orWhere('updated_at', '>=', now()->startOfMonth())
+                    ->count(),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $stats,
+                'message' => 'Statistiques des thèmes récupérées avec succès'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des statistiques: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
