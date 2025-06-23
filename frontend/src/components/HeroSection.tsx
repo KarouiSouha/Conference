@@ -260,92 +260,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language = 'fr' }) => {
     );
   };
 
-  // Timeline interactive
-  const InteractiveTimeline = () => {
-    const timelineEvents = [
-      {
-        key: 'submission',
-        title: currentContent.timeline.submission,
-        date: currentContent.timeline.dates.submission,
-        icon: FileText,
-        color: 'from-red-500 to-red-600',
-        isActive: true
-      },
-      {
-        key: 'review',
-        title: currentContent.timeline.review,
-        date: currentContent.timeline.dates.review,
-        icon: Clock,
-        color: 'from-yellow-500 to-orange-500',
-        isActive: false
-      },
-      {
-        key: 'notification',
-        title: currentContent.timeline.notification,
-        date: currentContent.timeline.dates.notification,
-        icon: AlertCircle,
-        color: 'from-blue-500 to-blue-600',
-        isActive: false
-      },
-      {
-        key: 'conference',
-        title: currentContent.timeline.conference,
-        date: currentContent.timeline.dates.conference,
-        icon: Calendar,
-        color: 'from-green-500 to-green-600',
-        isActive: false
-      }
-    ];
 
-    return (
-      <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-xl">
-        <h3 className="text-2xl font-bold text-center text-white mb-8">
-          Timeline 2025
-        </h3>
-        
-        <div className="relative">
-          {/* Ligne de progression */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-white/30 to-white/10 rounded-full"></div>
-          
-          {timelineEvents.map((event, index) => {
-            const Icon = event.icon;
-            return (
-              <div
-                key={event.key}
-                className={`relative flex items-center mb-12 ${
-                  index % 2 === 0 ? 'justify-start' : 'justify-end'
-                }`}
-              >
-                {/* Contenu de l'événement */}
-                <div className={`relative bg-white rounded-xl p-6 shadow-lg max-w-sm hover:scale-105 transition-all duration-300 ${
-                  index % 2 === 0 ? 'mr-8' : 'ml-8'
-                }`}>
-                  <div className={`absolute ${
-                    index % 2 === 0 ? 'right-0 top-1/2 transform translate-x-full -translate-y-1/2' : 'left-0 top-1/2 transform -translate-x-full -translate-y-1/2'
-                  }`}>
-                    <div className="w-4 h-4 bg-white rotate-45 border border-gray-200"></div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className={`p-2 rounded-lg bg-gradient-to-r ${event.color}`}>
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                    <h4 className="font-bold text-gray-800">{event.title}</h4>
-                  </div>
-                  <p className="text-sm text-gray-600 font-medium">{event.date}</p>
-                </div>
-                
-                {/* Point central */}
-                <div className={`absolute left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full border-4 border-white shadow-lg bg-gradient-to-r ${event.color} ${
-                  event.isActive ? 'animate-pulse scale-125' : ''
-                }`}></div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
 
   // Compteur avec effets visuels avancés
   interface TimeLeft {
@@ -490,10 +405,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ language = 'fr' }) => {
               </div>
             </div>
 
-            {/* Timeline interactive */}
-            <div className="mb-12">
-              <InteractiveTimeline />
-            </div>
+
 
             {/* Comptes à rebours avancés */}
             <div className="grid md:grid-cols-2 gap-8 mb-12">
