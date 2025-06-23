@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -369,43 +369,42 @@ export default function PartnersManager() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <Card className="p-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
+          <Card className="p-6 bg-white border-2 border-gray-100 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-full">
+              <div className="text-sm text-gray-600">
                 Affichage de {startIndex + 1} à {Math.min(endIndex, filteredPartners.length)} sur {filteredPartners.length} partenaires
               </div>
-
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="border-0 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl"
+                  className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <Button
                     key={page}
+                    variant={currentPage === page ? "default" : "outline"}
                     size="sm"
                     onClick={() => goToPage(page)}
-                    className={`min-w-[40px] rounded-xl border-0 ${currentPage === page
-                        ? "bg-blue-500 text-white shadow-lg"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                      }`}
+                    className={`border-2 ${
+                      currentPage === page
+                        ? "bg-blue-600 border-blue-600 text-white"
+                        : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                    } min-w-[40px]`}
                   >
                     {page}
                   </Button>
                 ))}
-
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="border-0 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl"
+                  className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
