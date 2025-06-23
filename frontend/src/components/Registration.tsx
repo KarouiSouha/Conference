@@ -404,21 +404,21 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
 
     try {
       const submitData = new FormData();
-      submitData.append('firstName', formData.firstName); // Use 'first_name' if server expects snake_case
-      submitData.append('lastName', formData.lastName); // Use 'last_name'
+      submitData.append('first_name', formData.firstName); // Use 'first_name' if server expects snake_case
+      submitData.append('last_name', formData.lastName); // Use 'last_name'
       submitData.append('establishment', formData.establishment);
       submitData.append('title', formData.title);
       submitData.append('email', formData.email);
       submitData.append('phone', formData.phone);
       submitData.append('country', formData.country);
-      submitData.append('participationType', formData.participationType); // Use 'participation_type'
-      submitData.append('hasAccompanying', formData.hasAccompanying); // Use 'has_accompanying'
-      submitData.append('accompanyingDetails', formData.accompanyingDetails || ''); // Use 'accompanying_details'
-      submitData.append('accommodationType', formData.accommodationType); // Use 'accommodation_type'
-      submitData.append('paymentMethod', formData.paymentMethod); // Use 'payment_method'
+      submitData.append('participation_type', formData.participationType); // Use 'participation_type'
+      submitData.append('has_accompanying', formData.hasAccompanying); // Use 'has_accompanying'
+      submitData.append('accompanying_details', formData.accompanyingDetails || ''); // Use 'accompanying_details'
+      submitData.append('accommodation_type', formData.accommodationType); // Use 'accommodation_type'
+      submitData.append('payment_method', formData.paymentMethod); // Use 'payment_method'
       submitData.append('language', language);
       if (formData.paymentProof) {
-        submitData.append('paymentProof', formData.paymentProof); // Use 'payment_proof'
+        submitData.append('payment_proof', formData.paymentProof); // Use 'payment_proof'
       }
 
       console.log('Submitting data:', Object.fromEntries(submitData));
