@@ -205,6 +205,10 @@ export default function SpeakersManager() {
     setCurrentPage(1);
   }, [searchTerm]);
 
+  const goToPage = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
   const stats = {
     total: speakers.length,
     keynote: speakers.filter(s => s.is_keynote).length,
@@ -337,16 +341,9 @@ export default function SpeakersManager() {
           <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-gray-900">
-                Liste des Intervenants ({filteredSpeakers.length})
+                Liste des Intervenants
               </h3>
-              <div className="flex items-center gap-4">
-                <Badge variant="outline" className="text-gray-700 border-gray-300">
-                  {filteredSpeakers.length} résultat{filteredSpeakers.length > 1 ? 's' : ''}
-                </Badge>
-                <div className="text-sm text-gray-600">
-                  Page {currentPage} sur {totalPages}
-                </div>
-              </div>
+              <p className="text-sm text-gray-600">{filteredSpeakers.length} intervenant(s) trouvé(s)</p>
             </div>
           </div>
 
@@ -354,25 +351,25 @@ export default function SpeakersManager() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Intervenant
                   </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Contact
                   </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Fonction
                   </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Origine
                   </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     LinkedIn
                   </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Thème & Statut
                   </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -464,18 +461,18 @@ export default function SpeakersManager() {
                       <div className="flex items-center space-x-2">
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
                           onClick={() => handleEditSpeaker(speaker)}
-                          className="h-9 w-9 p-0 border-gray-300 hover:bg-gray-50 text-gray-600 transition-colors"
+                          className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 h-8 w-8 p-0"
                           title="Modifier"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
                           onClick={() => handleDeleteSpeaker(speaker)}
-                          className="h-9 w-9 p-0 border-red-300 hover:bg-red-50 hover:border-red-400 text-red-600 hover:text-red-700 transition-colors"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                           title="Supprimer"
                         >
                           <Trash className="w-4 h-4" />
@@ -487,63 +484,6 @@ export default function SpeakersManager() {
               </tbody>
             </table>
           </div>
-
-          {/* Pagination */}
-          {filteredSpeakers.length > 0 && (
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  Affichage de {startIndex + 1} à {Math.min(endIndex, filteredSpeakers.length)} sur {filteredSpeakers.length} résultats
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="h-9 w-9 p-0"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-
-                  <div className="flex items-center space-x-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                      if (
-                        page === 1 ||
-                        page === totalPages ||
-                        (page >= currentPage - 1 && page <= currentPage + 1)
-                      ) {
-                        return (
-                          <Button
-                            key={page}
-                            variant={currentPage === page ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setCurrentPage(page)}
-                            className="h-9 w-9 p-0"
-                          >
-                            {page}
-                          </Button>
-                        );
-                      } else if (page === currentPage - 2 || page === currentPage + 2) {
-                        return <span key={page} className="px-2 text-gray-400">...</span>;
-                      }
-                      return null;
-                    })}
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="h-9 w-9 p-0"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {filteredSpeakers.length === 0 && (
             <div className="text-center py-16">
@@ -564,6 +504,52 @@ export default function SpeakersManager() {
             </div>
           )}
         </Card>
+
+        {/* Pagination - Toujours visible quand il y a des speakers */}
+        {filteredSpeakers.length > 0 && (
+          <Card className="p-6 bg-white border-2 border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                Affichage de {startIndex + 1} à {Math.min(endIndex, filteredSpeakers.length)} sur {filteredSpeakers.length} intervenants
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                {Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => goToPage(page)}
+                    className={`border-2 ${
+                      currentPage === page
+                        ? "bg-blue-600 border-blue-600 text-white"
+                        : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                    } min-w-[40px]`}
+                  >
+                    {page}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
 
       {/* Composant SpeakerForm */}
