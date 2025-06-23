@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Speaker;
+use App\Models\Realisation;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -36,7 +37,10 @@ class SpeakerController extends Controller
             'description_fr' => 'nullable|string',
             'description_en' => 'nullable|string',
             'theme_id' => 'nullable|exists:themes,id',
-            'link' => 'nullable|url|max:255', // Ajout de la validation pour le lien
+            'link' => 'nullable|url|max:255',
+            'realisations' => 'nullable|array', // Validation pour les réalisations
+            'realisations.*.title_fr' => 'required|string|max:255', // Titre en français requis
+            'realisations.*.title_en' => 'required|string|max:255', // Titre en anglais requis
         ]);
 
         // Créer le speaker
@@ -52,6 +56,26 @@ class SpeakerController extends Controller
             'theme_id' => $request->input('theme_id'),
             'link' => $request->input('link'),
         ]);
+
+        // Traiter les réalisations si fournies
+        if ($request->has('realisations')) {
+            $realisationIds = [];
+            foreach ($request->input('realisations') as $realisationData) {
+                // Rechercher si la réalisation existe déjà (par title_fr et title_en)
+                $realisation = Realisation::firstOrCreate([
+                    'title_fr' => $realisationData['title_fr'],
+                    'title_en' => $realisationData['title_en'],
+                ]);
+
+                $realisationIds[] = $realisation->id;
+            }
+
+            // Associer les réalisations au speaker
+            $speaker->realisations()->sync($realisationIds);
+        }
+
+        // Charger les relations pour la réponse
+        $speaker->load('realisations');
 
         return response()->json([
             'message' => 'Intervenant ajouté avec succès',
@@ -70,7 +94,7 @@ class SpeakerController extends Controller
         // Valider les données reçues
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:speakers,email,' . $speaker->id, // exclure l'email actuel
+            'email' => 'required|email|unique:speakers,email,' . $speaker->id,
             'job_fr' => 'required|string|max:255',
             'job_en' => 'required|string|max:255',
             'country_fr' => 'required|string|max:255',
@@ -79,6 +103,9 @@ class SpeakerController extends Controller
             'description_en' => 'nullable|string',
             'theme_id' => 'nullable|exists:themes,id',
             'link' => 'nullable|url|max:255',
+            'realisations' => 'nullable|array',
+            'realisations.*.title_fr' => 'required|string|max:255',
+            'realisations.*.title_en' => 'required|string|max:255',
         ]);
 
         // Mise à jour des champs
@@ -94,6 +121,29 @@ class SpeakerController extends Controller
             'theme_id' => $request->input('theme_id'),
             'link' => $request->input('link'),
         ]);
+
+        // Traiter les réalisations si fournies
+        if ($request->has('realisations')) {
+            $realisationIds = [];
+            foreach ($request->input('realisations') as $realisationData) {
+                // Rechercher ou créer la réalisation
+                $realisation = Realisation::firstOrCreate([
+                    'title_fr' => $realisationData['title_fr'],
+                    'title_en' => $realisationData['title_en'],
+                ]);
+
+                $realisationIds[] = $realisation->id;
+            }
+
+            // Synchroniser les réalisations
+            $speaker->realisations()->sync($realisationIds);
+        } else {
+            // Si aucune réalisation n'est fournie, détacher toutes les réalisations
+            $speaker->realisations()->detach();
+        }
+
+        // Charger les relations pour la réponse
+        $speaker->load('realisations');
 
         return response()->json([
             'message' => 'Intervenant mis à jour avec succès',
@@ -120,9 +170,6 @@ class SpeakerController extends Controller
         return response()->json(['total_speakers' => $count]);
     }
 
-    /**
-     * Get speaker statistics.
-     */
     public function statistics(): JsonResponse
     {
         try {
@@ -144,5 +191,21 @@ class SpeakerController extends Controller
                 'message' => 'Erreur lors de la récupération des statistiques: ' . $e->getMessage()
             ], 500);
         }
+    }
+    public function destroyRealisation($id): JsonResponse
+    {
+        $realisation = Realisation::find($id);
+
+        if (!$realisation) {
+            return response()->json(['message' => 'Réalisation non trouvée'], 404);
+        }
+
+        // Supprimer les associations dans la table pivot
+        $realisation->speakers()->detach();
+
+        // Supprimer la réalisation
+        $realisation->delete();
+
+        return response()->json(['message' => 'Réalisation supprimée avec succès']);
     }
 }
