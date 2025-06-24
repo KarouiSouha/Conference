@@ -3,18 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { User, Building, Mail, Phone, FileText, CreditCard, Upload, CheckCircle, AlertCircle, Loader2, Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Recu from './Recu.tsx';
 
 interface RegistrationProps {
   language: 'fr' | 'en';
   apiBaseUrl?: string;
 }
 
-// Configuration de l'API
 const API_CONFIG = {
   baseUrl: 'http://localhost:8000/api',
   endpoints: {
@@ -22,7 +20,6 @@ const API_CONFIG = {
   }
 };
 
-// Composants définis en dehors pour éviter la re-création
 const FormSection = ({ icon: Icon, title, children }: { icon: React.ElementType, title: string, children: React.ReactNode }) => (
   <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-6">
     <div className="flex items-center mb-4">
@@ -194,11 +191,11 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     country: '',
     participationType: '',
     hasAccompanying: '',
-    accompanyingDetails: '', // Changed to array for multiple accompaniments
+    accompanyingDetails: '',
     accommodationType: '',
     paymentMethod: '',
     paymentProof: null as File | null,
-    accompanyingPersons: [] as { name: string; age: number; discount?: number }[] // Added discount field
+    accompanyingPersons: [] as { name: string; age: number; discount?: number }[]
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -314,9 +311,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         countryRequired: 'Country required'
       }
     }
-  }), []);
+  }), [language]);
 
-  // Pricing data based on requirements
   const getRegistrationFees = () => {
     const isTunisia = formData.country === 'Tunisia';
     const participantType = formData.title;
@@ -327,7 +323,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         academic: isTunisia ? 700 : 1538.42,
         professional: isTunisia ? 750 : 1709.35
       },
-      withoutAccommodation: 450 // Fixed fee for all types without accommodation
+      withoutAccommodation: 450
     };
 
     return {
@@ -345,22 +341,29 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     formData.accompanyingPersons.forEach(person => {
       if (person.age >= 12) {
         adultCount++;
-        totalAccompanyingFees += isTunisia ? 240 : 273.50; // 120 TND * 2 nights or 80 EUR * 2 nights
+        totalAccompanyingFees += isTunisia ? 240 : 273.50;
+        person.discount = 0;
       } else if (person.age >= 2) {
         childCount++;
-      } // Children < 2 years are free
+      }
     });
 
-    // Apply family discounts based on the number of adults
-    const totalAdults = 1 + adultCount; // 1 is the registrant, plus additional adults
+    const totalAdults = 1 + adultCount;
     if (childCount > 0) {
+      const childFee = isTunisia ? 240 : 273.50;
+      let discountPercentage = 0;
       if (totalAdults >= 2) {
-        // 50% discount for children 2-11 years with 2 adults
-        totalAccompanyingFees += isTunisia ? (childCount * 240 * 0.5) : (childCount * 273.50 * 0.5); // 50% of base adult fee
+        discountPercentage = 0.5;
       } else {
-        // 30% discount for children 2-11 years with 1 adult or separate room
-        totalAccompanyingFees += isTunisia ? (childCount * 240 * 0.3) : (childCount * 273.50 * 0.3); // 30% of base adult fee
+        discountPercentage = 0.3;
       }
+      const discountedChildFee = childFee * discountPercentage;
+      totalAccompanyingFees += discountedChildFee * childCount;
+      formData.accompanyingPersons.forEach(person => {
+        if (person.age >= 2 && person.age < 12) {
+          person.discount = (childFee - discountedChildFee);
+        }
+      });
     }
 
     return totalAccompanyingFees;
@@ -373,7 +376,6 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     return accommodationFee + accompanyingFees;
   };
 
-  // Fonctions de mise à jour mémorisées
   const updateFormData = useCallback((field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -477,7 +479,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
       submitData.append('accompanying_details', JSON.stringify(formData.accompanyingPersons));
       submitData.append('accommodation_type', formData.accommodationType);
       submitData.append('payment_method', formData.paymentMethod);
-      submitData.append('amount', calculateTotalAmount().toString()); // Send calculated amount to backend
+      submitData.append('amount', calculateTotalAmount().toString());
       submitData.append('language', language);
       if (formData.paymentProof) {
         submitData.append('payment_proof', formData.paymentProof);
@@ -539,46 +541,40 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     return (
       <section className="min-h-screen bg-white py-12">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-8">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                {content[language].success}
-              </h2>
-              <p className="text-gray-600 mb-6">
-                {content[language].successMessage}
-              </p>
-              <Button
-                onClick={() => {
-                  setIsSubmitted(false);
-                  setCurrentStep(1);
-                  setFormData({
-                    firstName: '',
-                    lastName: '',
-                    establishment: '',
-                    title: '',
-                    email: '',
-                    phone: '',
-                    country: '',
-                    participationType: '',
-                    hasAccompanying: '',
-                    accompanyingDetails: '',
-                    accommodationType: '',
-                    paymentMethod: '',
-                    paymentProof: null,
-                    accompanyingPersons: []
-                  });
-                  setErrors({});
-                  setSubmitError('');
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
-              >
-                {language === 'fr' ? 'Nouvelle inscription' : 'New Registration'}
-              </Button>
-            </div>
-          </div>
+          <Recu
+            language={language}
+            firstName={formData.firstName}
+            lastName={formData.lastName}
+            email={formData.email}
+            country={formData.country}
+            totalAmount={calculateTotalAmount()}
+            accommodationType={formData.accommodationType}
+            participationType={formData.participationType}
+            paymentMethod={formData.paymentMethod}
+            accompanyingPersons={formData.accompanyingPersons}
+            onNewRegistration={() => {
+              setIsSubmitted(false);
+              setCurrentStep(1);
+              setFormData({
+                firstName: '',
+                lastName: '',
+                establishment: '',
+                title: '',
+                email: '',
+                phone: '',
+                country: '',
+                participationType: '',
+                hasAccompanying: '',
+                accompanyingDetails: '',
+                accommodationType: '',
+                paymentMethod: '',
+                paymentProof: null,
+                accompanyingPersons: []
+              });
+              setErrors({});
+              setSubmitError('');
+            }}
+          />
         </div>
       </section>
     );
@@ -614,7 +610,6 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     <section className="min-h-screen bg-white py-12" id="registration">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
               {content[language].title}
@@ -626,10 +621,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
 
           <StepIndicator />
 
-          {/* Error global */}
           {submitError && <ErrorAlert message={submitError} />}
 
-          {/* Step 1: Personal Information */}
           {currentStep === 1 && (
             <FormSection icon={User} title={content[language].personalInfo}>
               <div className="space-y-4">
@@ -731,7 +724,6 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
             </FormSection>
           )}
 
-          {/* Step 2: Participation */}
           {currentStep === 2 && (
             <FormSection icon={FileText} title={content[language].participation}>
               <div className="space-y-6">
@@ -852,7 +844,6 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
             </FormSection>
           )}
 
-          {/* Step 3: Payment */}
           {currentStep === 3 && (
             <FormSection icon={CreditCard} title={content[language].payment}>
               <div className="space-y-6">
