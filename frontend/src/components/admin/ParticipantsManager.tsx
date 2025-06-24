@@ -188,7 +188,7 @@ export default function ParticipantsManager() {
   );
 
   // Pagination calculations
-  const totalPages = Math.ceil(filteredParticipants.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredParticipants.length / itemsPerPage)); // Au minimum 1 page
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentParticipants = filteredParticipants.slice(startIndex, endIndex);
@@ -397,52 +397,55 @@ export default function ParticipantsManager() {
               </div>
             )}
           </div>
+        </Card>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <Card className="p-6 bg-white border-2 border-gray-100 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  Affichage de {startIndex + 1} à {Math.min(endIndex, filteredParticipants.length)} sur {filteredParticipants.length} participants
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => goToPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => goToPage(page)}
-                      className={`border-2 ${
-                        currentPage === page
-                          ? "bg-blue-600 border-blue-600 text-white"
-                          : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                      } min-w-[40px]`}
-                    >
-                      {page}
-                    </Button>
-                  ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => goToPage(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          )}
+        {/* Pagination - Maintenant toujours visible */}
+        <Card className="mt-6 p-6 bg-white border-2 border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              {filteredParticipants.length > 0 ? (
+                <>Affichage de {startIndex + 1} à {Math.min(endIndex, filteredParticipants.length)} sur {filteredParticipants.length} participants</>
+              ) : (
+                <>Aucun participant à afficher</>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1 || filteredParticipants.length === 0}
+                className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => goToPage(page)}
+                  disabled={filteredParticipants.length === 0}
+                  className={`border-2 ${
+                    currentPage === page
+                      ? "bg-blue-600 border-blue-600 text-white"
+                      : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                  } min-w-[40px] disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {page}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages || filteredParticipants.length === 0}
+                className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         </Card>
       </div>
 
