@@ -13,7 +13,7 @@ const VirtualTour: React.FC<{ language: 'fr' | 'en'; onClose: () => void }> = ({
     fr: [
       {
         title: 'Hall d\'entrée principal',
-        description: 'Vue panoramique de l\'entrée de Yasmine Hammamet avec ses jardins luxuriants',
+        description: 'Vue panoramique de l\'entree de Yasmine Hammamet avec ses jardins luxuriants',
         image: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&h=600&fit=crop'
       },
       {
