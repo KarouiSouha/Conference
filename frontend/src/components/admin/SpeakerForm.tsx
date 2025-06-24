@@ -16,14 +16,9 @@ import {
   MapPin,
   Check,
   AlertCircle,
-<<<<<<< HEAD
-  Linkedin
-=======
   Linkedin,
   Plus
->>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
 } from "lucide-react";
-import { link } from "fs";
 
 export default function SpeakerForm({
   isOpen = true,
@@ -41,12 +36,8 @@ export default function SpeakerForm({
     description_fr: "",
     description_en: "",
     theme_id: "",
-<<<<<<< HEAD
-    link: ""
-=======
     link: "",
     realisations: []
->>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -119,16 +110,12 @@ export default function SpeakerForm({
         description_fr: speaker.description_fr || "",
         description_en: speaker.description_en || "",
         theme_id: speaker.theme_id?.toString() || "",
-<<<<<<< HEAD
-        link: speaker.link || ""
-=======
         link: speaker.link || "",
         realisations: speaker.realisations?.map((r) => ({
           id: r.id, // ID réel depuis la base de données
           title_fr: r.title_fr,
           title_en: r.title_en
         })) || []
->>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
       });
     } else {
       setFormData({
@@ -141,12 +128,8 @@ export default function SpeakerForm({
         description_fr: "",
         description_en: "",
         theme_id: "",
-<<<<<<< HEAD
-        link: ""
-=======
         link: "",
         realisations: []
->>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
       });
     }
     setErrors({});
@@ -299,13 +282,10 @@ export default function SpeakerForm({
           description_en: formData.description_en,
           theme_id: parseInt(formData.theme_id),
           link: formData.link || null,
-<<<<<<< HEAD
-=======
           realisations: formData.realisations.map(r => ({
             title_fr: r.title_fr,
             title_en: r.title_en
           }))
->>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
         }),
       });
 
