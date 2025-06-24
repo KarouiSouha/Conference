@@ -16,7 +16,12 @@ import {
   MapPin,
   Check,
   AlertCircle,
+<<<<<<< HEAD
   Linkedin
+=======
+  Linkedin,
+  Plus
+>>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
 } from "lucide-react";
 import { link } from "fs";
 
@@ -36,13 +41,21 @@ export default function SpeakerForm({
     description_fr: "",
     description_en: "",
     theme_id: "",
+<<<<<<< HEAD
     link: ""
+=======
+    link: "",
+    realisations: []
+>>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [themes, setThemes] = useState([]);
+  const [showRealisationForm, setShowRealisationForm] = useState(false);
+  const [newRealisationFr, setNewRealisationFr] = useState("");
+  const [newRealisationEn, setNewRealisationEn] = useState("");
 
   // Pays populaires pour l'auto-complétion
   const countries = [
@@ -67,7 +80,6 @@ export default function SpeakerForm({
         if (!response.ok) {
           throw new Error('Erreur lors du chargement des thèmes');
         }
-        // Assumant que l'API retourne un tableau d'objets { id, name }
         setThemes(data.data.map(theme => ({
           id: theme.id,
           name: theme.titleFr,
@@ -107,10 +119,18 @@ export default function SpeakerForm({
         description_fr: speaker.description_fr || "",
         description_en: speaker.description_en || "",
         theme_id: speaker.theme_id?.toString() || "",
+<<<<<<< HEAD
         link: speaker.link || ""
+=======
+        link: speaker.link || "",
+        realisations: speaker.realisations?.map((r) => ({
+          id: r.id, // ID réel depuis la base de données
+          title_fr: r.title_fr,
+          title_en: r.title_en
+        })) || []
+>>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
       });
     } else {
-      // Reset pour nouveau speaker
       setFormData({
         name: "",
         email: "",
@@ -121,7 +141,12 @@ export default function SpeakerForm({
         description_fr: "",
         description_en: "",
         theme_id: "",
+<<<<<<< HEAD
         link: ""
+=======
+        link: "",
+        realisations: []
+>>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
       });
     }
     setErrors({});
@@ -134,7 +159,6 @@ export default function SpeakerForm({
       [field]: value
     }));
 
-    // Effacer l'erreur du champ modifié
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -155,6 +179,58 @@ export default function SpeakerForm({
         country_fr: "",
         country_en: ""
       }));
+    }
+  };
+
+  const addRealisation = () => {
+    if (!newRealisationFr.trim() || !newRealisationEn.trim()) return;
+
+    setFormData(prev => ({
+      ...prev,
+      realisations: [
+        ...prev.realisations,
+        {
+          id: `temp-${prev.realisations.length + 1}`, // ID temporaire pour les nouvelles réalisations
+          title_fr: newRealisationFr,
+          title_en: newRealisationEn
+        }
+      ]
+    }));
+    setNewRealisationFr("");
+    setNewRealisationEn("");
+    setShowRealisationForm(false);
+  };
+
+  const removeRealisation = async (id) => {
+    if (id.toString().startsWith('temp-')) {
+      // Suppression locale pour une réalisation non encore enregistrée
+      setFormData(prev => ({
+        ...prev,
+        realisations: prev.realisations.filter(r => r.id !== id)
+      }));
+    } else {
+      // Suppression via l'API pour une réalisation existante
+      try {
+        const response = await fetch(`http://localhost:8000/api/Speakers/realisation/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Erreur lors de la suppression de la réalisation');
+        }
+
+        // Mettre à jour l'état local après suppression
+        setFormData(prev => ({
+          ...prev,
+          realisations: prev.realisations.filter(r => r.id !== id)
+        }));
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+        setErrors({ submit: 'Une erreur est survenue lors de la suppression de la réalisation' });
+      }
     }
   };
 
@@ -223,6 +299,13 @@ export default function SpeakerForm({
           description_en: formData.description_en,
           theme_id: parseInt(formData.theme_id),
           link: formData.link || null,
+<<<<<<< HEAD
+=======
+          realisations: formData.realisations.map(r => ({
+            title_fr: r.title_fr,
+            title_en: r.title_en
+          }))
+>>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
         }),
       });
 
@@ -467,6 +550,96 @@ export default function SpeakerForm({
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Réalisations */}
+            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl border border-blue-200/50">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Tag className="w-5 h-5 mr-2 text-blue-600" />
+                  Réalisations ({formData.realisations.length})
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowRealisationForm(!showRealisationForm)}
+                  className="flex items-center px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-xl transition-all duration-200 font-medium"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajouter
+                </button>
+              </div>
+
+              {showRealisationForm && (
+                <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl mb-6 border border-blue-200 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Réalisation (Français)"
+                        value={newRealisationFr}
+                        onChange={(e) => setNewRealisationFr(e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Realisation (English)"
+                        value={newRealisationEn}
+                        onChange={(e) => setNewRealisationEn(e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowRealisationForm(false)}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all duration-200 border border-gray-200"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      onClick={addRealisation}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                      disabled={!newRealisationFr.trim() || !newRealisationEn.trim()}
+                    >
+                      Ajouter
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {formData.realisations.length > 0 ? (
+                <div className="flex flex-wrap gap-3">
+                  {formData.realisations.map((realisation) => (
+                    <div
+                      key={realisation.id}
+                      className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 shadow-sm"
+                      style={{
+                        backgroundColor: getSelectedThemeConfig().color + '20',
+                        color: getSelectedThemeConfig().color.replace(/from-|to-/g, ''),
+                        border: `2px solid ${getSelectedThemeConfig().color}40`
+                      }}
+                    >
+                      <span>{realisation.title_fr}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeRealisation(realisation.id)}
+                        className="ml-2 hover:bg-white/50 rounded-full p-1 transition-all duration-200"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">Aucune réalisation ajoutée</p>
+                </div>
+              )}
             </div>
 
             {/* Thème et spécialisation */}

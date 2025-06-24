@@ -167,7 +167,8 @@ export default function SpeakersManager() {
       "Italie": "it",
       "Royaume-Uni": "gb",
       "Canada": "ca",
-      "Australie": "au"
+      "Australie": "au",
+      "Tunisie": "tn",
     };
 
     for (const name in codes) {
