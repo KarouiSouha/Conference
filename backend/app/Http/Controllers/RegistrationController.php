@@ -54,6 +54,7 @@ class RegistrationController extends Controller
                 'accommodation_type' => 'required|in:without-accommodation,with-accommodation',
                 'payment_method' => 'required|in:bank-transfer,administrative-order,check',
                 'payment_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
+                'amount' => 'required|numeric' // Added amount validation
             ], [
                 'email.unique' => 'Cette adresse email est déjà utilisée pour une inscription.',
                 'first_name.required' => 'Le prénom est requis.',
@@ -69,6 +70,8 @@ class RegistrationController extends Controller
                 'payment_method.required' => 'Le mode de paiement est requis.',
                 'payment_proof.mimes' => 'Le justificatif doit être au format PDF, JPG, JPEG ou PNG.',
                 'payment_proof.max' => 'Le justificatif ne doit pas dépasser 5MB.',
+                'amount.required' => 'Le montant est requis.',
+                'amount.numeric' => 'Le montant doit être un nombre.'
             ]);
 
             if ($validator->fails()) {
@@ -106,11 +109,8 @@ class RegistrationController extends Controller
                 'payment_method' => $request->payment_method,
                 'payment_proof' => $paymentProofPath,
                 'status' => 'pending',
+                'amount' => $request->amount // Added amount from request
             ]);
-
-            // Calcul et sauvegarde du montant
-            $amount = $registration->calculateAmount();
-            $registration->update(['amount' => $amount]);
 
             // TODO: Envoyer un email de confirmation avec le mot de passe temporaire
             Mail::to($registration->email)->send(new RegistrationConfirmation($registration->first_name . ' ' . $registration->last_name, 'http://localhost:8080', $request->language));

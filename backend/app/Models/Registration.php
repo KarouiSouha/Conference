@@ -82,7 +82,7 @@ class Registration extends Authenticatable
     {
         return match($this->accommodation_type) {
             'with-accommodation' => 120.00,
-            'without-accommodation' => 50.00,
+            'without-accommodation' => 450.00,
             default => 0.00
         };
     }

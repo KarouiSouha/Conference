@@ -95,9 +95,8 @@ const SelectField: React.FC<SelectFieldProps> = ({
   const getIconForOption = (optionValue: string) => {
     switch(optionValue) {
       case 'student': return <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">E</div>;
-      case 'teacher': return <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white text-xs font-bold">P</div>;
-      case 'engineer': return <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold">I</div>;
-      case 'other': return <div className="w-6 h-6 bg-gradient-to-br from-gray-500 to-slate-600 rounded-full flex items-center justify-center text-white text-xs font-bold">A</div>;
+      case 'academic': return <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white text-xs font-bold">A</div>;
+      case 'professional': return <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold">P</div>;
       case 'Tunisia': return <div className="w-6 h-6 bg-gradient-to-br from-red-600 to-white rounded-full flex items-center justify-center text-white text-xs font-bold">TN</div>;
       case 'International': return <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-white rounded-full flex items-center justify-center text-white text-xs font-bold">INT</div>;
       default: return <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">?</div>;
@@ -195,10 +194,11 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     country: '',
     participationType: '',
     hasAccompanying: '',
-    accompanyingDetails: '',
+    accompanyingDetails: '', // Changed to array for multiple accompaniments
     accommodationType: '',
     paymentMethod: '',
-    paymentProof: null as File | null
+    paymentProof: null as File | null,
+    accompanyingPersons: [] as { name: string; age: number; discount?: number }[] // Added discount field
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -224,9 +224,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         title: 'Fonction / Titre',
         titleOptions: {
           student: 'Étudiant',
-          teacher: 'Enseignant',
-          engineer: 'Ingénieur',
-          other: 'Autre'
+          academic: 'Académique',
+          professional: 'Professionnel',
         },
         email: 'Adresse e-mail',
         phone: 'Numéro de téléphone',
@@ -277,9 +276,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         title: 'Position / Title',
         titleOptions: {
           student: 'Student',
-          teacher: 'Teacher',
-          engineer: 'Engineer',
-          other: 'Other'
+          academic: 'Academic',
+          professional: 'Professional',
         },
         email: 'Email Address',
         phone: 'Phone Number',
@@ -318,29 +316,62 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     }
   }), []);
 
-  // Pricing data from PricingInfo
+  // Pricing data based on requirements
   const getRegistrationFees = () => {
-    const participantType = formData.title === 'student' ? 'student' :
-                           formData.title === 'teacher' ? 'academic' :
-                           'professional';
     const isTunisia = formData.country === 'Tunisia';
+    const participantType = formData.title;
 
     const fees = {
       withAccommodation: {
-        academic: isTunisia ? '700 TND' : '450 €',
-        student: isTunisia ? '650 TND' : '400 €',
-        professional: isTunisia ? '750 TND' : '500 €'
+        student: isTunisia ? 650 : 1367.48,
+        academic: isTunisia ? 700 : 1538.42,
+        professional: isTunisia ? 750 : 1709.35
       },
-      withoutAccommodation: isTunisia ? '450 TND' : '150 €'
+      withoutAccommodation: 450 // Fixed fee for all types without accommodation
     };
 
     return {
-      withAccommodation: fees.withAccommodation[participantType],
+      withAccommodation: fees.withAccommodation[participantType as 'student' | 'academic' | 'professional'] || 0,
       withoutAccommodation: fees.withoutAccommodation
     };
   };
 
-  const fees = getRegistrationFees();
+  const calculateAccompanyingFees = () => {
+    const isTunisia = formData.country === 'Tunisia';
+    let totalAccompanyingFees = 0;
+    let adultCount = 0;
+    let childCount = 0;
+
+    formData.accompanyingPersons.forEach(person => {
+      if (person.age >= 12) {
+        adultCount++;
+        totalAccompanyingFees += isTunisia ? 240 : 160; // 120 TND * 2 nights or 80 EUR * 2 nights
+      } else if (person.age >= 2) {
+        childCount++;
+      } // Children < 2 years are free
+    });
+
+    // Apply family discounts based on the number of adults
+    const totalAdults = 1 + adultCount; // 1 is the registrant, plus additional adults
+    if (childCount > 0) {
+      if (totalAdults >= 2) {
+        // 50% discount for children 2-11 years with 2 adults
+        totalAccompanyingFees += isTunisia ? (childCount * 120 * 0.5) : (childCount * 80 * 0.5); // 50% of base adult fee
+      } else {
+        // 30% discount for children 2-11 years with 1 adult or separate room
+        totalAccompanyingFees += isTunisia ? (childCount * 120 * 0.3) : (childCount * 80 * 0.3); // 30% of base adult fee
+      }
+    }
+
+    return totalAccompanyingFees;
+  };
+
+  const calculateTotalAmount = () => {
+    const baseFees = getRegistrationFees();
+    const accommodationFee = formData.accommodationType === 'with-accommodation' ? baseFees.withAccommodation : baseFees.withoutAccommodation;
+    const accompanyingFees = formData.hasAccompanying === 'yes' ? calculateAccompanyingFees() : 0;
+    return accommodationFee + accompanyingFees;
+  };
 
   // Fonctions de mise à jour mémorisées
   const updateFormData = useCallback((field: string, value: string) => {
@@ -366,6 +397,28 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     }
   }, [errors]);
 
+  const addAccompanyingPerson = useCallback(() => {
+    setFormData(prev => ({
+      ...prev,
+      accompanyingPersons: [...prev.accompanyingPersons, { name: '', age: 0, discount: 0 }]
+    }));
+  }, []);
+
+  const updateAccompanyingPerson = useCallback((index: number, field: 'name' | 'age' | 'discount', value: string) => {
+    setFormData(prev => {
+      const newPersons = [...prev.accompanyingPersons];
+      newPersons[index] = { ...newPersons[index], [field]: field === 'age' ? parseInt(value) || 0 : value };
+      return { ...prev, accompanyingPersons: newPersons };
+    });
+  }, []);
+
+  const removeAccompanyingPerson = useCallback((index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      accompanyingPersons: prev.accompanyingPersons.filter((_, i) => i !== index)
+    }));
+  }, []);
+
   const validateStep = React.useCallback((step: number): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -381,9 +434,17 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     } else if (step === 2) {
       if (!formData.participationType) newErrors.participationType = 'Type de participation requis';
       if (!formData.hasAccompanying) newErrors.hasAccompanying = 'Réponse requise';
-      if (formData.hasAccompanying === 'yes' && !formData.accompanyingDetails.trim()) {
-        newErrors.accompanyingDetails = 'Détails des accompagnateurs requis';
+      if (formData.hasAccompanying === 'yes' && formData.accompanyingPersons.length === 0) {
+        newErrors.accompanyingDetails = 'Au moins un accompagnateur est requis';
       }
+      formData.accompanyingPersons.forEach((_, index) => {
+        if (!formData.accompanyingPersons[index].name.trim()) {
+          newErrors[`accompanyingPersons[${index}].name`] = `Nom de l'accompagnateur ${index + 1} requis`;
+        }
+        if (formData.accompanyingPersons[index].age === 0) {
+          newErrors[`accompanyingPersons[${index}].age`] = `Âge de l'accompagnateur ${index + 1} requis`;
+        }
+      });
     } else if (step === 3) {
       if (!formData.accommodationType) newErrors.accommodationType = 'Type d\'hébergement requis';
       if (!formData.paymentMethod) newErrors.paymentMethod = 'Mode de paiement requis';
@@ -404,21 +465,22 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
 
     try {
       const submitData = new FormData();
-      submitData.append('first_name', formData.firstName); // Use 'first_name' if server expects snake_case
-      submitData.append('last_name', formData.lastName); // Use 'last_name'
+      submitData.append('first_name', formData.firstName);
+      submitData.append('last_name', formData.lastName);
       submitData.append('establishment', formData.establishment);
       submitData.append('title', formData.title);
       submitData.append('email', formData.email);
       submitData.append('phone', formData.phone);
       submitData.append('country', formData.country);
-      submitData.append('participation_type', formData.participationType); // Use 'participation_type'
-      submitData.append('has_accompanying', formData.hasAccompanying); // Use 'has_accompanying'
-      submitData.append('accompanying_details', formData.accompanyingDetails || ''); // Use 'accompanying_details'
-      submitData.append('accommodation_type', formData.accommodationType); // Use 'accommodation_type'
-      submitData.append('payment_method', formData.paymentMethod); // Use 'payment_method'
+      submitData.append('participation_type', formData.participationType);
+      submitData.append('has_accompanying', formData.hasAccompanying);
+      submitData.append('accompanying_details', JSON.stringify(formData.accompanyingPersons));
+      submitData.append('accommodation_type', formData.accommodationType);
+      submitData.append('payment_method', formData.paymentMethod);
+      submitData.append('amount', calculateTotalAmount().toString()); // Send calculated amount to backend
       submitData.append('language', language);
       if (formData.paymentProof) {
-        submitData.append('payment_proof', formData.paymentProof); // Use 'payment_proof'
+        submitData.append('payment_proof', formData.paymentProof);
       }
 
       console.log('Submitting data:', Object.fromEntries(submitData));
@@ -461,7 +523,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     } finally {
       setIsLoading(false);
     }
-  }, [formData, baseUrl, language, content, validateStep]);
+  }, [formData, baseUrl, language, content, validateStep, calculateTotalAmount]);
 
   const nextStep = () => {
     if (validateStep(currentStep)) {
@@ -505,7 +567,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                     accompanyingDetails: '',
                     accommodationType: '',
                     paymentMethod: '',
-                    paymentProof: null
+                    paymentProof: null,
+                    accompanyingPersons: []
                   });
                   setErrors({});
                   setSubmitError('');
@@ -613,9 +676,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                     placeholder={language === 'fr' ? 'Sélectionnez votre fonction' : 'Select your position'}
                     options={[
                       { value: 'student', label: content[language].form.titleOptions.student },
-                      { value: 'teacher', label: content[language].form.titleOptions.teacher },
-                      { value: 'engineer', label: content[language].form.titleOptions.engineer },
-                      { value: 'other', label: content[language].form.titleOptions.other }
+                      { value: 'academic', label: content[language].form.titleOptions.academic },
+                      { value: 'professional', label: content[language].form.titleOptions.professional },
                     ]}
                   />
                   <SelectField
@@ -725,22 +787,47 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
 
                 {formData.hasAccompanying === 'yes' && (
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <Label htmlFor="accompanyingDetails" className="text-sm font-medium text-gray-700 mb-2 block">
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
                       {content[language].form.accompanyingDetails}
                       {errors.accompanyingDetails && <span className="text-red-500 ml-1">*</span>}
                     </Label>
-                    <Textarea
-                      id="accompanyingDetails"
-                      value={formData.accompanyingDetails}
-                      onChange={(e) => updateFormData('accompanyingDetails', e.target.value)}
-                      placeholder={language === 'fr' ? 'Ex: Marie Dupont (35 ans), Jean Dupont (8 ans)' : 'Ex: Marie Dupont (35 years), Jean Dupont (8 years)'}
-                      rows={3}
-                      className={`border rounded-lg ${errors.accompanyingDetails ? 'border-red-500' : 'border-gray-300'}`}
-                    />
+                    {formData.accompanyingPersons.map((person, index) => (
+                      <div key={index} className="flex items-center space-x-4 mb-4">
+                        <InputField
+                          id={`accompanyingName${index}`}
+                          label={`Nom de l'accompagnateur ${index + 1}`}
+                          value={person.name}
+                          onChange={(e) => updateAccompanyingPerson(index, 'name', e.target.value)}
+                          error={errors[`accompanyingPersons[${index}].name`]}
+                        />
+                        <InputField
+                          id={`accompanyingAge${index}`}
+                          label={`Âge de l'accompagnateur ${index + 1}`}
+                          type="number"
+                          value={person.age.toString()}
+                          onChange={(e) => updateAccompanyingPerson(index, 'age', e.target.value)}
+                          error={errors[`accompanyingPersons[${index}].age`]}
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={() => removeAccompanyingPerson(index)}
+                          className="mt-6 px-2 py-1 rounded-lg border hover:bg-gray-50"
+                          disabled={formData.accompanyingPersons.length <= 1}
+                        >
+                          Supprimer
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      onClick={addAccompanyingPerson}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mt-2"
+                    >
+                      Ajouter un accompagnateur
+                    </Button>
                     <p className="text-xs text-gray-600 mt-2">
                       {language === 'fr'
-                        ? 'Frais supplémentaires: 120 TND/80 € par nuit par adulte accompagnant.'
-                        : 'Additional fees: 120 TND/80 € per night per accompanying adult.'}
+                        ? 'Frais supplémentaires: 240 TND/160 € par nuit par adulte (>12 ans), enfants < 2 ans gratuits, 2-11 ans 50% réduction avec 2 adultes, 30% avec 1 adulte.'
+                        : 'Additional fees: 240 TND/160 € per night per adult (>12 years), children < 2 years free, 2-11 years 50% discount with 2 adults, 30% with 1 adult.'}
                     </p>
                     {errors.accompanyingDetails && <p className="text-red-500 text-xs mt-1">{errors.accompanyingDetails}</p>}
                   </div>
@@ -781,13 +868,13 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                     <RadioOption
                       value="without-accommodation"
                       id="without-accommodation"
-                      label={`${content[language].form.withoutAccommodation}: ${fees.withoutAccommodation}`}
+                      label={`${content[language].form.withoutAccommodation}: ${getRegistrationFees().withoutAccommodation} ${formData.country === 'Tunisia' ? 'TND' : 'TND'}`}
                       isSelected={formData.accommodationType === 'without-accommodation'}
                     />
                     <RadioOption
                       value="with-accommodation"
                       id="with-accommodation"
-                      label={`${content[language].form.withAccommodation}: ${fees.withAccommodation}`}
+                      label={`${content[language].form.withAccommodation}: ${getRegistrationFees().withAccommodation} ${formData.country === 'Tunisia' ? 'TND' : '€'}`}
                       isSelected={formData.accommodationType === 'with-accommodation'}
                     />
                   </RadioGroup>

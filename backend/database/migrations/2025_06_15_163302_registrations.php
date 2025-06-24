@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->string('establishment');
-            $table->string('title'); // Fonction/Titre
+            // $table->string('title'); // Fonction/Titre
+            $table->enum('title', ['student', 'academic', 'professional'])->default('student')->after('establishment');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
