@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Mail, Globe, Award, Loader2, QrCode, Linkedin } from 'lucide-react';
+import { ExternalLink, Mail, Globe, Award, Loader2, QrCode, Linkedin, User, MapPin, Briefcase, Star } from 'lucide-react';
 import Modal from './Modal';
 import { useToast } from '@/hooks/use-toast';
 import 'keen-slider/keen-slider.min.css';
@@ -300,54 +300,127 @@ const Speakers: React.FC<SpeakersProps> = ({
                               {content[language].actions.bio}
                             </Button>
                           }
-                          title={speaker.name}
+                          title=""
                         >
-                          <div className="space-y-4">
-                            <div className="text-center">
-                              <div className="w-20 h-20 bg-primary/10 rounded-full mx-auto mb-3 flex items-center justify-center">
-                                <span className="text-xl font-bold text-primary">
-                                  {speaker.name.split(' ').map(n => n[0]).join('')}
-                                </span>
+                          <div className="max-w-4xl mx-auto">
+                            {/* Header Section avec dégradé */}
+                            <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-t-xl p-8 mb-6 overflow-hidden">
+                              {/* Motif décoratif en arrière-plan */}
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full transform translate-x-16 -translate-y-16"></div>
+                              <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full transform -translate-x-12 translate-y-12"></div>
+                              
+                              <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
+                                {/* Avatar professionnel */}
+                                <div className="relative">
+                                  <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center shadow-lg">
+                                    <span className="text-2xl font-bold text-white">
+                                      {speaker.name.split(' ').map(n => n[0]).join('')}
+                                    </span>
+                                  </div>
+                                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white flex items-center justify-center">
+                                    <Star className="w-3 h-3 text-white" fill="currentColor" />
+                                  </div>
+                                </div>
+
+                                {/* Informations principales */}
+                                <div className="text-center md:text-left flex-1">
+                                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                                    {speaker.name}
+                                  </h3>
+                                  
+                                  <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
+                                    <div className="flex items-center gap-2 text-primary font-semibold">
+                                      <Briefcase className="w-4 h-4" />
+                                      <span>{getSpeakerJob(speaker)}</span>
+                                    </div>
+                                    <div className="hidden md:block w-1 h-1 bg-gray-300 rounded-full"></div>
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                      <MapPin className="w-4 h-4" />
+                                      <span>{getSpeakerCountry(speaker)}</span>
+                                    </div>
+                                  </div>
+
+                                  {getSpeakerTheme(speaker) && (
+                                    <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
+                                      <Globe className="w-4 h-4" />
+                                      {getSpeakerTheme(speaker)}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                              <h3 className="text-xl font-semibold">{speaker.name}</h3>
-                              <p className="text-primary">{getSpeakerJob(speaker)}</p>
-                              <p className="text-muted-foreground">{getSpeakerCountry(speaker)}</p>
                             </div>
 
-                            {getSpeakerDescription(speaker) && (
-                              <div>
-                                <h4 className="font-semibold mb-2">
-                                  {content[language].labels.biography}
-                                </h4>
-                                <p className="text-muted-foreground">{getSpeakerDescription(speaker)}</p>
-                              </div>
-                            )}
+                            {/* Contenu principal */}
+                            <div className="px-8 pb-8 space-y-8">
+                              {/* Biographie */}
+                              {getSpeakerDescription(speaker) && (
+                                <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+                                  <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                      <User className="w-5 h-5 text-blue-600" />
+                                    </div>
+                                    <h4 className="text-xl font-semibold text-gray-900">
+                                      {content[language].labels.biography}
+                                    </h4>
+                                  </div>
+                                  <div className="prose prose-gray max-w-none">
+                                    <p className="text-gray-700 leading-relaxed text-base">
+                                      {getSpeakerDescription(speaker)}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
 
-                            {speaker.realisations && speaker.realisations.length > 0 && (
-                              <div>
-                                <h4 className="font-semibold mb-2">
-                                  {content[language].labels.achievements}
-                                </h4>
-                                <ul className="space-y-1">
-                                  {speaker.realisations.map((realisation) => (
-                                    <li key={realisation.id} className="flex items-start gap-2 text-sm text-muted-foreground">
-                                      <Award className="w-3 h-3 text-primary mt-1 flex-shrink-0" />
-                                      {getRealisationTitle(realisation)}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
+                              {/* Réalisations */}
+                              {speaker.realisations && speaker.realisations.length > 0 && (
+                                <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+                                  <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                                      <Award className="w-5 h-5 text-amber-600" />
+                                    </div>
+                                    <h4 className="text-xl font-semibold text-gray-900">
+                                      {content[language].labels.achievements}
+                                    </h4>
+                                  </div>
+                                  <div className="grid gap-3">
+                                    {speaker.realisations.map((realisation, index) => (
+                                      <div 
+                                        key={realisation.id} 
+                                        className="flex items-start gap-4 p-4 bg-gradient-to-r from-gray-50 to-transparent rounded-lg border-l-4 border-primary hover:shadow-sm transition-shadow"
+                                      >
+                                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                          <span className="text-primary font-bold text-sm">
+                                            {index + 1}
+                                          </span>
+                                        </div>
+                                        <div className="flex-1">
+                                          <p className="text-gray-800 font-medium leading-relaxed">
+                                            {getRealisationTitle(realisation)}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
 
-                            {getSpeakerTheme(speaker) && (
-                              <div>
-                                <h4 className="font-semibold mb-2">
-                                  {content[language].labels.talk}
-                                </h4>
-                                <p className="text-muted-foreground italic">{getSpeakerTheme(speaker)}</p>
-                              </div>
-                            )}
-
+                              {/* Domaine d'expertise */}
+                              {getSpeakerTheme(speaker) && (
+                                <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-6 border border-primary/20">
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                                      <Globe className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <h4 className="text-xl font-semibold text-gray-900">
+                                      {content[language].labels.talk}
+                                    </h4>
+                                  </div>
+                                  <p className="text-primary font-medium text-lg italic pl-2 border-l-4 border-primary/30">
+                                    {getSpeakerTheme(speaker)}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </Modal>
 
