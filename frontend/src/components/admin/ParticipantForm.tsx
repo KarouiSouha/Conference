@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,10 @@ interface Participant {
   establishment: string;
   title: string;
   phone: string;
+  nationality: string;
   participation_type: string;
   has_accompanying: string;
-  accompanying_details: string;
+  accompanying_details: { name: string; age: number }[];
   accommodation_type: string;
   payment_method: string;
   status: string;
@@ -32,7 +33,7 @@ interface ParticipantFormProps {
   onSave: (data: FormData) => void;
 }
 
-type ParticipantFormErrors = Partial<Record<keyof Participant, string>> & { submit?: string };
+type ParticipantFormErrors = Partial<Record<keyof Participant, string>> & { submit?: string; accompanying_details?: string };
 
 export default function ParticipantForm({ participant, onClose, onSave }: ParticipantFormProps) {
   const [formData, setFormData] = useState<Participant>({
@@ -42,9 +43,10 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
     establishment: participant?.establishment || "",
     title: participant?.title || "",
     phone: participant?.phone || "",
+    nationality: participant?.nationality || "Tunisia",
     participation_type: participant?.participation_type || "without-article",
     has_accompanying: participant?.has_accompanying || "no",
-    accompanying_details: participant?.accompanying_details || "",
+    accompanying_details: participant?.accompanying_details || [],
     accommodation_type: participant?.accommodation_type || "without-accommodation",
     payment_method: participant?.payment_method || "bank-transfer",
     status: participant?.status || "pending",
@@ -58,6 +60,64 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [paymentProofPreview, setPaymentProofPreview] = useState<string | null>(participant?.payment_proof ? `http://localhost:8000/storage/${participant.payment_proof}` : null);
 
+  const getRegistrationFees = useCallback(() => {
+    const isTunisia = formData.nationality === "Tunisia";
+    const participantType = formData.title;
+
+    const fees = {
+      withAccommodation: {
+        student: isTunisia ? 650 : 1367.48,
+        academic: isTunisia ? 700 : 1538.42,
+        professional: isTunisia ? 750 : 1709.35,
+      },
+      withoutAccommodation: 450, // Fixed fee for all types without accommodation
+    };
+
+    return {
+      withAccommodation: fees.withAccommodation[participantType as "student" | "academic" | "professional"] || 0,
+      withoutAccommodation: fees.withoutAccommodation,
+    };
+  }, [formData.nationality, formData.title]);
+
+  const calculateAccompanyingFees = useCallback(() => {
+    const isTunisia = formData.nationality === "Tunisia";
+    let totalAccompanyingFees = 0;
+    let adultCount = 0;
+    let childCount = 0;
+
+    formData.accompanying_details.forEach((person) => {
+      if (person.age >= 12) {
+        adultCount++;
+        totalAccompanyingFees += isTunisia ? 240 : 273.50; // 120 TND * 2 nights or 80 EUR * 2 nights
+      } else if (person.age >= 2) {
+        childCount++;
+      } // Children < 2 years are free
+    });
+
+    // Apply family discounts based on the number of adults
+    const totalAdults = 1 + adultCount; // 1 is the registrant, plus additional adults
+    if (childCount > 0) {
+      if (totalAdults >= 2) {
+        // 50% discount for children 2-11 years with 2 adults
+        totalAccompanyingFees += isTunisia ? childCount * 240 * 0.5 : childCount * 273.50 * 0.5;
+      } else {
+        // 30% discount for children 2-11 years with 1 adult
+        totalAccompanyingFees += isTunisia ? childCount * 240 * 0.3 : childCount * 273.50 * 0.3;
+      }
+    }
+
+    return totalAccompanyingFees;
+  }, [formData.nationality, formData.accompanying_details]);
+
+  const calculateTotalAmount = useCallback(() => {
+    const baseFees = getRegistrationFees();
+    const accommodationFee = formData.accommodation_type === "with-accommodation" ? baseFees.withAccommodation : baseFees.withoutAccommodation;
+    const accompanyingFees = formData.has_accompanying === "yes" ? calculateAccompanyingFees() : 0;
+    const totalAmount = accommodationFee + accompanyingFees;
+    setFormData((prev) => ({ ...prev, amount: totalAmount }));
+    return totalAmount;
+  }, [formData.accommodation_type, formData.has_accompanying, getRegistrationFees, calculateAccompanyingFees]);
+
   useEffect(() => {
     if (participant) {
       setFormData({
@@ -67,9 +127,10 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
         establishment: participant.establishment,
         title: participant.title,
         phone: participant.phone,
+        nationality: participant.nationality || "Tunisia",
         participation_type: participant.participation_type,
         has_accompanying: participant.has_accompanying,
-        accompanying_details: participant.accompanying_details,
+        accompanying_details: participant.accompanying_details || [],
         accommodation_type: participant.accommodation_type,
         payment_method: participant.payment_method,
         status: participant.status,
@@ -80,27 +141,26 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
     }
   }, [participant]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  useEffect(() => {
+    calculateTotalAmount();
+  }, [formData.nationality, formData.title, formData.accommodation_type, formData.has_accompanying, formData.accompanying_details, calculateTotalAmount]);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof Participant]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
-  };
+  }, [errors]);
 
-  const handleSelectChange = (name: string, value: string) => {
+  const handleSelectChange = useCallback((name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof Participant]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
-    // Update amount based on accommodation type
-    if (name === "accommodation_type") {
-      const amount = value === "with-accommodation" ? 120.0 : 50.0;
-      setFormData((prev) => ({ ...prev, amount }));
-    }
-  };
+  }, [errors]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!["application/pdf", "image/jpeg", "image/png"].includes(file.type)) {
@@ -115,9 +175,34 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
       setPaymentProofPreview(URL.createObjectURL(file));
       setErrors((prev) => ({ ...prev, payment_proof: undefined }));
     }
-  };
+  }, []);
 
-  const validateForm = () => {
+  const addAccompanyingPerson = useCallback(() => {
+    setFormData((prev) => ({
+      ...prev,
+      accompanying_details: [...prev.accompanying_details, { name: "", age: 0 }],
+    }));
+  }, []);
+
+  const updateAccompanyingPerson = useCallback((index: number, field: "name" | "age", value: string) => {
+    setFormData((prev) => {
+      const newDetails = [...prev.accompanying_details];
+      newDetails[index] = { ...newDetails[index], [field]: field === "age" ? parseInt(value) || 0 : value };
+      return { ...prev, accompanying_details: newDetails };
+    });
+    if (errors.accompanying_details) {
+      setErrors((prev) => ({ ...prev, accompanying_details: undefined }));
+    }
+  }, [errors]);
+
+  const removeAccompanyingPerson = useCallback((index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      accompanying_details: prev.accompanying_details.filter((_, i) => i !== index),
+    }));
+  }, []);
+
+  const validateForm = useCallback(() => {
     const newErrors: ParticipantFormErrors = {};
 
     if (!formData.first_name.trim()) newErrors.first_name = "Le prénom est requis";
@@ -129,13 +214,21 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
     if (!formData.phone.trim()) newErrors.phone = "Le téléphone est requis";
     if (formData.amount < 0) newErrors.amount = "Le montant ne peut pas être négatif";
 
-    if (formData.has_accompanying === "yes" && !formData.accompanying_details.trim()) {
-      newErrors.accompanying_details = "Les détails de l'accompagnant sont requis";
+    if (formData.has_accompanying === "yes" && formData.accompanying_details.length === 0) {
+      newErrors.accompanying_details = "Au moins un accompagnant est requis";
     }
+    formData.accompanying_details.forEach((_, index) => {
+      if (!formData.accompanying_details[index].name.trim()) {
+        newErrors.accompanying_details = `Nom de l'accompagnant ${index + 1} requis`;
+      }
+      if (formData.accompanying_details[index].age === 0) {
+        newErrors.accompanying_details = `Âge de l'accompagnant ${index + 1} requis`;
+      }
+    });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,9 +247,10 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
       formDataToSend.append("establishment", formData.establishment);
       formDataToSend.append("title", formData.title);
       formDataToSend.append("phone", formData.phone);
+      formDataToSend.append("nationality", formData.nationality);
       formDataToSend.append("participation_type", formData.participation_type);
       formDataToSend.append("has_accompanying", formData.has_accompanying);
-      formDataToSend.append("accompanying_details", formData.accompanying_details);
+      formDataToSend.append("accompanying_details", JSON.stringify(formData.accompanying_details));
       formDataToSend.append("accommodation_type", formData.accommodation_type);
       formDataToSend.append("payment_method", formData.payment_method);
       formDataToSend.append("status", formData.status);
@@ -353,18 +447,48 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="title" className="block text-sm font-semibold text-gray-700">Fonction/Titre *</Label>
-                      <Input
-                        id="title"
-                        name="title"
+                      <Select
                         value={formData.title}
-                        onChange={handleChange}
-                        placeholder="Fonction ou titre"
-                        className={`border-2 ${errors.title ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
-                      />
+                        onValueChange={(value) => handleSelectChange("title", value)}
+                      >
+                        <SelectTrigger
+                          className={`border-2 ${errors.title ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        >
+                          <SelectValue placeholder="Sélectionner" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="student">Étudiant</SelectItem>
+                          <SelectItem value="academic">Académique</SelectItem>
+                          <SelectItem value="professional">Professionnel</SelectItem>
+                        </SelectContent>
+                      </Select>
                       {errors.title && (
                         <div className="flex items-center space-x-2 text-red-600 text-sm">
                           <AlertCircle className="w-4 h-4" />
                           <span>{errors.title}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="nationality" className="block text-sm font-semibold text-gray-700">Pays *</Label>
+                      <Select
+                        value={formData.nationality}
+                        onValueChange={(value) => handleSelectChange("nationality", value)}
+                      >
+                        <SelectTrigger
+                          className={`border-2 ${errors.nationality ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        >
+                          <SelectValue placeholder="Sélectionner" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Tunisia">Tunisie</SelectItem>
+                          <SelectItem value="International">International</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.nationality && (
+                        <div className="flex items-center space-x-2 text-red-600 text-sm">
+                          <AlertCircle className="w-4 h-4" />
+                          <span>{errors.nationality}</span>
                         </div>
                       )}
                     </div>
@@ -444,18 +568,40 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                         </SelectContent>
                       </Select>
                       {formData.has_accompanying === "yes" && (
-                        <div className="mt-4 space-y-2">
-                          <Label htmlFor="accompanying_details" className="block text-sm font-semibold text-gray-700">
-                            Détails accompagnant *
-                          </Label>
-                          <Input
-                            id="accompanying_details"
-                            name="accompanying_details"
-                            value={formData.accompanying_details}
-                            onChange={handleChange}
-                            placeholder="Nom et informations de l'accompagnant"
-                            className={`border-2 ${errors.accompanying_details ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
-                          />
+                        <div className="mt-4 space-y-4">
+                          {formData.accompanying_details.map((person, index) => (
+                            <div key={index} className="flex space-x-4">
+                              <Input
+                                placeholder="Nom"
+                                value={person.name}
+                                onChange={(e) => updateAccompanyingPerson(index, "name", e.target.value)}
+                                className={`border-2 ${errors.accompanying_details ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                              />
+                              <Input
+                                type="number"
+                                placeholder="Âge"
+                                value={person.age.toString()}
+                                onChange={(e) => updateAccompanyingPerson(index, "age", e.target.value)}
+                                className={`border-2 ${errors.accompanying_details ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => removeAccompanyingPerson(index)}
+                                disabled={formData.accompanying_details.length <= 1}
+                                className="px-3 py-2 border-2 border-gray-300 hover:bg-gray-50 rounded-xl"
+                              >
+                                Supprimer
+                              </Button>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            onClick={addAccompanyingPerson}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700"
+                          >
+                            Ajouter un accompagnant
+                          </Button>
                           {errors.accompanying_details && (
                             <div className="flex items-center space-x-2 text-red-600 text-sm">
                               <AlertCircle className="w-4 h-4" />
@@ -466,6 +612,21 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                       )}
                     </div>
                     <div className="space-y-2">
+                      <Label className="block text-sm font-semibold text-gray-700">Type d'hébergement</Label>
+                      <Select
+                        value={formData.accommodation_type}
+                        onValueChange={(value) => handleSelectChange("accommodation_type", value)}
+                      >
+                        <SelectTrigger
+                          className={`border-2 ${errors.accommodation_type ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                        >
+                          <SelectValue placeholder="Sélectionner" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="without-accommodation">Sans hébergement</SelectItem>
+                          <SelectItem value="with-accommodation">Avec hébergement (2 nuits)</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Label className="block text-sm font-semibold text-gray-700">Méthode de paiement</Label>
                       <Select
                         value={formData.payment_method}
@@ -478,18 +639,18 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="bank-transfer">Virement bancaire</SelectItem>
-                          <SelectItem value="administrative-order">Ordre administratif</SelectItem>
+                          <SelectItem value="administrative-order">Mandat administratif</SelectItem>
                           <SelectItem value="check">Chèque</SelectItem>
                         </SelectContent>
                       </Select>
                       <div className="mt-4 space-y-2">
-                        <Label htmlFor="amount" className="block text-sm font-semibold text-gray-700">Montant (€) *</Label>
+                        <Label htmlFor="amount" className="block text-sm font-semibold text-gray-700">Montant (DT) *</Label>
                         <Input
                           id="amount"
                           name="amount"
                           type="number"
-                          value={formData.amount}
-                          onChange={handleChange}
+                          value={formData.amount.toString()}
+                          readOnly
                           placeholder="0"
                           className={`border-2 ${errors.amount ? "border-red-300" : "border-gray-200"} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
                         />
@@ -632,15 +793,21 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                       <p className="text-gray-700 leading-relaxed">{formData.title}, {formData.establishment}</p>
                       <p className="text-gray-700 leading-relaxed">Téléphone: {formData.phone}</p>
                       <p className="text-gray-700 leading-relaxed">
+                        Pays: {formData.nationality === "Tunisia" ? "Tunisie" : "International"}
+                      </p>
+                      <p className="text-gray-700 leading-relaxed">
                         Type de participation: {formData.participation_type === "with-article" ? "Avec article" : "Sans article"}
                       </p>
                       <p className="text-gray-700 leading-relaxed">
-                        Accompagnant: {formData.has_accompanying === "yes" ? `Oui (${formData.accompanying_details})` : "Non"}
+                        Hébergement: {formData.accommodation_type === "with-accommodation" ? "Avec hébergement" : "Sans hébergement"}
                       </p>
                       <p className="text-gray-700 leading-relaxed">
-                        Méthode de paiement: {formData.payment_method === "bank-transfer" ? "Virement bancaire" : formData.payment_method === "administrative-order" ? "Ordre administratif" : "Chèque"}
+                        Accompagnant: {formData.has_accompanying === "yes" ? `Oui (${formData.accompanying_details.map(p => `${p.name} (${p.age} ans)`).join(", ")})` : "Non"}
                       </p>
-                      <p className="text-gray-700 leading-relaxed">Montant: {formData.amount} €</p>
+                      <p className="text-gray-700 leading-relaxed">
+                        Méthode de paiement: {formData.payment_method === "bank-transfer" ? "Virement bancaire" : formData.payment_method === "administrative-order" ? "Mandat administratif" : "Chèque"}
+                      </p>
+                      <p className="text-gray-700 leading-relaxed">Montant: {formData.amount} DT</p>
                       <p className="text-gray-700 leading-relaxed">Payé: {formData.is_paid ? "Oui" : "Non"}</p>
                     </div>
                   </div>
@@ -661,4 +828,4 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
       </div>
     </div>
   );
-  }
+}

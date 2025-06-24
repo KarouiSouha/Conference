@@ -345,7 +345,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     formData.accompanyingPersons.forEach(person => {
       if (person.age >= 12) {
         adultCount++;
-        totalAccompanyingFees += isTunisia ? 240 : 160; // 120 TND * 2 nights or 80 EUR * 2 nights
+        totalAccompanyingFees += isTunisia ? 240 : 273.50; // 120 TND * 2 nights or 80 EUR * 2 nights
       } else if (person.age >= 2) {
         childCount++;
       } // Children < 2 years are free
@@ -356,10 +356,10 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
     if (childCount > 0) {
       if (totalAdults >= 2) {
         // 50% discount for children 2-11 years with 2 adults
-        totalAccompanyingFees += isTunisia ? (childCount * 120 * 0.5) : (childCount * 80 * 0.5); // 50% of base adult fee
+        totalAccompanyingFees += isTunisia ? (childCount * 240 * 0.5) : (childCount * 273.50 * 0.5); // 50% of base adult fee
       } else {
         // 30% discount for children 2-11 years with 1 adult or separate room
-        totalAccompanyingFees += isTunisia ? (childCount * 120 * 0.3) : (childCount * 80 * 0.3); // 30% of base adult fee
+        totalAccompanyingFees += isTunisia ? (childCount * 240 * 0.3) : (childCount * 273.50 * 0.3); // 30% of base adult fee
       }
     }
 
