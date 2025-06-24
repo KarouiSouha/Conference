@@ -34,24 +34,21 @@ Route::apiResource('dates', ImportantDateController::class);
 Route::prefix('Speakers')->controller(SpeakerController::class)->group(function () {
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
-<<<<<<< HEAD
-    // hthy
-    Route::post('/store', [SpeakerController::class, 'store']);
-    // hthy
-    Route::put('/update/{id}', [SpeakerController::class, 'update']);
-    // hthy
-    Route::delete('/destroy/{id}', [SpeakerController::class, 'destroy']);
-    Route::get('/count', 'count');
-    Route::get('/statistics', 'statistics');
+    // // hthy
+    // Route::post('/store', [SpeakerController::class, 'store']);
+    // // hthy
+    // Route::put('/update/{id}', [SpeakerController::class, 'update']);
+    // // hthy
+    // Route::delete('/destroy/{id}', [SpeakerController::class, 'destroy']);
+    // Route::get('/count', 'count');
+    // Route::get('/statistics', 'statistics');
 
-=======
     Route::post('/store', 'store');
     Route::put('/update/{id}', 'update');
     Route::delete('/destroy/{id}', 'destroy');
     Route::get('/count', 'count');
     Route::get('/statistics', 'statistics');
     Route::delete('/realisation/{id}', 'destroyRealisation'); // Nouvelle route
->>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
 });
 Route::post('login', [AuthController::class, 'login']);
 

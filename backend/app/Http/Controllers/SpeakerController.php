@@ -37,14 +37,10 @@ class SpeakerController extends Controller
             'description_fr' => 'nullable|string',
             'description_en' => 'nullable|string',
             'theme_id' => 'nullable|exists:themes,id',
-<<<<<<< HEAD
-            'link' => 'nullable|url|max:255', // Ajout de la validation pour le lien
-=======
             'link' => 'nullable|url|max:255',
             'realisations' => 'nullable|array', // Validation pour les réalisations
             'realisations.*.title_fr' => 'required|string|max:255', // Titre en français requis
             'realisations.*.title_en' => 'required|string|max:255', // Titre en anglais requis
->>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
         ]);
 
         // Créer le speaker
@@ -107,12 +103,9 @@ class SpeakerController extends Controller
             'description_en' => 'nullable|string',
             'theme_id' => 'nullable|exists:themes,id',
             'link' => 'nullable|url|max:255',
-<<<<<<< HEAD
-=======
             'realisations' => 'nullable|array',
             'realisations.*.title_fr' => 'required|string|max:255',
             'realisations.*.title_en' => 'required|string|max:255',
->>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
         ]);
 
         // Mise à jour des champs
@@ -177,12 +170,9 @@ class SpeakerController extends Controller
         return response()->json(['total_speakers' => $count]);
     }
 
-<<<<<<< HEAD
     /**
      * Get speaker statistics.
      */
-=======
->>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
     public function statistics(): JsonResponse
     {
         try {
@@ -205,9 +195,7 @@ class SpeakerController extends Controller
             ], 500);
         }
     }
-<<<<<<< HEAD
-}
-=======
+
     public function destroyRealisation($id): JsonResponse
     {
         $realisation = Realisation::find($id);
@@ -225,4 +213,3 @@ class SpeakerController extends Controller
         return response()->json(['message' => 'Réalisation supprimée avec succès']);
     }
 }
->>>>>>> aaf93052bbfc9c0da8b118cb6037b16d079b6cc4
