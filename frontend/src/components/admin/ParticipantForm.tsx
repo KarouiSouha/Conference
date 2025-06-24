@@ -130,7 +130,7 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
         nationality: participant.nationality || "Tunisia",
         participation_type: participant.participation_type,
         has_accompanying: participant.has_accompanying,
-        accompanying_details: participant.accompanying_details || [],
+        accompanying_details: Array.isArray(participant.accompanying_details) ? participant.accompanying_details : [],
         accommodation_type: participant.accommodation_type,
         payment_method: participant.payment_method,
         status: participant.status,
@@ -217,11 +217,11 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
     if (formData.has_accompanying === "yes" && formData.accompanying_details.length === 0) {
       newErrors.accompanying_details = "Au moins un accompagnant est requis";
     }
-    formData.accompanying_details.forEach((_, index) => {
-      if (!formData.accompanying_details[index].name.trim()) {
+    formData.accompanying_details.forEach((person, index) => {
+      if (!person.name.trim()) {
         newErrors.accompanying_details = `Nom de l'accompagnant ${index + 1} requis`;
       }
-      if (formData.accompanying_details[index].age === 0) {
+      if (person.age === 0) {
         newErrors.accompanying_details = `Âge de l'accompagnant ${index + 1} requis`;
       }
     });
@@ -789,7 +789,7 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                     <div className="flex items-center gap-4">{getStatusBadge()}</div>
                     <div className="space-y-3">
                       <h3 className="text-xl font-bold text-gray-900 mb-2">{`${formData.first_name} ${formData.last_name}`}</h3>
-                      <p className="text-sm text-gray-500 font-medium italic mb-3">{formData.email}</p>
+                      <p className="text-sm text-gray-500 font-medium italic">{formData.email}</p>
                       <p className="text-gray-700 leading-relaxed">{formData.title}, {formData.establishment}</p>
                       <p className="text-gray-700 leading-relaxed">Téléphone: {formData.phone}</p>
                       <p className="text-gray-700 leading-relaxed">
@@ -802,7 +802,7 @@ export default function ParticipantForm({ participant, onClose, onSave }: Partic
                         Hébergement: {formData.accommodation_type === "with-accommodation" ? "Avec hébergement" : "Sans hébergement"}
                       </p>
                       <p className="text-gray-700 leading-relaxed">
-                        Accompagnant: {formData.has_accompanying === "yes" ? `Oui (${formData.accompanying_details.map(p => `${p.name} (${p.age} ans)`).join(", ")})` : "Non"}
+                        Accompagnant: {formData.has_accompanying === "yes" && Array.isArray(formData.accompanying_details) && formData.accompanying_details.length > 0 ? formData.accompanying_details.map(p => `${p.name} (${p.age} ans)`).join(", ") : "Non"}
                       </p>
                       <p className="text-gray-700 leading-relaxed">
                         Méthode de paiement: {formData.payment_method === "bank-transfer" ? "Virement bancaire" : formData.payment_method === "administrative-order" ? "Mandat administratif" : "Chèque"}

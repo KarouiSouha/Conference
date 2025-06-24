@@ -250,7 +250,7 @@ export default function AdminStats() {
                     <p className="text-emerald-700 text-xs font-semibold tracking-wider uppercase">Revenus</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-4xl font-bold text-slate-800">€{stats.revenue.total.toLocaleString()}</p>
+                    <p className="text-4xl font-bold text-slate-800">{stats.revenue.total.toLocaleString()} DT</p>
                     <div className="flex items-center space-x-2">
                       <div className="flex items-center space-x-1 bg-emerald-100 px-3 py-1 rounded-full">
                         <ArrowUpRight className="h-3 w-3 text-emerald-600" />

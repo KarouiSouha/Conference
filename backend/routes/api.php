@@ -100,7 +100,7 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
     Route::get('/statistics', 'statistics');     // 👈 Mettre AVANT /{id}
     Route::get('/{id}', 'show');
     Route::post('/', 'store');
-    Route::put('/{id}', 'update');
+    Route::post('update/{id}', 'update');
     Route::delete('/{id}', 'destroy');
     Route::patch('/{id}/mark-as-paid', 'markAsPaid');
     Route::get('/statistics', 'statistics'); // GET /api/Registration/statistics

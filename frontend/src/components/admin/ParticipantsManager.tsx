@@ -7,6 +7,7 @@ import { Search, Plus, Edit, Trash, Download, Filter, Users, CheckCircle, Clock,
 import ParticipantForm from "./ParticipantForm";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import axios from "axios";
+import { useToast } from "@/hooks/use-toast";
 
 interface Participant {
   id: number;
@@ -18,12 +19,13 @@ interface Participant {
   phone: string;
   participation_type: string;
   has_accompanying: string;
-  accompanying_details: string;
   accommodation_type: string;
   payment_method: string;
   status: string;
   amount: number;
   is_paid: boolean;
+  nationality: string;
+  accompanying_details: { name: string; age: number }[];
   payment_proof?: string;
 }
 
@@ -35,6 +37,7 @@ interface Stats {
 }
 
 export default function ParticipantsManager() {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentParticipant, setCurrentParticipant] = useState<Participant | null>(null);
@@ -61,11 +64,25 @@ export default function ParticipantsManager() {
   const fetchParticipants = async () => {
     try {
       const response = await axios.get("http://localhost:8000/api/Registration/all");
-      // Ensure amount is a number
-      const parsedParticipants = response.data.data.map((participant: Participant) => ({
-        ...participant,
-        amount: parseFloat(participant.amount as unknown as string) || 0, // Convert to number, fallback to 0 if invalid
-      }));
+      // Parse accompanying_details and ensure amount is a number
+      const parsedParticipants = response.data.data.map((participant: any) => {
+        let parsedAccompanyingDetails: { name: string; age: number }[] = [];
+        if (typeof participant.accompanying_details === "string" && participant.accompanying_details) {
+          try {
+            parsedAccompanyingDetails = JSON.parse(participant.accompanying_details);
+          } catch (e) {
+            console.error(`Error parsing accompanying_details for participant ${participant.id}:`, e);
+            parsedAccompanyingDetails = [];
+          }
+        } else if (Array.isArray(participant.accompanying_details)) {
+          parsedAccompanyingDetails = participant.accompanying_details;
+        }
+        return {
+          ...participant,
+          amount: parseFloat(participant.amount as unknown as string) || 0,
+          accompanying_details: parsedAccompanyingDetails,
+        };
+      });
       setParticipants(parsedParticipants);
     } catch (error) {
       console.error("Error fetching participants:", error);
@@ -97,24 +114,28 @@ export default function ParticipantsManager() {
 
   const handleSaveParticipant = async (data: FormData) => {
     try {
-      let response;
-      if (currentParticipant) {
-        // Update existing participant
-        response = await axios.put(`http://localhost:8000/api/Registration/${currentParticipant.id}`, data, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-      } else {
-        // Create new participant
-        response = await axios.post("http://localhost:8000/api/Registration", data, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+      const isEditing = !!currentParticipant;
+      const url = isEditing
+        ? `http://localhost:8000/api/Registration/update/${currentParticipant.id}`
+        : 'http://localhost:8000/api/Registration/store';
+
+      const response = await fetch(url, {
+        method: 'POST',
+        body: data,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur lors de ${isEditing ? 'la mise à jour' : 'l\'enregistrement'} du participant`);
       }
+
+      const result = await response.json();
+      console.log('Réponse de l\'API:', result);
 
       // Refresh participants list
       await fetchParticipants();
       handleCloseForm();
     } catch (error) {
-      console.error("Error saving participant:", error);
+      console.error(`Erreur lors de ${currentParticipant ? 'la mise à jour' : 'l\'enregistrement'} du participant:`, error);
       throw error; // Let ParticipantForm handle the error
     }
   };
@@ -150,8 +171,24 @@ export default function ParticipantsManager() {
       await axios.patch(`http://localhost:8000/api/Registration/${id}/mark-as-paid`);
       await fetchParticipants();
       await fetchStatistics();
+      // Show success toast
+      toast({
+        title: "Succès",
+        description: "Paiement marqué comme effectué avec succès !",
+        variant: "default",
+        duration: 3000,
+        className: "bg-green-50 text-green-800 border-green-200 shadow-md rounded-lg",
+      });
     } catch (error) {
       console.error("Error marking as paid:", error);
+      // Show error toast
+      toast({
+        title: "Erreur",
+        description: "Erreur lors du marquage du paiement.",
+        variant: "destructive",
+        duration: 3000,
+        className: "bg-red-50 text-red-800 border-red-200 shadow-md rounded-lg",
+      });
     }
   };
 
@@ -267,7 +304,7 @@ export default function ParticipantsManager() {
                 <DollarSign className="w-6 h-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">€{stats.paid_amount.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.paid_amount.toFixed(2)} DT</p>
                 <p className="text-sm font-medium text-gray-600">Revenus Totaux</p>
               </div>
             </div>
@@ -349,7 +386,7 @@ export default function ParticipantsManager() {
                         <div className="space-y-1">
                           {getPaymentBadge(participant.is_paid)}
                           <p className="text-sm font-semibold text-gray-900">
-                            €{(typeof participant.amount === 'number' ? participant.amount : parseFloat(participant.amount) || 0).toFixed(2)}
+                            {(typeof participant.amount === 'number' ? participant.amount : parseFloat(participant.amount) || 0).toFixed(2)} DT
                           </p>
                         </div>
                       </td>

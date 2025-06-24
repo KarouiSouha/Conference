@@ -162,19 +162,19 @@ class RegistrationController extends Controller
             $registration = Registration::findOrFail($id);
 
             $validator = Validator::make($request->all(), [
-                'firstName' => 'sometimes|required|string|max:255',
-                'lastName' => 'sometimes|required|string|max:255',
+                'first_name' => 'sometimes|required|string|max:255',
+                'last_name' => 'sometimes|required|string|max:255',
                 'establishment' => 'sometimes|required|string|max:255',
                 'title' => 'sometimes|required|string|max:255',
                 'email' => 'sometimes|required|email|unique:registrations,email,' . $id,
                 'phone' => 'sometimes|required|string|max:20',
-                'participationType' => 'sometimes|required|in:without-article,with-article',
-                'hasAccompanying' => 'sometimes|required|in:yes,no',
-                'accompanyingDetails' => 'nullable|string',
-                'accommodationType' => 'sometimes|required|in:without-accommodation,with-accommodation',
-                'paymentMethod' => 'sometimes|required|in:bank-transfer,administrative-order,check',
+                'participation_type' => 'sometimes|required|in:without-article,with-article',
+                'has_accompanying' => 'sometimes|required|in:yes,no',
+                'accompanying_details' => 'nullable|string',
+                'accommodation_type' => 'sometimes|required|in:without-accommodation,with-accommodation',
+                'payment_method' => 'sometimes|required|in:bank-transfer,administrative-order,check',
                 'status' => 'sometimes|in:pending,confirmed,cancelled',
-                'paymentProof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+                'payment_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
             ]);
 
             if ($validator->fails()) {
@@ -188,10 +188,10 @@ class RegistrationController extends Controller
             $updateData = [];
 
             // Mapping des champs
-            if ($request->has('firstName'))
-                $updateData['first_name'] = $request->firstName;
-            if ($request->has('lastName'))
-                $updateData['last_name'] = $request->lastName;
+            if ($request->has('first_name'))
+                $updateData['first_name'] = $request->first_name;
+            if ($request->has('last_name'))
+                $updateData['last_name'] = $request->last_name;
             if ($request->has('establishment'))
                 $updateData['establishment'] = $request->establishment;
             if ($request->has('title'))
@@ -200,37 +200,40 @@ class RegistrationController extends Controller
                 $updateData['email'] = $request->email;
             if ($request->has('phone'))
                 $updateData['phone'] = $request->phone;
-            if ($request->has('participationType'))
-                $updateData['participation_type'] = $request->participationType;
-            if ($request->has('hasAccompanying'))
-                $updateData['has_accompanying'] = $request->hasAccompanying;
-            if ($request->has('accompanyingDetails'))
-                $updateData['accompanying_details'] = $request->accompanyingDetails;
-            if ($request->has('accommodationType'))
-                $updateData['accommodation_type'] = $request->accommodationType;
-            if ($request->has('paymentMethod'))
-                $updateData['payment_method'] = $request->paymentMethod;
+            if ($request->has('participation_type'))
+                $updateData['participation_type'] = $request->participation_type;
+            if ($request->has('has_accompanying'))
+                $updateData['has_accompanying'] = $request->has_accompanying;
+            if ($request->has('accompanying_details'))
+                $updateData['accompanying_details'] = $request->accompanying_details;
+            if ($request->has('accommodation_type'))
+                $updateData['accommodation_type'] = $request->accommodation_type;
+            if ($request->has('payment_method'))
+                $updateData['payment_method'] = $request->payment_method;
             if ($request->has('status'))
                 $updateData['status'] = $request->status;
+            if ($request->has('amount'))
+                $updateData['amount'] = $request->amount;
+
 
             // Traitement du nouveau fichier de justificatif
-            if ($request->hasFile('paymentProof')) {
+            if ($request->hasFile('payment_proof')) {
                 // Supprimer l'ancien fichier
                 if ($registration->payment_proof) {
                     Storage::disk('public')->delete($registration->payment_proof);
                 }
 
-                $file = $request->file('paymentProof');
+                $file = $request->file('payment_proof');
                 $filename = time() . '_' . Str::slug($registration->last_name . '_' . $registration->first_name) . '.' . $file->getClientOriginalExtension();
                 $updateData['payment_proof'] = $file->storeAs('payment-proofs', $filename, 'public');
             }
-
+            
             $registration->update($updateData);
 
-            // Recalculer le montant si le type d'hébergement a changé
-            if (isset($updateData['accommodation_type'])) {
-                $registration->update(['amount' => $registration->calculateAmount()]);
-            }
+            // Recalculer le montant si le type d'hébergement ou les accompagnants ont changé
+            // if (isset($updateData['accommodation_type']) || isset($updateData['accompanying_details']) || isset($updateData['has_accompanying'])) {
+            //     $registration->update(['amount' => $registration->calculateAmount()]);
+            // }
 
             return response()->json([
                 'success' => true,
@@ -297,42 +300,42 @@ class RegistrationController extends Controller
         }
     }
 
-/**
- * Get registration statistics.
- */
-public function statistics(): JsonResponse
-{
-    try {
-        $stats = [
-            'total' => Registration::count(),
-            'pending' => Registration::pending()->count(),
-            'confirmed' => Registration::confirmed()->count(),
-            'paid' => Registration::paid()->count(),
-            'with_accommodation' => Registration::where('accommodation_type', 'with-accommodation')->count(),
-            'without_accommodation' => Registration::where('accommodation_type', 'without-accommodation')->count(),
-            'with_article' => Registration::where('participation_type', 'with-article')->count(),
-            'without_article' => Registration::where('participation_type', 'without-article')->count(),
-            'total_amount' => Registration::sum('amount'),
-            'paid_amount' => Registration::paid()->sum('amount'),
-        ];
+    /**
+     * Get registration statistics.
+     */
+    public function statistics(): JsonResponse
+    {
+        try {
+            $stats = [
+                'total' => Registration::count(),
+                'pending' => Registration::pending()->count(),
+                'confirmed' => Registration::confirmed()->count(),
+                'paid' => Registration::paid()->count(),
+                'with_accommodation' => Registration::where('accommodation_type', 'with-accommodation')->count(),
+                'without_accommodation' => Registration::where('accommodation_type', 'without-accommodation')->count(),
+                'with_article' => Registration::where('participation_type', 'with-article')->count(),
+                'without_article' => Registration::where('participation_type', 'without-article')->count(),
+                'total_amount' => Registration::sum('amount'),
+                'paid_amount' => Registration::paid()->sum('amount'),
+            ];
 
-        return response()->json([
-            'success' => true,
-            'data' => $stats,
-            'message' => 'Statistiques récupérées avec succès'
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $stats,
+                'message' => 'Statistiques récupérées avec succès'
+            ]);
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Erreur lors de la récupération des statistiques: ' . $e->getMessage()
-        ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des statistiques: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
-public function count(): JsonResponse
-{
-    $count = Registration::count();
-    return response()->json(['total_registrations' => $count]);
-}
+    public function count(): JsonResponse
+    {
+        $count = Registration::count();
+        return response()->json(['total_registrations' => $count]);
+    }
 
 }
