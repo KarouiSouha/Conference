@@ -133,6 +133,7 @@ export default function ParticipantsManager() {
 
       // Refresh participants list
       await fetchParticipants();
+      await fetchStatistics(); // Mettre à jour les statistiques
       handleCloseForm();
     } catch (error) {
       console.error(`Erreur lors de ${currentParticipant ? 'la mise à jour' : 'l\'enregistrement'} du participant:`, error);
