@@ -117,8 +117,8 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
       description_fr: "Session plénière 3 : « Nexus Eau-Énergie » animée par M. Khaled El Moueddeb, Professeur à l'ESIM.",
       description_en: "Plenary session 3 Nexus Eau-Energie Mr Khaled El Moueddeb: Professeur ESIM",
       type: 'video',
-      file_path: '/asset/videos/gallery/artists-interview.mp4',
-      file_url: '/asset/videos/gallery/artists-interview.mp4',
+      file_path: '/asset/videos/gallery/nexus.mp4',
+      file_url: '/asset/videos/gallery/nexus.mp4',
       thumbnail_path: '/asset/images/gallery/speekers.jpg',
       thumbnail_url: '/asset/images/gallery/speekers.jpg',
       year: '2023',
@@ -134,8 +134,8 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
       description_fr: "La cérémonie d'ouverture de la Conférence Internationale sur l'Industrie Intelligente, la Technologie et l'Environnement a officiellement eu lieu.",
       description_en: "The opening ceremony of the International Conference on Smart Industry, Technology and Environment has officially taken place!",
       type: 'video',
-      file_path: '/asset/videos/gallery/behind-scenes.mp4',
-      file_url: '/asset/videos/gallery/behind-scenes.mp4',
+      file_path: '/asset/videos/gallery/ceremony.mp4',
+      file_url: '/asset/videos/gallery/ceremony.mp4',
       thumbnail_path: '/asset/images/gallery/speekers.jpg',
       thumbnail_url: '/asset/images/gallery/speekers.jpg',
       year: '2023',
@@ -195,7 +195,7 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
 
   const handleWatch = (video: GalleryItem) => {
     // Ouvrir la vidéo dans un nouvel onglet ou utiliser un lecteur vidéo
-    window.open(video.file_url);
+    window.open(video.file_url, '_blank');
   };
 
   const handleViewPhoto = (photo: GalleryItem) => {
