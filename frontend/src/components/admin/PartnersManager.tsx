@@ -32,10 +32,9 @@ export default function PartnersManager() {
   const [imageErrors, setImageErrors] = useState({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [partnerToDelete, setPartnerToDelete] = useState(null);
-  const [viewMode, setViewMode] = useState("grid"); // "grid" ou "list"
+  const [viewMode, setViewMode] = useState("grid");
 
-  // Fetch partners from API
-  useEffect(() => {
+  const fetchPartners = () => {
     fetch("http://localhost:8000/api/Partners/all")
       .then((response) => {
         if (!response.ok) {
@@ -44,8 +43,6 @@ export default function PartnersManager() {
         return response.json();
       })
       .then((data) => {
-        console.log("Fetched partners:", data);
-        // Map API data to match expected structure
         const formattedPartners = data.map((partner) => ({
           id: partner.id,
           nameFr: partner.name_fr,
@@ -56,38 +53,52 @@ export default function PartnersManager() {
         setPartners(formattedPartners);
       })
       .catch((error) => console.error("Error fetching partners:", error));
+  };
+
+  useEffect(() => {
+    fetchPartners();
   }, []);
 
   const handleSavePartner = (formData) => {
+    // Update local state immediately
     if (editingPartner) {
       const updatedPartner = {
         ...editingPartner,
         id: formData.id,
         nameFr: formData.name_fr,
         nameEn: formData.name_en,
-        image: formData.image,
+        image: formData.image, // Use the new image path
         type: formData.type,
       };
-      setPartners((prev) => prev.map((p) => (p.id === editingPartner.id ? updatedPartner : p)));
+      setPartners((prev) =>
+        prev.map((p) => (p.id === editingPartner.id ? updatedPartner : p))
+      );
     } else {
       const newPartner = {
         id: formData.id,
         nameFr: formData.name_fr,
         nameEn: formData.name_en,
-        image: formData.image || '/placeholder.svg',
+        image: formData.image || "/placeholder.svg",
         type: formData.type,
       };
       setPartners((prev) => [...prev, newPartner]);
     }
+
     setShowPartnerForm(false);
     setEditingPartner(null);
+
+    // Refresh from API in the background
+    fetchPartners();
   };
 
   const handleDeletePartner = async (partnerId) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/Partners/destroy/${partnerId}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `http://localhost:8000/api/Partners/destroy/${partnerId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to delete partner");
@@ -122,63 +133,74 @@ export default function PartnersManager() {
   };
 
   const handleImageError = (partnerId) => {
-    setImageErrors(prev => ({ ...prev, [partnerId]: true }));
+    setImageErrors((prev) => ({ ...prev, [partnerId]: true }));
   };
 
   const getImageUrl = (partner) => {
     if (imageErrors[partner.id] || !partner.image) {
       return null;
     }
-    return `http://localhost:8000/storage/${partner.image}`;
+    // Add cache-busting query parameter
+    return `http://localhost:8000/storage/${partner.image}?t=${new Date().getTime()}`;
   };
 
   const getTypeBadge = (type) => {
     const badgeConfig = {
       Institutionnels: {
-        className: "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm",
+        className:
+          "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm",
         icon: <Building2 className="w-3 h-3 mr-1" />,
       },
       "Industriels & Technologiques": {
-        className: "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-sm",
+        className:
+          "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-sm",
         icon: <Cpu className="w-3 h-3 mr-1" />,
       },
       "Centres de Recherche & Innovation": {
-        className: "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-sm",
+        className:
+          "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-sm",
         icon: <Microscope className="w-3 h-3 mr-1" />,
       },
     };
-    const config = badgeConfig[type] || {
-      className: "bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-sm",
-      icon: <Building2 className="w-3 h-3 mr-1" />,
-    };
+    const config =
+      badgeConfig[type] || {
+        className:
+          "bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-sm",
+        icon: <Building2 className="w-3 h-3 mr-1" />,
+      };
     return (
-      <Badge className={`${config.className} px-3 py-1 flex items-center justify-center font-medium text-xs rounded-full border-0`}>
+      <Badge
+        className={`${config.className} px-3 py-1 flex items-center justify-center font-medium text-xs rounded-full border-0`}
+      >
         {config.icon}
         {type}
       </Badge>
     );
   };
 
-  const filteredPartners = partners.filter((partner) =>
-    partner.nameFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    partner.type.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPartners = partners.filter(
+    (partner) =>
+      partner.nameFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      partner.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Pagination calculations
   const totalPages = Math.ceil(filteredPartners.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentPartners = filteredPartners.slice(startIndex, endIndex);
 
-  // Reset to first page when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
 
   const stats = {
     institutionnels: partners.filter((p) => p.type === "Institutionnels").length,
-    industriels: partners.filter((p) => p.type === "Industriels & Technologiques").length,
-    recherche: partners.filter((p) => p.type === "Centres de Recherche & Innovation").length,
+    industriels: partners.filter(
+      (p) => p.type === "Industriels & Technologiques"
+    ).length,
+    recherche: partners.filter(
+      (p) => p.type === "Centres de Recherche & Innovation"
+    ).length,
   };
 
   const goToPage = (page) => {

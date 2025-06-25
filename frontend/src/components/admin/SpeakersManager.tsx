@@ -4,10 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Edit, Trash, Mail, Users, Award, Globe, BookOpen, Filter, ChevronLeft, ChevronRight, Loader2, Linkedin } from "lucide-react";
-
-// Import du composant SpeakerForm
 import SpeakerForm from "./SpeakerForm";
-// Import du composant DeleteConfirmationModal
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
 
 export default function SpeakersManager() {
@@ -18,16 +15,11 @@ export default function SpeakersManager() {
   const [themes, setThemes] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // États pour le modal de suppression
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [speakerToDelete, setSpeakerToDelete] = useState(null);
-
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const speakersPerPage = 5;
 
-  // Charger les données depuis l'API
   useEffect(() => {
     fetchSpeakers();
     fetchThemes();
@@ -40,7 +32,6 @@ export default function SpeakersManager() {
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des intervenants');
       }
-
       const data = await response.json();
       setSpeakers(data);
       setError(null);
@@ -55,25 +46,20 @@ export default function SpeakersManager() {
   const fetchThemes = async () => {
     try {
       const response = await fetch('http://localhost:8000/api/Theme/all');
-
       if (!response.ok) {
         throw new Error("Erreur lors du chargement des thèmes");
       }
-
       const data = await response.json();
-
       const themesMap = {};
       data.data.forEach(theme => {
-        themesMap[theme.id] = theme.titleFr; // Utilise "title" car c'est ce que l'API renvoie
+        themesMap[theme.id] = theme.titleFr;
       });
-
       setThemes(themesMap);
     } catch (err) {
       console.error("Erreur de récupération des thèmes :", err);
     }
   };
 
-  // Fonctions pour gérer le formulaire
   const handleNewSpeaker = () => {
     setSelectedSpeaker(null);
     setShowForm(true);
@@ -84,26 +70,25 @@ export default function SpeakersManager() {
     setShowForm(true);
   };
 
-  // Fonction pour ouvrir le modal de suppression
   const handleDeleteSpeaker = (speaker) => {
     setSpeakerToDelete(speaker);
     setShowDeleteModal(true);
   };
 
-  // Fonction pour confirmer la suppression
   const confirmDeleteSpeaker = async () => {
     if (!speakerToDelete) return;
-
     try {
       const response = await fetch(`http://localhost:8000/api/Speakers/destroy/${speakerToDelete.id}`, {
         method: 'DELETE',
+        // credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        }
       });
-
       if (response.ok) {
         setSpeakers(prevSpeakers =>
           prevSpeakers.filter(speaker => speaker.id !== speakerToDelete.id)
         );
-        // Fermer le modal et reset l'état
         setShowDeleteModal(false);
         setSpeakerToDelete(null);
       } else {
@@ -111,20 +96,77 @@ export default function SpeakersManager() {
       }
     } catch (err) {
       alert('Erreur lors de la suppression: ' + err.message);
-      // En cas d'erreur, on ferme quand même le modal
       setShowDeleteModal(false);
       setSpeakerToDelete(null);
     }
   };
 
-  // Fonction pour annuler la suppression
   const cancelDeleteSpeaker = () => {
     setShowDeleteModal(false);
     setSpeakerToDelete(null);
   };
 
+ const handleSaveSpeaker = async (speakerData, imageFile) => {
+  try {
+    const formData = new FormData();
+    // Append all fields except realisations
+    Object.entries(speakerData).forEach(([key, value]) => {
+      if (key !== 'realisations' && value !== null && value !== undefined) {
+        formData.append(key, value.toString());
+      }
+    });
+    // Append realisations as individual array entries
+    if (speakerData.realisations && Array.isArray(speakerData.realisations)) {
+      speakerData.realisations.forEach((realisation, index) => {
+        if (realisation.title_fr && realisation.title_en) {
+          formData.append(`realisations[${index}][title_fr]`, realisation.title_fr);
+          formData.append(`realisations[${index}][title_en]`, realisation.title_en);
+        }
+      });
+    }
+    // Append image file as image_path
+    if (imageFile) {
+      formData.append('image_path', imageFile);
+    }
+
+    let response;
+    if (speakerData.id) {
+      formData.append('_method', 'PUT');
+      response = await fetch(`http://localhost:8000/api/Speakers/update/${speakerData.id}`, {
+        method: 'POST',
+        body: formData,
+        // credentials: 'include',
+        headers: {
+          'X-HTTP-Method-Override': 'PUT',
+          'Accept': 'application/json',
+        }
+      });
+    } else {
+      response = await fetch('http://localhost:8000/api/Speakers/store', {
+        method: 'POST',
+        body: formData,
+        // credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+    }
+
+    const result = await response.json();
+    if (response.ok) {
+      await fetchSpeakers();
+      setShowForm(false);
+      setSelectedSpeaker(null);
+    } else {
+      throw new Error(result.message || 'Erreur lors de la sauvegarde');
+    }
+  } catch (error) {
+    console.error("Erreur lors de la sauvegarde:", error);
+    throw error;
+  }
+};
+
   const getThemeName = (themeId) => {
-    console.log("getThemeName called with themeId:", themeId,themes[themeId]);
     return themes[themeId] || "Thème inconnu";
   };
 
@@ -135,7 +177,6 @@ export default function SpeakersManager() {
       "Pédagogie, Enseignement et Processus Socio-Humains": "bg-amber-50 text-amber-700 border-amber-200",
       "Économie, Gestion et Entrepreneuriat": "bg-indigo-50 text-indigo-700 border-indigo-200",
     };
-
     const colorClass = themeColors[themeName] || "bg-gray-50 text-gray-700 border-gray-200";
     return (
       <div className="flex items-center gap-2">
@@ -170,23 +211,19 @@ export default function SpeakersManager() {
       "Australie": "au",
       "Tunisie": "tn",
     };
-
     for (const name in codes) {
       if (country.toLowerCase().includes(name.toLowerCase())) {
-        return `https://flagcdn.com/w40/${codes[name]}.png`; // 40px wide
+        return `https://flagcdn.com/w40/${codes[name]}.png`;
       }
     }
-
-    return `https://flagcdn.com/w40/un.png`; // 🌍 par défaut
+    return `https://flagcdn.com/w40/un.png`;
   };
 
-  // Fonction pour vérifier si un lien est valide
   const isValidLinkedInUrl = (url) => {
     if (!url) return false;
     return url.includes('linkedin.com') || url.startsWith('http');
   };
 
-  // Filtrage des speakers
   const filteredSpeakers = speakers.filter(speaker =>
     speaker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     speaker.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -195,13 +232,11 @@ export default function SpeakersManager() {
     getThemeName(speaker.theme_id).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Pagination
   const totalPages = Math.ceil(filteredSpeakers.length / speakersPerPage);
   const startIndex = (currentPage - 1) * speakersPerPage;
   const endIndex = startIndex + speakersPerPage;
   const currentSpeakers = filteredSpeakers.slice(startIndex, endIndex);
 
-  // Reset pagination when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
@@ -212,9 +247,9 @@ export default function SpeakersManager() {
 
   const stats = {
     total: speakers.length,
-    keynote: speakers.filter(s => s.is_keynote).length,
-    countries: new Set(speakers.map(s => s.country_fr)).size,
-    themes: new Set(speakers.map(s => s.theme_id)).size
+    keynote: speakers.filter(speaker => speaker.is_keynote).length,
+    countries: new Set(speakers.map(speaker => speaker.country_fr)).size,
+    themes: new Set(speakers.map(speaker => speaker.theme_id)).size
   };
 
   if (loading) {
@@ -248,7 +283,6 @@ export default function SpeakersManager() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
-        {/* En-tête élégant */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -267,7 +301,6 @@ export default function SpeakersManager() {
           </div>
         </div>
 
-        {/* Statistiques visuellement améliorées */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="p-6 border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-gray-50">
             <div className="flex items-center justify-between">
@@ -280,7 +313,6 @@ export default function SpeakersManager() {
               </div>
             </div>
           </Card>
-
           <Card className="p-6 border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-amber-50">
             <div className="flex items-center justify-between">
               <div>
@@ -292,7 +324,6 @@ export default function SpeakersManager() {
               </div>
             </div>
           </Card>
-
           <Card className="p-6 border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-emerald-50">
             <div className="flex items-center justify-between">
               <div>
@@ -304,7 +335,6 @@ export default function SpeakersManager() {
               </div>
             </div>
           </Card>
-
           <Card className="p-6 border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-purple-50">
             <div className="flex items-center justify-between">
               <div>
@@ -318,7 +348,6 @@ export default function SpeakersManager() {
           </Card>
         </div>
 
-        {/* Recherche et filtres sophistiqués */}
         <Card className="p-6 border-gray-200 shadow-sm bg-gradient-to-r from-white to-gray-50">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
@@ -337,7 +366,6 @@ export default function SpeakersManager() {
           </div>
         </Card>
 
-        {/* Table moderne et élégante */}
         <Card className="border-gray-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
             <div className="flex items-center justify-between">
@@ -352,51 +380,32 @@ export default function SpeakersManager() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Intervenant
-                  </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Fonction
-                  </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Origine
-                  </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    LinkedIn
-                  </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Thème & Statut
-                  </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">Intervenant</th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">Contact</th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">Fonction</th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">Origine</th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">LinkedIn</th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">Thème & Statut</th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {currentSpeakers.map((speaker, index) => (
                   <tr
                     key={speaker.id}
-                    className={`hover:bg-gray-50 transition-colors duration-150 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
-                      } ${speaker.is_keynote ? 'border-l-4 border-l-amber-400' : ''}`}
+                    className={`hover:bg-gray-50 transition-colors duration-150 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'} ${speaker.is_keynote ? 'border-l-4 border-l-amber-400' : ''}`}
                   >
                     <td className="py-6 px-6">
                       <div className="flex items-center space-x-4">
                         <div className="flex-shrink-0">
                           <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center ring-2 ring-white shadow-lg">
-                            <span className="text-white font-semibold text-sm">
-                              {getInitials(speaker.name)}
-                            </span>
+                            <span className="text-white font-semibold text-sm">{getInitials(speaker.name)}</span>
                           </div>
                         </div>
                         <div>
                           <div className="text-base font-semibold text-gray-900 flex items-center gap-2">
                             {speaker.name}
-                            {speaker.is_keynote && (
-                              <Award className="w-4 h-4 text-amber-500" />
-                            )}
+                            {speaker.is_keynote && <Award className="w-4 h-4 text-amber-500" />}
                           </div>
                           <div className="text-sm text-gray-600">Dr. / Prof.</div>
                         </div>
@@ -431,7 +440,6 @@ export default function SpeakersManager() {
                           alt="flag"
                           className="w-6 h-4 object-cover inline-block rounded"
                         />
-
                         <div>
                           <div className="text-sm font-medium text-gray-900">{speaker.country_fr}</div>
                           <div className="text-xs text-gray-600 italic">{speaker.country_en}</div>
@@ -455,9 +463,7 @@ export default function SpeakersManager() {
                         </div>
                       )}
                     </td>
-                    <td className="py-6 px-6">
-                      {getThemeBadge(getThemeName(speaker.theme_id), speaker.is_keynote)}
-                    </td>
+                    <td className="py-6 px-6">{getThemeBadge(getThemeName(speaker.theme_id), speaker.is_keynote)}</td>
                     <td className="py-6 px-6">
                       <div className="flex items-center space-x-2">
                         <Button
@@ -492,9 +498,7 @@ export default function SpeakersManager() {
                 <Users className="h-8 w-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun intervenant trouvé</h3>
-              <p className="text-gray-500 mb-6">
-                Essayez de modifier vos critères de recherche ou ajoutez un nouvel intervenant
-              </p>
+              <p className="text-gray-500 mb-6">Essayez de modifier vos critères de recherche ou ajoutez un nouvel intervenant</p>
               <Button
                 onClick={handleNewSpeaker}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -506,7 +510,6 @@ export default function SpeakersManager() {
           )}
         </Card>
 
-        {/* Pagination - Toujours visible quand il y a des speakers */}
         {filteredSpeakers.length > 0 && (
           <Card className="p-6 bg-white border-2 border-gray-100 shadow-sm">
             <div className="flex items-center justify-between">
@@ -529,11 +532,7 @@ export default function SpeakersManager() {
                     variant={currentPage === page ? "default" : "outline"}
                     size="sm"
                     onClick={() => goToPage(page)}
-                    className={`border-2 ${
-                      currentPage === page
-                        ? "bg-blue-600 border-blue-600 text-white"
-                        : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                    } min-w-[40px]`}
+                    className={`border-2 ${currentPage === page ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"} min-w-[40px]`}
                   >
                     {page}
                   </Button>
@@ -553,7 +552,6 @@ export default function SpeakersManager() {
         )}
       </div>
 
-      {/* Composant SpeakerForm */}
       <SpeakerForm
         isOpen={showForm}
         speaker={selectedSpeaker}
@@ -561,14 +559,9 @@ export default function SpeakersManager() {
           setShowForm(false);
           setSelectedSpeaker(null);
         }}
-        onSave={() => {
-          fetchSpeakers();
-          setShowForm(false);
-          setSelectedSpeaker(null);
-        }}
+        onSave={handleSaveSpeaker}
       />
 
-      {/* Modal de confirmation de suppression */}
       <DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={cancelDeleteSpeaker}
