@@ -195,7 +195,7 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
 
   const handleWatch = (video: GalleryItem) => {
     // Ouvrir la vidéo dans un nouvel onglet ou utiliser un lecteur vidéo
-    window.open(video.file_url, '_blank');
+    window.open(video.file_url);
   };
 
   const handleViewPhoto = (photo: GalleryItem) => {

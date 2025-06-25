@@ -40,6 +40,7 @@ interface Speaker {
   realisations: Realisation[];
   email?: string;
   link?: string;
+  image?: string; // Added image field
 }
 
 interface SpeakersProps {
@@ -66,18 +67,16 @@ const Speakers: React.FC<SpeakersProps> = ({
     },
     breakpoints: {
       '(min-width: 640px)': {
-        slides: { perView: 2, spacing: 16 },
+        slides: { perView: 2, spacing: 20 },
       },
       '(min-width: 1024px)': {
-        slides: { perView: 3, spacing: 24 },
+        slides: { perView: 3, spacing: 28 },
       },
     },
   });
 
-  // Générer le QR code pour un speaker avec son lien spécifique
   const generateQRCode = async (speaker: Speaker) => {
     try {
-      // Utiliser le lien du speaker s'il existe, sinon utiliser une URL par défaut
       const url = speaker.link || "https://site-conf.com/";
       const qrDataUrl = await QRCode.toDataURL(url, {
         width: 200,
@@ -95,7 +94,6 @@ const Speakers: React.FC<SpeakersProps> = ({
     }
   };
 
-  // Charger les speakers depuis l'API Laravel
   useEffect(() => {
     const fetchSpeakers = async () => {
       try {
@@ -106,7 +104,6 @@ const Speakers: React.FC<SpeakersProps> = ({
         const data = await response.json();
         setSpeakers(data);
 
-        // Générer les QR codes pour tous les speakers avec leurs liens spécifiques
         const qrPromises = data.map(async (speaker: Speaker) => {
           const qrCode = await generateQRCode(speaker);
           return { id: speaker.id, qrCode };
@@ -190,7 +187,6 @@ const Speakers: React.FC<SpeakersProps> = ({
   };
 
   const handleQRCodeClick = (speaker: Speaker) => {
-    // Utiliser le lien du speaker s'il existe, sinon utiliser une URL par défaut
     const url = speaker.link || `https://site-conf.com/`;
     window.open(url, '_blank');
   };
@@ -221,11 +217,11 @@ const Speakers: React.FC<SpeakersProps> = ({
 
   if (loading) {
     return (
-      <section id="speakers" className="py-20 bg-muted/30">
+      <section id="speakers" className="py-24 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin mr-2" />
-            <span>{content[language].labels.loading}</span>
+            <Loader2 className="w-8 h-8 animate-spin mr-2 text-primary" />
+            <span className="text-lg text-gray-600">{content[language].labels.loading}</span>
           </div>
         </div>
       </section>
@@ -234,10 +230,10 @@ const Speakers: React.FC<SpeakersProps> = ({
 
   if (error) {
     return (
-      <section id="speakers" className="py-20 bg-muted/30">
+      <section id="speakers" className="py-24 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
-          <div className="text-center text-red-500">
-            <p>{content[language].labels.error}: {error}</p>
+          <div className="text-center text-red-500 bg-white p-6 rounded-lg shadow-sm">
+            <p className="text-lg font-medium">{content[language].labels.error}: {error}</p>
           </div>
         </div>
       </section>
@@ -246,10 +242,10 @@ const Speakers: React.FC<SpeakersProps> = ({
 
   if (speakers.length === 0) {
     return (
-      <section id="speakers" className="py-20 bg-muted/30">
+      <section id="speakers" className="py-24 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p>Aucun speaker disponible pour le moment.</p>
+          <div className="text-center bg-white p-6 rounded-lg shadow-sm">
+            <p className="text-lg text-gray-600">Aucun speaker disponible pour le moment.</p>
           </div>
         </div>
       </section>
@@ -257,77 +253,101 @@ const Speakers: React.FC<SpeakersProps> = ({
   }
 
   return (
-    <section id="speakers" className="py-20 bg-muted/30">
+    <section id="speakers" className="py-24 bg-gradient-to-b from-gray-50 to-white">
       <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
               {content[language].title}
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               {content[language].subtitle}
             </p>
           </div>
           
           <div className="relative">
             <div ref={sliderRef} className="keen-slider">
-              {speakers.map((speaker, index) => (
+              {speakers.map((speaker) => (
                 <div key={speaker.id} className="keen-slider__slide">
-                  <Card className="text-center h-full mx-2">
-                    <CardContent className="p-6 flex flex-col h-full">
-                      <div className="w-24 h-24 bg-primary/10 rounded-full mx-auto mb-4 flex items-center justify-center">
-                        <span className="text-2xl font-bold text-primary">
-                          {speaker.name.split(' ').map(n => n[0]).join('')}
-                        </span>
+                  <Card className="group relative mx-2 overflow-hidden bg-white border-none shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <CardContent className="p-6 flex flex-col relative z-10">
+                      {/* Image or Initials */}
+                      <div className="relative w-32 h-32 mx-auto mb-6">
+                        {speaker.image ? (
+                          <img
+                            src={speaker.image}
+                            alt={speaker.name}
+                            className="w-full h-full object-cover rounded-full border-4 border-white shadow-md group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-300">
+                            <span className="text-3xl font-bold text-white">
+                              {speaker.name.split(' ').map(n => n[0]).join('')}
+                            </span>
+                          </div>
+                        )}
+                        <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-green-500 rounded-full border-4 border-white flex items-center justify-center shadow-sm">
+                          <Star className="w-4 h-4 text-white" fill="currentColor" />
+                        </div>
                       </div>
-                      <h3 className="font-semibold text-lg text-foreground mb-1">
+
+                      <h3 className="font-bold text-xl text-gray-900 mb-2 tracking-tight">
                         {speaker.name}
                       </h3>
-                      <p className="text-primary font-medium mb-1">
+                      <p className="text-primary font-semibold text-base mb-2">
                         {getSpeakerJob(speaker)}
                       </p>
-                      <p className="text-muted-foreground text-sm mb-2">
+                      <p className="text-gray-600 text-sm mb-3 flex items-center justify-center gap-1">
+                        <MapPin className="w-4 h-4" />
                         {getSpeakerCountry(speaker)}
                       </p>
-                      <p className="text-sm text-muted-foreground italic mb-4">
+                      <p className="text-sm text-gray-500 italic mb-6">
                         {getSpeakerTheme(speaker)}
                       </p>
 
-                      <div className="space-y-2 mt-auto">
+                      <div className="space-y-3 mt-auto">
                         <Modal
                           trigger={
-                            <Button variant="outline" size="sm" className="w-full">
+                            <Button 
+                              variant="default" 
+                              size="sm" 
+                              className="w-full bg-primary hover:bg-primary/90 text-white rounded-full transition-all duration-300"
+                            >
                               {content[language].actions.bio}
                             </Button>
                           }
                           title=""
                         >
                           <div className="max-w-4xl mx-auto">
-                            {/* Header Section avec dégradé */}
                             <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-t-xl p-8 mb-6 overflow-hidden">
-                              {/* Motif décoratif en arrière-plan */}
                               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full transform translate-x-16 -translate-y-16"></div>
                               <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full transform -translate-x-12 translate-y-12"></div>
                               
                               <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
-                                {/* Avatar professionnel */}
                                 <div className="relative">
-                                  <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center shadow-lg">
-                                    <span className="text-2xl font-bold text-white">
-                                      {speaker.name.split(' ').map(n => n[0]).join('')}
-                                    </span>
-                                  </div>
+                                  {speaker.image ? (
+                                    <img
+                                      src={speaker.image}
+                                      alt={speaker.name}
+                                      className="w-24 h-24 object-cover rounded-2xl border-4 border-white shadow-lg"
+                                    />
+                                  ) : (
+                                    <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center shadow-lg">
+                                      <span className="text-2xl font-bold text-white">
+                                        {speaker.name.split(' ').map(n => n[0]).join('')}
+                                      </span>
+                                    </div>
+                                  )}
                                   <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white flex items-center justify-center">
                                     <Star className="w-3 h-3 text-white" fill="currentColor" />
                                   </div>
                                 </div>
 
-                                {/* Informations principales */}
                                 <div className="text-center md:text-left flex-1">
                                   <h3 className="text-2xl font-bold text-gray-900 mb-2">
                                     {speaker.name}
                                   </h3>
-                                  
                                   <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
                                     <div className="flex items-center gap-2 text-primary font-semibold">
                                       <Briefcase className="w-4 h-4" />
@@ -339,7 +359,6 @@ const Speakers: React.FC<SpeakersProps> = ({
                                       <span>{getSpeakerCountry(speaker)}</span>
                                     </div>
                                   </div>
-
                                   {getSpeakerTheme(speaker) && (
                                     <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
                                       <Globe className="w-4 h-4" />
@@ -350,9 +369,7 @@ const Speakers: React.FC<SpeakersProps> = ({
                               </div>
                             </div>
 
-                            {/* Contenu principal */}
                             <div className="px-8 pb-8 space-y-8">
-                              {/* Biographie */}
                               {getSpeakerDescription(speaker) && (
                                 <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
                                   <div className="flex items-center gap-3 mb-4">
@@ -371,7 +388,6 @@ const Speakers: React.FC<SpeakersProps> = ({
                                 </div>
                               )}
 
-                              {/* Réalisations */}
                               {speaker.realisations && speaker.realisations.length > 0 && (
                                 <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
                                   <div className="flex items-center gap-3 mb-4">
@@ -404,7 +420,6 @@ const Speakers: React.FC<SpeakersProps> = ({
                                 </div>
                               )}
 
-                              {/* Domaine d'expertise */}
                               {getSpeakerTheme(speaker) && (
                                 <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-6 border border-primary/20">
                                   <div className="flex items-center gap-3 mb-3">
@@ -424,35 +439,33 @@ const Speakers: React.FC<SpeakersProps> = ({
                           </div>
                         </Modal>
 
-                        <div className="flex gap-1">
+                        <div className="flex gap-2">
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleContact(speaker)}
-                            className="flex-1"
+                            className="flex-1 rounded-full border-gray-300 text-gray-900 hover:bg-gray-100 transition-all duration-300"
                             disabled={!speaker.email}
                           >
-                            <Mail className="w-3 h-3 mr-1" />
+                            <Mail className="w-4 h-4 mr-2" />
                             {content[language].actions.contact}
                           </Button>
                           
-                          {/* Modal LinkedIn QR Code */}
                           <Modal
                             trigger={
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="flex-1 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                                className="flex-1 rounded-full bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 transition-all duration-300"
                                 disabled={!speaker.link}
                               >
-                                <Linkedin className="w-3 h-3 mr-1" />
+                                <Linkedin className="w-4 h-4 mr-2" />
                                 {content[language].actions.qrCode}
                               </Button>
                             }
                             title=""
                           >
                             <div className="text-center space-y-6 py-2">
-                              {/* En-tête avec icône LinkedIn */}
                               <div className="flex items-center justify-center space-x-3 mb-4">
                                 <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                                   <Linkedin className="w-6 h-6 text-white" />
@@ -465,14 +478,12 @@ const Speakers: React.FC<SpeakersProps> = ({
                                 </div>
                               </div>
 
-                              {/* Description */}
                               <div className="bg-blue-50 rounded-lg p-4">
                                 <p className="text-sm text-blue-800">
                                   {content[language].labels.qrCodeDesc}
                                 </p>
                               </div>
 
-                              {/* QR Code */}
                               <div className="bg-white p-6 rounded-xl border-2 border-gray-100 shadow-sm">
                                 {qrCodes[speaker.id] ? (
                                   <div className="flex flex-col items-center space-y-4">
@@ -496,7 +507,6 @@ const Speakers: React.FC<SpeakersProps> = ({
                                 )}
                               </div>
 
-                              {/* URL cliquable si disponible */}
                               {speaker.link && (
                                 <div className="pt-2 border-t border-gray-100">
                                   <a 
@@ -525,18 +535,18 @@ const Speakers: React.FC<SpeakersProps> = ({
               <>
                 <button
                   onClick={() => instanceRef.current?.prev()}
-                  className="absolute top-1/2 -translate-y-1/2 left-0 z-10 bg-white shadow p-2 rounded-full hover:bg-gray-100 transition"
+                  className="absolute top-1/2 -translate-y-1/2 -left-4 z-10 bg-white shadow-lg p-3 rounded-full hover:bg-gray-100 transition-all duration-300"
                   aria-label="Précédent"
                 >
-                  <ChevronLeft className="w-5 h-5 text-primary" />
+                  <ChevronLeft className="w-6 h-6 text-primary" />
                 </button>
 
                 <button
                   onClick={() => instanceRef.current?.next()}
-                  className="absolute top-1/2 -translate-y-1/2 right-0 z-10 bg-white shadow p-2 rounded-full hover:bg-gray-100 transition"
+                  className="absolute top-1/2 -translate-y-1/2 -right-4 z-10 bg-white shadow-lg p-3 rounded-full hover:bg-gray-100 transition-all duration-300"
                   aria-label="Suivant"
                 >
-                  <ChevronRight className="w-5 h-5 text-primary" />
+                  <ChevronRight className="w-6 h-6 text-primary" />
                 </button>
               </>
             )}
