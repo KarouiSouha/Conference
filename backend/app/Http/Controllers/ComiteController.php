@@ -16,7 +16,12 @@ class ComiteController extends Controller
             ->get();
 
         $organized = [
-            'scientific' => ['chair' => null, 'co_chair' => null, 'members' => []],
+            'scientific' => [
+                'general_chair' => [],
+                'chair' => [],
+                'co_chair' => [],
+                'members' => []
+            ],
             'organizing' => ['chair' => null, 'members' => []],
             'honorary' => ['members' => []]
         ];
@@ -37,17 +42,21 @@ class ComiteController extends Controller
             ];
 
             if ($comite->committee_type === 'scientific') {
-                if ($comite->special_role === 'chair')
-                    $organized['scientific']['chair'] = $member;
-                elseif ($comite->special_role === 'co-chair')
-                    $organized['scientific']['co_chair'] = $member;
-                else
+                if ($comite->special_role === 'general chair') {
+                    $organized['scientific']['general_chair'][] = $member;
+                } elseif ($comite->special_role === 'chair') {
+                    $organized['scientific']['chair'][] = $member;
+                } elseif ($comite->special_role === 'co-chair') {
+                    $organized['scientific']['co_chair'][] = $member;
+                } else {
                     $organized['scientific']['members'][] = $member;
+                }
             } elseif ($comite->committee_type === 'organizing') {
-                if ($comite->special_role === 'chair')
+                if ($comite->special_role === 'chair') {
                     $organized['organizing']['chair'] = $member;
-                else
+                } else {
                     $organized['organizing']['members'][] = $member;
+                }
             } elseif ($comite->committee_type === 'honorary') {
                 $organized['honorary']['members'][] = $member;
             }
@@ -66,14 +75,14 @@ class ComiteController extends Controller
             'job_fr' => 'nullable|string|max:255',
             'job_en' => 'nullable|string|max:255',
             'committee_type' => 'required|in:scientific,organizing,honorary',
-            'special_role' => 'required|in:chair,co-chair,member',
+            'special_role' => 'required|in:chair,co-chair,member,general chair',
             'order' => 'integer|min:0',
-            'image_path' => 'nullable|image|max:2048' // Validation pour l'image
+            'image_path' => 'nullable|image|max:2048'
         ]);
 
         $data = $validated;
-        if ($request->hasFile('image')) {
-            $data['image_path'] = $request->file('image')->store('images', 'public');
+        if ($request->hasFile('image_path')) {
+            $data['image_path'] = $request->file('image_path')->store('images', 'public');
         }
 
         $comite = Comite::create($data);
@@ -81,62 +90,60 @@ class ComiteController extends Controller
         return response()->json(['success' => true, 'message' => 'Comité ajouté avec succès', 'data' => $comite], 201);
     }
 
-public function update(Request $request, $id)
-{
-    \Log::info('Update request received:', [
-        'id' => $id,
-        'all' => $request->all(),
-        'files' => $request->hasFile('image') ? $request->file('image')->getClientOriginalName() : 'No file',
-        'method' => $request->method(),
-        'has_method_field' => $request->has('_method')
-    ]);
+    public function update(Request $request, $id)
+    {
+        \Log::info('Update request received:', [
+            'id' => $id,
+            'all' => $request->all(),
+            'files' => $request->hasFile('image_path') ? $request->file('image_path')->getClientOriginalName() : 'No file',
+            'method' => $request->method(),
+            'has_method_field' => $request->has('_method')
+        ]);
 
-    $comite = Comite::findOrFail($id);
+        $comite = Comite::findOrFail($id);
 
-    $validated = $request->validate([
-        'name_fr' => 'required|string|max:255',
-        'name_en' => 'required|string|max:255',
-        'institute_fr' => 'nullable|string|max:255',
-        'institute_en' => 'nullable|string|max:255',
-        'job_fr' => 'nullable|string|max:255',
-        'job_en' => 'nullable|string|max:255',
-        'committee_type' => 'required|in:scientific,organizing,honorary',
-        'special_role' => 'required|in:chair,co-chair,member',
-        'order' => 'required|integer|min:0',
-        'image' => 'nullable|image|max:2048' // Changé de image_path à image
-    ]);
+        $validated = $request->validate([
+            'name_fr' => 'required|string|max:255',
+            'name_en' => 'required|string|max:255',
+            'institute_fr' => 'nullable|string|max:255',
+            'institute_en' => 'nullable|string|max:255',
+            'job_fr' => 'nullable|string|max:255',
+            'job_en' => 'nullable|string|max:255',
+            'committee_type' => 'required|in:scientific,organizing,honorary',
+            'special_role' => 'required|in:chair,co-chair,member,general chair',
+            'order' => 'required|integer|min:0',
+            'image_path' => 'nullable|image|max:2048'
+        ]);
 
-    \Log::info('Validated data:', $validated);
+        \Log::info('Validated data:', $validated);
 
-    // Supprimer les champs qui ne doivent pas être dans $data
-    $data = collect($validated)->except(['image'])->toArray();
-    
-    // Gérer l'upload d'image
-    if ($request->hasFile('image')) {
-        // Supprimer l'ancienne image si elle existe
-        if ($comite->image_path && Storage::disk('public')->exists($comite->image_path)) {
-            Storage::disk('public')->delete($comite->image_path);
-        }
+        $data = $validated;
         
-        $data['image_path'] = $request->file('image')->store('images', 'public');
+        if ($request->hasFile('image_path')) {
+            if ($comite->image_path && Storage::disk('public')->exists($comite->image_path)) {
+                Storage::disk('public')->delete($comite->image_path);
+            }
+            
+            $data['image_path'] = $request->file('image_path')->store('images', 'public');
+        }
+
+        $comite->update($data);
+
+        \Log::info('Updated comite:', $comite->toArray());
+
+        return response()->json([
+            'success' => true, 
+            'message' => 'Comité mis à jour avec succès', 
+            'data' => $comite
+        ]);
     }
-
-    $comite->update($data);
-
-    \Log::info('Updated comite:', $comite->toArray());
-
-    return response()->json([
-        'success' => true, 
-        'message' => 'Comité mis à jour avec succès', 
-        'data' => $comite
-    ]);
-}
 
     public function destroy($id)
     {
         $comite = Comite::findOrFail($id);
-        if ($comite->image_path)
-            Storage::delete($comite->image_path);
+        if ($comite->image_path) {
+            Storage::disk('public')->delete($comite->image_path);
+        }
         $comite->delete();
 
         return response()->json(['success' => true, 'message' => 'Comité supprimé avec succès']);

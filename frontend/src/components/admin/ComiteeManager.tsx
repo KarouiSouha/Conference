@@ -104,15 +104,11 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
         };
 
         const scientificMembers: Member[] = [];
-        if (scientific.chair) {
-          const chair = normalizeMember(scientific.chair);
-          if (chair) scientificMembers.push(chair);
-        }
-        if (scientific.co_chair) {
-          const coChair = normalizeMember(scientific.co_chair);
-          if (coChair) scientificMembers.push(coChair);
-        }
+        // Handle general_chair, chair, and co_chair as arrays
         scientificMembers.push(
+          ...(scientific.general_chair || []).map(normalizeMember).filter((member): member is Member => member !== null),
+          ...(scientific.chair || []).map(normalizeMember).filter((member): member is Member => member !== null),
+          ...(scientific.co_chair || []).map(normalizeMember).filter((member): member is Member => member !== null),
           ...(scientific.members || []).map(normalizeMember).filter((member): member is Member => member !== null)
         );
 
@@ -172,7 +168,7 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
       });
 
       if (imageFile) {
-        formData.append('image', imageFile);
+        formData.append('image_path', imageFile);
       }
 
       let response;
@@ -247,6 +243,11 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
 
   const getRoleBadge = (role: string) => {
     const badges = {
+      'general chair': {
+        bg: "bg-gradient-to-r from-amber-500 to-orange-600",
+        text: "Président Général",
+        icon: "🏆"
+      },
       chair: {
         bg: "bg-gradient-to-r from-blue-500 to-blue-600",
         text: "Président",
@@ -390,9 +391,9 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
             </div>
             <Button
               onClick={() => handleOpenForm()}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg"
             >
-              <Plus className="w-5 h-5 mr-2" />
+              <Plus className="w-5 h-5" />
               Nouveau membre
             </Button>
           </div>
@@ -414,61 +415,62 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
 
         {/* Onglets */}
         <div className="bg-white rounded-xl shadow-lg p-2 mb-8 border border-gray-100">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <button
-              className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
-                activeTab === 'scientific'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-              onClick={() => setActiveTab('scientific')}
-            >
-              {getTabIcon('scientific')}
-              Comité Scientifique
-              <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                activeTab === 'scientific' 
-                  ? 'bg-white bg-opacity-20 text-white' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
-                {getTabStats('scientific')}
-              </span>
-            </button>
-            <button
-              className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
-                activeTab === 'organizing'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-              onClick={() => setActiveTab('organizing')}
-            >
-              {getTabIcon('organizing')}
-              Comité d'Organisation
-              <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                activeTab === 'organizing' 
-                  ? 'bg-white bg-opacity-20 text-white' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
-                {getTabStats('organizing')}
-              </span>
-            </button>
-            <button
-              className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
-                activeTab === 'honorary'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-              onClick={() => setActiveTab('honorary')}
-            >
-              {getTabIcon('honorary')}
-              Comité d'Honneur
-              <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                activeTab === 'honorary' 
-                  ? 'bg-white bg-opacity-20 text-white' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
-                {getTabStats('honorary')}
-              </span>
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
+                  activeTab === 'scientific'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+                onClick={() => setActiveTab('scientific')}
+              >
+                {getTabIcon('scientific')}
+                Comité Scientifique
+                <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                  activeTab === 'scientific' 
+                    ? 'bg-white bg-opacity-20 text-white' 
+                    : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {getTabStats('scientific')}
+                </span>
+              </button>
+              <button
+                className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
+                  activeTab === 'organizing'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+                onClick={() => setActiveTab('organizing')}
+              >
+                {getTabIcon('organizing')}
+                Comité d'Organisation
+                <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                  activeTab === 'organizing' 
+                    ? 'bg-white bg-opacity-20 text-white' 
+                    : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {getTabStats('organizing')}
+                </span>
+              </button>
+              <button
+                className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
+                  activeTab === 'honorary'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+                onClick={() => setActiveTab('honorary')}
+              >
+                {getTabIcon('honorary')}
+                Comité d'Honneur
+                <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                  activeTab === 'honorary' 
+                    ? 'bg-white bg-opacity-20 text-white' 
+                    : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {getTabStats('honorary')}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -605,7 +607,7 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
           isOpen={isDeleteModalOpen}
           onClose={handleDeleteCancel}
           onConfirm={handleDeleteConfirm}
-          partnerName={memberToDelete ? (language === 'en' ? memberToDelete.name_en || memberToDelete.name_fr : memberToDelete.name_fr || memberToDelete.name_en) : ''}
+          partnerName={memberToDelete ? (language === 'en' ? memberToDelete.name_en : memberToDelete.name_fr) : null}
         />
 
         <ComiteForm
@@ -614,7 +616,7 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
           member={currentMember}
           onSave={handleSaveMember}
         />
-      </div>
     </div>
+    // </div>
   );
 }

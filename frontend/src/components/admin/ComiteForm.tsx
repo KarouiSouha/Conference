@@ -470,6 +470,7 @@ useEffect(() => {
                       <SelectValue placeholder="Sélectionner" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="general chair">Président général</SelectItem>
                       <SelectItem value="chair">Président</SelectItem>
                       <SelectItem value="co-chair">Vice-Président</SelectItem>
                       <SelectItem value="member">Membre</SelectItem>
