@@ -23,7 +23,8 @@ class ComiteController extends Controller
                 'members' => []
             ],
             'organizing' => ['chair' => null, 'members' => []],
-            'honorary' => ['members' => []]
+            'honorary' => ['members' => []],
+            'proceeding' => ['members' => []]
         ];
 
         foreach ($comites as $comite) {
@@ -60,6 +61,9 @@ class ComiteController extends Controller
             } elseif ($comite->committee_type === 'honorary') {
                 $organized['honorary']['members'][] = $member;
             }
+            elseif ($comite->committee_type === 'proceeding') {
+                $organized['proceeding']['members'][] = $member;
+            }
         }
 
         return response()->json(['success' => true, 'data' => $organized]);
@@ -74,7 +78,7 @@ class ComiteController extends Controller
             'institute_en' => 'nullable|string|max:255',
             'job_fr' => 'nullable|string|max:255',
             'job_en' => 'nullable|string|max:255',
-            'committee_type' => 'required|in:scientific,organizing,honorary',
+            'committee_type' => 'required|in:scientific,organizing,honorary,proceeding',
             'special_role' => 'required|in:chair,co-chair,member,general chair',
             'order' => 'integer|min:0',
             'image_path' => 'nullable|image|max:2048'
@@ -109,7 +113,7 @@ class ComiteController extends Controller
             'institute_en' => 'nullable|string|max:255',
             'job_fr' => 'nullable|string|max:255',
             'job_en' => 'nullable|string|max:255',
-            'committee_type' => 'required|in:scientific,organizing,honorary',
+            'committee_type' => 'required|in:scientific,organizing,honorary,proceeding',
             'special_role' => 'required|in:chair,co-chair,member,general chair',
             'order' => 'required|integer|min:0',
             'image_path' => 'nullable|image|max:2048'

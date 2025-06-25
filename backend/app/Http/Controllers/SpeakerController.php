@@ -138,6 +138,7 @@ class SpeakerController extends Controller
     }
 
 
+
     public function destroy($id)
     {
         $speaker = Speaker::find($id);
