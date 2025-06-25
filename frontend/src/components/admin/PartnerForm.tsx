@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,44 +9,45 @@ import {
   FlaskConical,
   Building2,
   GraduationCap,
-  Handshake,
   TrendingUp,
   ImageIcon,
   CheckCircle,
   AlertCircle
 } from "lucide-react";
-import { Label } from "recharts";
 
 interface PartnerFormProps {
   onClose: () => void;
-  onSubmit: (data: { id?: string; name_fr: string; name_en: string; image: File | string | null; type: string }) => void;
+  onSubmit: (data: { id?: string; name_fr: string; name_en: string; image: File | string | null; type: string; removeImage?: boolean }) => void;
   partnerToEdit?: { id?: string; nameFr?: string; nameEn?: string; image?: string; type?: string } | null;
 }
 
+interface FormData {
+  id: string;
+  name_fr: string;
+  name_en: string;
+  image: File | string | null;
+  type: string;
+}
+
+type FormErrors = {
+  name_fr?: string;
+  name_en?: string;
+  image?: string;
+  submit?: string;
+};
+
 export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }: PartnerFormProps) {
-  const [formData, setFormData] = useState<{
-    id: string;
-    name_fr: string;
-    name_en: string;
-    image: File | string | null;
-    type: string;
-  }>({
+  const [formData, setFormData] = useState<FormData>({
     id: partnerToEdit?.id || "",
     name_fr: partnerToEdit?.nameFr || "",
-    name_en: partnerToEdit?.nameEn || "", // Ensure nameEn is initialized
+    name_en: partnerToEdit?.nameEn || "",
     image: partnerToEdit?.image || null,
     type: partnerToEdit?.type || "Partenaire"
   });
-
-  type FormErrors = {
-    name_fr?: string;
-    name_en?: string;
-    image?: string;
-    submit?: string;
-  };
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imagePreview, setImagePreview] = useState(partnerToEdit?.image ? `http://localhost:8000/storage/${partnerToEdit.image}` : null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [removeImage, setRemoveImage] = useState<boolean>(false);
 
   const partnerTypes = [
     {
@@ -68,6 +69,15 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
       color: "bg-gradient-to-r from-purple-500 to-purple-600"
     }
   ];
+
+  useEffect(() => {
+    if (partnerToEdit?.image) {
+      setImagePreview(`http://localhost:8000/storage/${partnerToEdit.image}?t=${Date.now()}`);
+    } else {
+      setImagePreview(null);
+    }
+    setRemoveImage(false);
+  }, [partnerToEdit]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -91,14 +101,22 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
       console.log("Image file selected:", file);
 
       setFormData(prev => ({ ...prev, image: file }));
+      setRemoveImage(false);
+      setErrors(prev => ({ ...prev, image: "" }));
 
       const reader = new FileReader();
       reader.onload = (e) => setImagePreview(e.target.result as string);
       reader.readAsDataURL(file);
+    }
+  };
 
-      if (errors.image) {
-        setErrors(prev => ({ ...prev, image: "" }));
-      }
+  const handleRemoveImage = () => {
+    setFormData(prev => ({ ...prev, image: null }));
+    setImagePreview(null);
+    setRemoveImage(true);
+    const fileInput = document.getElementById('image-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
     }
   };
 
@@ -123,18 +141,17 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
     }
 
     setIsSubmitting(true);
-    console.log("Submitting form data:", formData);
+    console.log("Submitting form data:", { ...formData, removeImage });
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('name_fr', formData.name_fr);
       formDataToSend.append('name_en', formData.name_en);
       formDataToSend.append('type', formData.type);
-      if (
-        formData.image &&
-        typeof formData.image !== "string" &&
-        formData.image instanceof File
-      ) {
+      if (formData.image instanceof File) {
         formDataToSend.append('image', formData.image);
+      }
+      if (removeImage) {
+        formDataToSend.append('removeImage', 'true');
       }
 
       const isEditing = !!partnerToEdit;
@@ -143,8 +160,9 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
         : 'http://localhost:8000/api/Partners/store';
 
       const response = await fetch(url, {
-        method: isEditing ? 'POST' : 'POST',
+        method: 'POST',
         body: formDataToSend,
+        headers: isEditing ? { 'X-HTTP-Method-Override': 'PUT' } : {}
       });
 
       if (!response.ok) {
@@ -160,6 +178,7 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
         name_en: formData.name_en,
         type: formData.type,
         image: result.partner.image,
+        removeImage
       });
 
       onClose();
@@ -207,9 +226,9 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
 
           <div className="p-6 space-y-6">
             <div className="space-y-3">
-              <Label className="block text-sm font-semibold text-gray-900">
+              <label className="block text-sm font-semibold text-gray-900">
                 Type de Partenaire *
-              </Label>
+              </label>
               <div className="grid grid-cols-2 gap-3">
                 {partnerTypes.map((type) => (
                   <button
@@ -235,9 +254,9 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="block text-sm font-semibold text-gray-900">
+                <label className="block text-sm font-semibold text-gray-900">
                   Nom (Français) *
-                </Label>
+                </label>
                 <Input
                   value={formData.name_fr}
                   onChange={(e) => handleInputChange('name_fr', e.target.value)}
@@ -252,9 +271,9 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
                 )}
               </div>
               <div className="space-y-2">
-                <Label className="block text-sm font-semibold text-gray-900">
+                <label className="block text-sm font-semibold text-gray-900">
                   Nom (Anglais) *
-                </Label>
+                </label>
                 <Input
                   value={formData.name_en}
                   onChange={(e) => handleInputChange('name_en', e.target.value)}
@@ -271,9 +290,9 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
             </div>
 
             <div className="space-y-3">
-              <Label className="block text-sm font-semibold text-gray-900">
+              <label className="block text-sm font-semibold text-gray-900">
                 Logo / Image
-              </Label>
+              </label>
               <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors duration-200">
                 {imagePreview ? (
                   <div className="space-y-4">
@@ -287,10 +306,7 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          setImagePreview(null);
-                          setFormData(prev => ({ ...prev, image: null }));
-                        }}
+                        onClick={handleRemoveImage}
                         className="text-red-600 border-red-300 hover:bg-red-50"
                       >
                         Supprimer
@@ -300,6 +316,7 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
                           <span>Changer</span>
                         </Button>
                         <input
+                          id="image-upload"
                           type="file"
                           accept="image/*"
                           onChange={handleImageUpload}
@@ -320,6 +337,7 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
                       </div>
                     </div>
                     <input
+                      id="image-upload"
                       type="file"
                       accept="image/*"
                       onChange={handleImageUpload}
@@ -341,7 +359,15 @@ export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }:
               <Card className="p-4 bg-white border-2 border-gray-200">
                 <div className="text-center space-y-3">
                   <div className="w-12 h-12 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
-                    {getSelectedTypeConfig().icon}
+                    {imagePreview ? (
+                      <img
+                        src={imagePreview}
+                        alt="Aperçu"
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    ) : (
+                      getSelectedTypeConfig().icon
+                    )}
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-800">

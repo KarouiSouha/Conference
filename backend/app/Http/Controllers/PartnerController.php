@@ -45,37 +45,51 @@ class PartnerController extends Controller
 
   public function update(Request $request, $id)
   {
+    // \Log::info('Update request received:', [
+    //   'id' => $id,
+    //   'all' => $request->all(),
+    //   'files' => $request->hasFile('image') ? $request->file('image')->getClientOriginalName() : 'No file',
+    //   'method' => $request->method(),
+    //   'has_method_field' => $request->has('_method')
+    // ]);
+
     $partner = Partner::find($id);
 
     if (!$partner) {
-      return response()->json(['message' => 'Partenaire non trouvé'], 404);
+      return response()->json(['success' => false, 'message' => 'Partenaire non trouvé'], 404);
     }
 
-    // Valider les champs
-    $request->validate([
+    $validated = $request->validate([
       'name_fr' => 'required|string|max:255',
       'name_en' => 'required|string|max:255',
       'type' => 'required|string|max:255',
       'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
     ]);
 
-    // Sauvegarde de la nouvelle image si elle est envoyée
-    if ($request->hasFile('image')) {
-      $image = $request->file('image')->store('images', 'public');
-      $partner->image = $image;
+
+    $data = $validated;
+
+    if ($request->input('removeImage') && !$request->hasFile('image')) {
+      if ($partner->image && Storage::disk('public')->exists($partner->image)) {
+        Storage::disk('public')->delete($partner->image);
+      }
+      $data['image'] = null;
+    } elseif ($request->hasFile('image')) {
+      if ($partner->image && Storage::disk('public')->exists($partner->image)) {
+        Storage::disk('public')->delete($partner->image);
+      }
+      $data['image'] = $request->file('image')->store('images', 'public');
     }
 
-    // Mettre à jour les autres champs
-    $partner->name_fr = $request->input('name_fr');
-    $partner->name_en = $request->input('name_en');
-    $partner->type = $request->input('type');
-    $partner->save();
+    $partner->update($data);
 
     return response()->json([
+      'success' => true,
       'message' => 'Partenaire mis à jour avec succès',
-      'partner' => $partner,
+      'partner' => $partner
     ]);
   }
+
 
   public function destroy($id)
   {

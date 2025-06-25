@@ -65,7 +65,7 @@ Route::prefix('Partners')->controller(PartnerController::class)->group(function 
     Route::get('/all', 'displayAll');
     Route::get('get/{id}', 'displayOne');
     Route::post('/store', [PartnerController::class, 'store']);
-    Route::post('/update/{id}', [PartnerController::class, 'update']);
+    Route::put('/update/{id}', [PartnerController::class, 'update']);
     Route::delete('/destroy/{id}', [PartnerController::class, 'destroy']);
     Route::get('/count', 'count');
 

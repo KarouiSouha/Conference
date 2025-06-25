@@ -1,476 +1,430 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Search,
-  Plus,
-  Edit,
-  Trash,
+  X,
+  Save,
+  FlaskConical,
   Building2,
-  Cpu,
-  Microscope,
-  ChevronLeft,
-  ChevronRight,
-  Image,
-  Eye,
-  Star,
-  Calendar,
-  Users,
+  GraduationCap,
+  TrendingUp,
+  ImageIcon,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
-import PartnerForm from "./PartnerForm";
-import DeleteConfirmationModal from "./DeleteConfirmationModal";
 
-export default function PartnersManager() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [editingPartner, setEditingPartner] = useState(null);
-  const [showPartnerForm, setShowPartnerForm] = useState(false);
-  const [partners, setPartners] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(6);
-  const [imageErrors, setImageErrors] = useState({});
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [partnerToDelete, setPartnerToDelete] = useState(null);
-  const [viewMode, setViewMode] = useState("grid");
+interface PartnerFormProps {
+  onClose: () => void;
+  onSubmit: (data: { id?: string; name_fr: string; name_en: string; image: File | string | null; type: string; removeImage?: boolean }) => void;
+  partnerToEdit?: { id?: string; nameFr?: string; nameEn?: string; image?: string; type?: string } | null;
+}
 
-  const fetchPartners = () => {
-    fetch("http://localhost:8000/api/Partners/all")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to fetch partners");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        const formattedPartners = data.map((partner) => ({
-          id: partner.id,
-          nameFr: partner.name_fr,
-          nameEn: partner.name_en,
-          image: partner.image,
-          type: partner.type || "Institutionnels",
-        }));
-        setPartners(formattedPartners);
-      })
-      .catch((error) => console.error("Error fetching partners:", error));
-  };
+interface FormData {
+  id: string;
+  name_fr: string;
+  name_en: string;
+  image: File | string | null;
+  type: string;
+}
+
+type FormErrors = {
+  name_fr?: string;
+  name_en?: string;
+  image?: string;
+  submit?: string;
+};
+
+export default function PartnerForm({ onClose, onSubmit, partnerToEdit = null }: PartnerFormProps) {
+  const [formData, setFormData] = useState<FormData>({
+    id: partnerToEdit?.id || "",
+    name_fr: partnerToEdit?.nameFr || "",
+    name_en: partnerToEdit?.nameEn || "",
+    image: partnerToEdit?.image || null,
+    type: partnerToEdit?.type || "Partenaire"
+  });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [removeImage, setRemoveImage] = useState<boolean>(false);
+
+  const partnerTypes = [
+    {
+      value: "Institutionnels",
+      label: "Institutionnels",
+      icon: <GraduationCap className="w-4 h-4" />,
+      color: "bg-gradient-to-r from-blue-500 to-blue-600"
+    },
+    {
+      value: "Industriels & Technologiques",
+      label: "Industriels & Technologiques",
+      icon: <TrendingUp className="w-4 h-4" />,
+      color: "bg-gradient-to-r from-green-500 to-green-600"
+    },
+    {
+      value: "Centres de Recherche & Innovation",
+      label: "Centres de Recherche & Innovation",
+      icon: <FlaskConical className="w-4 h-4" />,
+      color: "bg-gradient-to-r from-purple-500 to-purple-600"
+    }
+  ];
 
   useEffect(() => {
-    fetchPartners();
-  }, []);
-
-  const handleSavePartner = (formData) => {
-    // Update local state immediately
-    if (editingPartner) {
-      const updatedPartner = {
-        ...editingPartner,
-        id: formData.id,
-        nameFr: formData.name_fr,
-        nameEn: formData.name_en,
-        image: formData.image, // Use the new image path
-        type: formData.type,
-      };
-      setPartners((prev) =>
-        prev.map((p) => (p.id === editingPartner.id ? updatedPartner : p))
-      );
+    if (partnerToEdit?.image) {
+      setImagePreview(`http://localhost:8000/storage/${partnerToEdit.image}?t=${Date.now()}`);
     } else {
-      const newPartner = {
-        id: formData.id,
-        nameFr: formData.name_fr,
-        nameEn: formData.name_en,
-        image: formData.image || "/placeholder.svg",
-        type: formData.type,
-      };
-      setPartners((prev) => [...prev, newPartner]);
+      setImagePreview(null);
     }
+    setRemoveImage(false);
+  }, [partnerToEdit]);
 
-    setShowPartnerForm(false);
-    setEditingPartner(null);
-
-    // Refresh from API in the background
-    fetchPartners();
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
   };
 
-  const handleDeletePartner = async (partnerId) => {
-    try {
-      const response = await fetch(
-        `http://localhost:8000/api/Partners/destroy/${partnerId}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete partner");
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setErrors(prev => ({ ...prev, image: "Veuillez sélectionner un fichier image valide" }));
+        return;
       }
 
-      setPartners((prev) => prev.filter((partner) => partner.id !== partnerId));
-      setShowDeleteModal(false);
-      setPartnerToDelete(null);
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, image: "La taille de l'image ne doit pas dépasser 5MB" }));
+        return;
+      }
+      console.log("Image file selected:", file);
+
+      setFormData(prev => ({ ...prev, image: file }));
+      setRemoveImage(false);
+      setErrors(prev => ({ ...prev, image: "" }));
+
+      const reader = new FileReader();
+      reader.onload = (e) => setImagePreview(e.target.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData(prev => ({ ...prev, image: null }));
+    setImagePreview(null);
+    setRemoveImage(true);
+    const fileInput = document.getElementById('image-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: FormErrors = {};
+
+    if (!formData.name_fr.trim()) {
+      newErrors.name_fr = "Le nom en français est requis";
+    }
+
+    if (!formData.name_en.trim()) {
+      newErrors.name_en = "Le nom en anglais est requis";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    console.log("Submitting form data:", { ...formData, removeImage });
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('name_fr', formData.name_fr);
+      formDataToSend.append('name_en', formData.name_en);
+      formDataToSend.append('type', formData.type);
+      if (formData.image instanceof File) {
+        formDataToSend.append('image', formData.image);
+      }
+      if (removeImage) {
+        formDataToSend.append('removeImage', 'true');
+      }
+
+      const isEditing = !!partnerToEdit;
+      const url = isEditing
+        ? `http://localhost:8000/api/Partners/update/${partnerToEdit.id}`
+        : 'http://localhost:8000/api/Partners/store';
+
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formDataToSend,
+        headers: isEditing ? { 'X-HTTP-Method-Override': 'PUT' } : {}
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur lors de ${isEditing ? 'la mise à jour' : 'l\'enregistrement'} du partenaire`);
+      }
+
+      const result = await response.json();
+      console.log('Réponse de l\'API:', result);
+
+      onSubmit({
+        id: result.partner.id,
+        name_fr: formData.name_fr,
+        name_en: formData.name_en,
+        type: formData.type,
+        image: result.partner.image,
+        removeImage
+      });
+
+      onClose();
     } catch (error) {
-      console.error("Error deleting partner:", error);
+      console.error(`Erreur lors de ${partnerToEdit ? 'la mise à jour' : 'l\'enregistrement'} du partenaire:`, error);
+      setErrors((prev) => ({ ...prev, submit: `Une erreur est survenue lors de ${partnerToEdit ? 'la mise à jour' : 'l\'enregistrement'}` }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleOpenDeleteModal = (partner) => {
-    setPartnerToDelete(partner);
-    setShowDeleteModal(true);
-  };
-
-  const handleCloseDeleteModal = () => {
-    setShowDeleteModal(false);
-    setPartnerToDelete(null);
-  };
-
-  const handleEditPartner = (partner) => {
-    setEditingPartner(partner);
-    setShowPartnerForm(true);
-  };
-
-  const handleCloseForm = () => {
-    setShowPartnerForm(false);
-    setEditingPartner(null);
-  };
-
-  const handleImageError = (partnerId) => {
-    setImageErrors((prev) => ({ ...prev, [partnerId]: true }));
-  };
-
-  const getImageUrl = (partner) => {
-    if (imageErrors[partner.id] || !partner.image) {
-      return null;
-    }
-    // Add cache-busting query parameter
-    return `http://localhost:8000/storage/${partner.image}?t=${new Date().getTime()}`;
-  };
-
-  const getTypeBadge = (type) => {
-    const badgeConfig = {
-      Institutionnels: {
-        className:
-          "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm",
-        icon: <Building2 className="w-3 h-3 mr-1" />,
-      },
-      "Industriels & Technologiques": {
-        className:
-          "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-sm",
-        icon: <Cpu className="w-3 h-3 mr-1" />,
-      },
-      "Centres de Recherche & Innovation": {
-        className:
-          "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-sm",
-        icon: <Microscope className="w-3 h-3 mr-1" />,
-      },
-    };
-    const config =
-      badgeConfig[type] || {
-        className:
-          "bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-sm",
-        icon: <Building2 className="w-3 h-3 mr-1" />,
-      };
-    return (
-      <Badge
-        className={`${config.className} px-3 py-1 flex items-center justify-center font-medium text-xs rounded-full border-0`}
-      >
-        {config.icon}
-        {type}
-      </Badge>
-    );
-  };
-
-  const filteredPartners = partners.filter(
-    (partner) =>
-      partner.nameFr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      partner.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredPartners.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentPartners = filteredPartners.slice(startIndex, endIndex);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
-
-  const stats = {
-    institutionnels: partners.filter((p) => p.type === "Institutionnels").length,
-    industriels: partners.filter(
-      (p) => p.type === "Industriels & Technologiques"
-    ).length,
-    recherche: partners.filter(
-      (p) => p.type === "Centres de Recherche & Innovation"
-    ).length,
-  };
-
-  const goToPage = (page) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  const getSelectedTypeConfig = () => {
+    return partnerTypes.find(type => type.value === formData.type) || partnerTypes[2];
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      <div className="container mx-auto px-6 py-8 space-y-8">
-        {/* Header Section */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent mb-2">
-                Gestion des Partenaires
-              </h1>
-              <p className="text-gray-600 text-lg">Gérez et organisez vos partenariats stratégiques</p>
-            </div>
-            <Button
-              onClick={() => setShowPartnerForm(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-lg"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Nouveau Partenaire
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group rounded-2xl">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <Card className="bg-white shadow-2xl border-0 rounded-2xl">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-t-2xl border-b border-blue-100">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                  {stats.institutionnels}
-                </p>
-                <p className="text-gray-600 font-medium">Institutionnels</p>
-              </div>
-              <div className="p-4 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl group-hover:from-blue-200 group-hover:to-blue-300 transition-all duration-300">
-                <Building2 className="w-8 h-8 text-blue-600" />
-              </div>
-            </div>
-          </Card>
-          <Card className="p-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group rounded-2xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
-                  {stats.industriels}
-                </p>
-                <p className="text-gray-600 font-medium">Industriels & Tech.</p>
-              </div>
-              <div className="p-4 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl group-hover:from-emerald-200 group-hover:to-emerald-300 transition-all duration-300">
-                <Cpu className="w-8 h-8 text-emerald-600" />
-              </div>
-            </div>
-          </Card>
-          <Card className="p-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group rounded-2xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">
-                  {stats.recherche}
-                </p>
-                <p className="text-gray-600 font-medium">Centres de Recherche</p>
-              </div>
-              <div className="p-4 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300">
-                <Microscope className="w-8 h-8 text-purple-600" />
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Search Bar */}
-        <Card className="p-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              placeholder="Rechercher par nom ou type..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 pr-4 py-4 text-lg border-0 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 shadow-inner"
-            />
-            {searchTerm && (
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                <Badge className="bg-blue-500 text-white px-3 py-1 rounded-full">
-                  {filteredPartners.length} résultat{filteredPartners.length > 1 ? "s" : ""}
-                </Badge>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        {/* Partners Grid - Design Amélioré */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-800">Nos Partenaires</h2>
-            <div className="text-sm text-gray-600 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full">
-              {filteredPartners.length} partenaire{filteredPartners.length > 1 ? "s" : ""}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {currentPartners.map((partner) => (
-              <Card
-                key={partner.id}
-                className="group relative bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden transform hover:-translate-y-2"
-              >
-                {/* Decorative Top Border */}
-                <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
-
-                {/* Logo Section */}
-                <div className="relative h-48 bg-gradient-to-br from-gray-50 to-white p-8 flex items-center justify-center">
-                  {getImageUrl(partner) ? (
-                    <img
-                      src={getImageUrl(partner)}
-                      alt={partner.nameFr}
-                      className="max-w-full max-h-full object-contain filter drop-shadow-lg transition-transform duration-300 group-hover:scale-105"
-                      onError={() => handleImageError(partner.id)}
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center text-gray-300">
-                      <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full mb-4">
-                        <Image className="w-12 h-12" strokeWidth={1} />
-                      </div>
-                      <span className="text-sm text-gray-400 font-medium">Logo non disponible</span>
-                    </div>
-                  )}
-
-                  {/* Status Indicator */}
-                  <div className="absolute top-4 right-4 w-3 h-3 bg-green-400 rounded-full shadow-sm animate-pulse"></div>
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-white rounded-xl shadow-sm">
+                  <Building2 className="w-6 h-6 text-blue-600" />
                 </div>
-
-                {/* Content Section */}
-                <div className="p-6 space-y-4">
-                  {/* Partner Name */}
-                  <div className="text-center">
-                    <h3 className="font-bold text-lg text-gray-800 mb-2 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">
-                      {partner.nameFr}
-                    </h3>
-                    {partner.nameEn && partner.nameEn !== partner.nameFr && (
-                      <p className="text-sm text-gray-500 italic">{partner.nameEn}</p>
-                    )}
-                  </div>
-
-                  {/* Type Badge */}
-                  <div className="flex justify-center">
-                    {getTypeBadge(partner.type)}
-                  </div>
-
-                  {/* Quick Info */}
-                  <div className="flex items-center justify-center space-x-4 text-xs text-gray-500 pt-2">
-                    <div className="flex items-center">
-                      <Calendar className="w-3 h-3 mr-1" />
-                      <span>Partenaire</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Star className="w-3 h-3 mr-1 text-yellow-500" />
-                      <span>Actif</span>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex justify-center space-x-3 pt-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                    <Button
-                      size="sm"
-                      onClick={() => handleEditPartner(partner)}
-                      className="h-9 px-4 bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Modifier
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleOpenDeleteModal(partner)}
-                      className="h-9 px-4 bg-red-500 hover:bg-red-600 text-white shadow-md hover:shadow-lg transition-all duration-200 rounded-xl border-0"
-                    >
-                      <Trash className="w-4 h-4 mr-1" />
-                      Supprimer
-                    </Button>
-                  </div>
+                <div>
+                  <h2 className="text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">
+                    {partnerToEdit ? 'Modifier Partenaire' : 'Nouveau Partenaire'}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {partnerToEdit ? 'Modifiez les informations du partenaire' : 'Ajoutez un nouveau partenaire à votre réseau'}
+                  </p>
                 </div>
-
-                {/* Glow Effect */}
-                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <Card className="p-6 bg-white border-2 border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
-                Affichage de {startIndex + 1} à {Math.min(endIndex, filteredPartners.length)} sur {filteredPartners.length} partenaires
               </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <Button
-                    key={page}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => goToPage(page)}
-                    className={`border-2 ${
-                      currentPage === page
-                        ? "bg-blue-600 border-blue-600 text-white"
-                        : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                    } min-w-[40px]`}
-                  >
-                    {page}
-                  </Button>
-                ))}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Empty State */}
-        {filteredPartners.length === 0 && searchTerm && (
-          <Card className="p-16 bg-white/80 backdrop-blur-sm border-0 shadow-lg text-center rounded-3xl">
-            <div className="space-y-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto">
-                <Search className="w-10 h-10 text-gray-400" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-600">Aucun partenaire trouvé</h3>
-              <p className="text-gray-500 max-w-md mx-auto">Aucun partenaire ne correspond à vos critères de recherche. Essayez de modifier vos termes de recherche.</p>
               <Button
-                onClick={() => setSearchTerm("")}
-                className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl border-0"
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="hover:bg-red-100 hover:text-red-600 rounded-full p-2"
               >
-                Réinitialiser la recherche
+                <X className="w-5 h-5" />
               </Button>
             </div>
-          </Card>
-        )}
+          </div>
 
-        {/* Modals */}
-        {showPartnerForm && (
-          <PartnerForm
-            onClose={handleCloseForm}
-            onSubmit={handleSavePartner}
-            partnerToEdit={editingPartner}
-          />
-        )}
+          <div className="p-6 space-y-6">
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-900">
+                Type de Partenaire *
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {partnerTypes.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => handleInputChange('type', type.value)}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center space-x-3 ${formData.type === type.value
+                      ? 'border-blue-400 bg-blue-50 shadow-md'
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                  >
+                    <div className={`p-2 rounded-lg ${type.color} text-white`}>
+                      {type.icon}
+                    </div>
+                    <span className="font-medium text-gray-700">{type.label}</span>
+                    {formData.type === type.value && (
+                      <CheckCircle className="w-4 h-4 text-blue-600 ml-auto" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        {showDeleteModal && partnerToDelete && (
-          <DeleteConfirmationModal
-            isOpen={showDeleteModal}
-            onClose={handleCloseDeleteModal}
-            onConfirm={() => handleDeletePartner(partnerToDelete.id)}
-            Name={partnerToDelete.nameFr}
-          />
-        )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-900">
+                  Nom (Français) *
+                </label>
+                <Input
+                  value={formData.name_fr}
+                  onChange={(e) => handleInputChange('name_fr', e.target.value)}
+                  placeholder="Nom du partenaire en français"
+                  className={`border-2 ${errors.name_fr ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                />
+                {errors.name_fr && (
+                  <div className="flex items-center space-x-2 text-red-600 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{errors.name_fr}</span>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-900">
+                  Nom (Anglais) *
+                </label>
+                <Input
+                  value={formData.name_en}
+                  onChange={(e) => handleInputChange('name_en', e.target.value)}
+                  placeholder="Nom du partenaire en anglais"
+                  className={`border-2 ${errors.name_en ? 'border-red-300' : 'border-gray-200'} focus:border-blue-400 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 py-3`}
+                />
+                {errors.name_en && (
+                  <div className="flex items-center space-x-2 text-red-600 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{errors.name_en}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-900">
+                Logo / Image
+              </label>
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors duration-200">
+                {imagePreview ? (
+                  <div className="space-y-4">
+                    <img
+                      src={imagePreview}
+                      alt="Aperçu"
+                      className="w-32 h-32 object-cover rounded-lg mx-auto shadow-md"
+                    />
+                    <div className="flex justify-center space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRemoveImage}
+                        className="text-red-600 border-red-300 hover:bg-red-50"
+                      >
+                        Supprimer
+                      </Button>
+                      <label className="cursor-pointer">
+                        <Button type="button" variant="outline" size="sm" asChild>
+                          <span>Changer</span>
+                        </Button>
+                        <input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer block">
+                    <div className="space-y-3">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                        <ImageIcon className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <div>
+                        <p className="text-gray-600 font-medium">Cliquez pour ajouter une image</p>
+                        <p className="text-sm text-gray-500">PNG, JPG, GIF jusqu'à 5MB</p>
+                      </div>
+                    </div>
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+              {errors.image && (
+                <div className="flex items-center space-x-2 text-red-600 text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.image}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Aperçu</h3>
+              <Card className="p-4 bg-white border-2 border-gray-200">
+                <div className="text-center space-y-3">
+                  <div className="w-12 h-12 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+                    {imagePreview ? (
+                      <img
+                        src={imagePreview}
+                        alt="Aperçu"
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    ) : (
+                      getSelectedTypeConfig().icon
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-800">
+                      {formData.name_fr || "Nom du partenaire"}
+                    </h4>
+                    <p className="text-sm text-gray-500 italic">
+                      {formData.name_en || "Nom du partenaire"}
+                    </p>
+                  </div>
+                  <Badge className={`bg-gradient-to-r ${getSelectedTypeConfig().color} text-white px-3 py-1 flex items-center justify-center w-fit mx-auto`}>
+                    {getSelectedTypeConfig().icon}
+                    <span className="ml-1">{formData.type}</span>
+                  </Badge>
+                </div>
+              </Card>
+            </div>
+
+            {errors.submit && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <div className="flex items-center space-x-2 text-red-600">
+                  <AlertCircle className="w-5 h-5" />
+                  <span className="font-medium">{errors.submit}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="px-6 py-2 border-2 border-gray-300 hover:bg-gray-50"
+              >
+                Annuler
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Enregistrement...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    {partnerToEdit ? 'Modifier' : 'Enregistrer'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );
