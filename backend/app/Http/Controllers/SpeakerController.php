@@ -27,7 +27,7 @@ class SpeakerController extends Controller
     public function store(Request $request)
     {
         // Valider les données reçues
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:speakers,email',
             'job_fr' => 'required|string|max:255',
@@ -37,40 +37,31 @@ class SpeakerController extends Controller
             'description_fr' => 'nullable|string',
             'description_en' => 'nullable|string',
             'theme_id' => 'nullable|exists:themes,id',
-            'link' => 'nullable|url|max:255',
-            'realisations' => 'nullable|array', // Validation pour les réalisations
-            'realisations.*.title_fr' => 'required|string|max:255', // Titre en français requis
-            'realisations.*.title_en' => 'required|string|max:255', // Titre en anglais requis
+            'link' => 'nullable|string|max:255',
+            'image_path' => 'nullable|image:jpg,jpeg,png,gif|max:2048',
+            'realisations' => 'nullable|array',
+            'realisations.*.title_fr' => 'required|string|max:255',
+            'realisations.*.title_en' => 'required|string|max:255',
         ]);
 
-        // Créer le speaker
-        $speaker = Speaker::create([
-            'name' => $request->input('name'),
-            'email' => $request->input('email'),
-            'job_fr' => $request->input('job_fr'),
-            'job_en' => $request->input('job_en'),
-            'country_fr' => $request->input('country_fr'),
-            'country_en' => $request->input('country_en'),
-            'description_fr' => $request->input('description_fr'),
-            'description_en' => $request->input('description_en'),
-            'theme_id' => $request->input('theme_id'),
-            'link' => $request->input('link'),
-        ]);
+        // Ajouter l'image si présente
+        if ($request->hasFile('image_path')) {
+            $validated['image_path'] = $request->file('image_path')->store('images', 'public');
+        }
+
+        // Créer le speaker avec les données validées
+        $speaker = Speaker::create($validated);
 
         // Traiter les réalisations si fournies
         if ($request->has('realisations')) {
             $realisationIds = [];
             foreach ($request->input('realisations') as $realisationData) {
-                // Rechercher si la réalisation existe déjà (par title_fr et title_en)
                 $realisation = Realisation::firstOrCreate([
                     'title_fr' => $realisationData['title_fr'],
                     'title_en' => $realisationData['title_en'],
                 ]);
-
                 $realisationIds[] = $realisation->id;
             }
-
-            // Associer les réalisations au speaker
             $speaker->realisations()->sync($realisationIds);
         }
 
@@ -78,6 +69,7 @@ class SpeakerController extends Controller
         $speaker->load('realisations');
 
         return response()->json([
+            'success' => true,
             'message' => 'Intervenant ajouté avec succès',
             'speaker' => $speaker,
         ], 201);
@@ -88,11 +80,11 @@ class SpeakerController extends Controller
         $speaker = Speaker::find($id);
 
         if (!$speaker) {
-            return response()->json(['message' => 'Speaker non trouvé'], 404);
+            return response()->json(['success' => false, 'message' => 'Intervenant non trouvé'], 404);
         }
 
-        // Valider les données reçues
-        $request->validate([
+        // Valider les données
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:speakers,email,' . $speaker->id,
             'job_fr' => 'required|string|max:255',
@@ -102,54 +94,49 @@ class SpeakerController extends Controller
             'description_fr' => 'nullable|string',
             'description_en' => 'nullable|string',
             'theme_id' => 'nullable|exists:themes,id',
-            'link' => 'nullable|url|max:255',
+            'link' => 'nullable|string|max:255',
+            'image_path' => 'nullable|image:jpg,jpeg,png,gif|max:2048',
             'realisations' => 'nullable|array',
             'realisations.*.title_fr' => 'required|string|max:255',
             'realisations.*.title_en' => 'required|string|max:255',
         ]);
 
-        // Mise à jour des champs
-        $speaker->update([
-            'name' => $request->input('name'),
-            'email' => $request->input('email'),
-            'job_fr' => $request->input('job_fr'),
-            'job_en' => $request->input('job_en'),
-            'country_fr' => $request->input('country_fr'),
-            'country_en' => $request->input('country_en'),
-            'description_fr' => $request->input('description_fr'),
-            'description_en' => $request->input('description_en'),
-            'theme_id' => $request->input('theme_id'),
-            'link' => $request->input('link'),
-        ]);
+        // Ajouter ou remplacer l'image si présente
+        if ($request->hasFile('image_path')) {
+            if ($speaker->image_path) {
+                \Storage::disk('public')->delete($speaker->image_path);
+            }
+            $validated['image_path'] = $request->file('image_path')->store('images', 'public');
+        }
+
+        // Mise à jour du speaker
+        $speaker->update($validated);
 
         // Traiter les réalisations si fournies
         if ($request->has('realisations')) {
             $realisationIds = [];
             foreach ($request->input('realisations') as $realisationData) {
-                // Rechercher ou créer la réalisation
                 $realisation = Realisation::firstOrCreate([
                     'title_fr' => $realisationData['title_fr'],
                     'title_en' => $realisationData['title_en'],
                 ]);
-
                 $realisationIds[] = $realisation->id;
             }
-
-            // Synchroniser les réalisations
             $speaker->realisations()->sync($realisationIds);
         } else {
-            // Si aucune réalisation n'est fournie, détacher toutes les réalisations
             $speaker->realisations()->detach();
         }
 
-        // Charger les relations pour la réponse
+        // Charger les relations pour réponse complète
         $speaker->load('realisations');
 
         return response()->json([
+            'success' => true,
             'message' => 'Intervenant mis à jour avec succès',
             'speaker' => $speaker,
-        ]);
+        ], 200);
     }
+
 
     public function destroy($id)
     {
