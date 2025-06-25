@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { FileText } from "lucide-react";
-import { X, Save, User, Mail, AlertCircle, Briefcase, Globe, MapPin, Check, Languages, Linkedin, Plus, Tag, Upload, ImageIcon } from "lucide-react";
+import { FileText, X, Save, User, Mail, AlertCircle, Briefcase, Globe, MapPin, Check, Languages, Linkedin, Plus, Tag, Upload, ImageIcon } from "lucide-react";
 
 interface Speaker {
   id?: number;
@@ -26,7 +25,7 @@ interface Speaker {
 interface FormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (speakerData: Partial<Speaker>, imageFile?: File | null) => void;
+  onSave: (speakerData: Partial<Speaker>, imageFile?: File | null, removeImage?: boolean) => void;
   speaker?: Speaker | null;
 }
 
@@ -60,6 +59,7 @@ export default function SpeakerForm({ isOpen, onClose, onSave, speaker }: FormPr
   const [newRealisationEn, setNewRealisationEn] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [removeImage, setRemoveImage] = useState<boolean>(false);
 
   const countries = [
     { fr: "France", en: "France" },
@@ -116,7 +116,7 @@ export default function SpeakerForm({ isOpen, onClose, onSave, speaker }: FormPr
         })) || []
       });
       if (speaker.image_path) {
-        setImagePreview(`http://localhost:8000/storage/${speaker.image_path}`);
+        setImagePreview(`http://localhost:8000/storage/${speaker.image_path}?t=${Date.now()}`);
       } else {
         setImagePreview("");
       }
@@ -139,6 +139,7 @@ export default function SpeakerForm({ isOpen, onClose, onSave, speaker }: FormPr
       setImagePreview("");
     }
     setImageFile(null);
+    setRemoveImage(false);
     setErrors({});
   }, [speaker, isOpen]);
 
@@ -194,6 +195,7 @@ export default function SpeakerForm({ isOpen, onClose, onSave, speaker }: FormPr
         return;
       }
       setImageFile(file);
+      setRemoveImage(false);
       setErrors(prev => ({ ...prev, image: undefined }));
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -203,10 +205,10 @@ export default function SpeakerForm({ isOpen, onClose, onSave, speaker }: FormPr
     }
   };
 
-  const removeImage = () => {
+  const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview("");
-    setFormData(prev => ({ ...prev, image_path: "" }));
+    setRemoveImage(true);
     const fileInput = document.getElementById('image-upload') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
@@ -278,8 +280,7 @@ export default function SpeakerForm({ isOpen, onClose, onSave, speaker }: FormPr
     if (!validateForm()) return;
     setIsSubmitting(true);
     try {
-      console.log("Form data before saving:", imageFile);
-      await onSave(formData, imageFile);
+      await onSave(formData, imageFile, removeImage);
       onClose();
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
@@ -368,7 +369,7 @@ export default function SpeakerForm({ isOpen, onClose, onSave, speaker }: FormPr
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={removeImage}
+                          onClick={handleRemoveImage}
                           className="border-red-300 text-red-600 hover:bg-red-50"
                         >
                           <X className="w-4 h-4 mr-1" />

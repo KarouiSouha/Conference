@@ -60,8 +60,7 @@ class ComiteController extends Controller
                 }
             } elseif ($comite->committee_type === 'honorary') {
                 $organized['honorary']['members'][] = $member;
-            }
-            elseif ($comite->committee_type === 'proceeding') {
+            } elseif ($comite->committee_type === 'proceeding') {
                 $organized['proceeding']['members'][] = $member;
             }
         }
@@ -96,13 +95,13 @@ class ComiteController extends Controller
 
     public function update(Request $request, $id)
     {
-        \Log::info('Update request received:', [
-            'id' => $id,
-            'all' => $request->all(),
-            'files' => $request->hasFile('image_path') ? $request->file('image_path')->getClientOriginalName() : 'No file',
-            'method' => $request->method(),
-            'has_method_field' => $request->has('_method')
-        ]);
+        // \Log::info('Update request received:', [
+        //     'id' => $id,
+        //     'all' => $request->all(),
+        //     'files' => $request->hasFile('image_path') ? $request->file('image_path')->getClientOriginalName() : 'No file',
+        //     'method' => $request->method(),
+        //     'has_method_field' => $request->has('_method')
+        // ]);
 
         $comite = Comite::findOrFail($id);
 
@@ -116,28 +115,35 @@ class ComiteController extends Controller
             'committee_type' => 'required|in:scientific,organizing,honorary,proceeding',
             'special_role' => 'required|in:chair,co-chair,member,general chair',
             'order' => 'required|integer|min:0',
-            'image_path' => 'nullable|image|max:2048'
+            'image_path' => 'nullable|image|max:2048',
+            // 'removeImage' => 'nullable|boolean'
         ]);
 
-        \Log::info('Validated data:', $validated);
+        // \Log::info('Validated data:', $validated);
 
         $data = $validated;
-        
-        if ($request->hasFile('image_path')) {
+
+        // Handle image removal
+        if ($request->input('removeImage') && !$request->hasFile('image_path')) {
             if ($comite->image_path && Storage::disk('public')->exists($comite->image_path)) {
                 Storage::disk('public')->delete($comite->image_path);
             }
-            
+            $data['image_path'] = null;
+        } elseif ($request->hasFile('image_path')) {
+            // Delete existing image if a new one is uploaded
+            if ($comite->image_path && Storage::disk('public')->exists($comite->image_path)) {
+                Storage::disk('public')->delete($comite->image_path);
+            }
             $data['image_path'] = $request->file('image_path')->store('images', 'public');
         }
 
         $comite->update($data);
 
-        \Log::info('Updated comite:', $comite->toArray());
+        // \Log::info('Updated comite:', $comite->toArray());
 
         return response()->json([
-            'success' => true, 
-            'message' => 'Comité mis à jour avec succès', 
+            'success' => true,
+            'message' => 'Comité mis à jour avec succès',
             'data' => $comite
         ]);
     }

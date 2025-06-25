@@ -105,13 +105,13 @@ export default function SpeakersManager() {
     setSpeakerToDelete(null);
   };
 
-  const handleSaveSpeaker = async (speakerData, imageFile) => {
+  const handleSaveSpeaker = async (speakerData, imageFile, removeImage) => {
     try {
       const formData = new FormData();
       
-      // Append all fields except image_path and realisations
+      // Append all fields except image_path, removeImage, and realisations
       Object.entries(speakerData).forEach(([key, value]) => {
-        if (key !== 'image_path' && key !== 'realisations' && value !== null && value !== undefined) {
+        if (key !== 'image_path' && key !== 'removeImage' && key !== 'realisations' && value !== null && value !== undefined) {
           formData.append(key, value.toString());
         }
       });
@@ -126,15 +126,15 @@ export default function SpeakersManager() {
         });
       }
 
-      // Handle image_path
+      // Handle image_path and removeImage
       if (imageFile instanceof File) {
         // New image uploaded
         formData.append('image_path', imageFile);
-      } else if (imageFile === false || imageFile === undefined) {
+      } else if (removeImage) {
         // Image explicitly removed
-        formData.append('image_path', 'null');
+        formData.append('removeImage', 'true');
       }
-      // If imageFile is null, do nothing (keep existing image)
+      // If neither imageFile nor removeImage, keep existing image
 
       let response;
       if (speakerData.id) {
@@ -405,7 +405,7 @@ export default function SpeakersManager() {
                         <div className="flex-shrink-0">
                           {speaker.image_path ? (
                             <img
-                              src={`http://localhost:8000/storage/${speaker.image_path}`}
+                              src={`http://localhost:8000/storage/${speaker.image_path}?t=${Date.now()}`}
                               alt={speaker.name}
                               className="h-12 w-12 rounded-full object-cover ring-2 ring-white shadow-lg"
                             />

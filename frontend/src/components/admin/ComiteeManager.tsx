@@ -10,7 +10,6 @@ interface ComiteManagerProps {
   language: 'fr' | 'en';
 }
 
-// Modal de confirmation de suppression
 function DeleteConfirmationModal({ isOpen, onClose, onConfirm, partnerName }) {
   if (!isOpen) return null;
 
@@ -60,15 +59,10 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
   const [currentMember, setCurrentMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // États pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
   const membersPerPage = 5;
-
-  // États pour le modal de suppression
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
-
   const [scientificCommittee, setScientificCommittee] = useState<Member[]>([]);
   const [organizingCommittee, setOrganizingCommittee] = useState<Member[]>([]);
   const [honoraryCommittee, setHonoraryCommittee] = useState<Member[]>([]);
@@ -162,20 +156,22 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
     setCurrentMember(null);
   };
 
-  const handleSaveMember = async (memberData: Partial<Member>, imageFile: File | null) => {
+  const handleSaveMember = async (memberData: Partial<Member>, imageFile: File | null, removeImage: boolean = false) => {
     try {
       const formData = new FormData();
       
-      // Append all fields except image_path
       Object.entries(memberData).forEach(([key, value]) => {
         if (key !== 'image_path' && value !== null && value !== undefined) {
           formData.append(key, value.toString());
         }
       });
 
-      // Only append image_path if a new file is provided
       if (imageFile) {
         formData.append('image_path', imageFile);
+      }
+
+      if (removeImage) {
+        formData.append('removeImage', 'true');
       }
 
       let response;
@@ -386,7 +382,6 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto p-6">
-        {/* En-tête */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -407,7 +402,6 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
           </div>
         </div>
 
-        {/* Barre de recherche */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -421,7 +415,6 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
           </div>
         </div>
 
-        {/* Onglets */}
         <div className="bg-white rounded-xl shadow-lg p-2 mb-8 border border-gray-100">
           <div className="flex flex-col sm:flex-row gap-2">
             <button
@@ -499,7 +492,6 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
           </div>
         </div>
 
-        {/* Tableau */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -519,7 +511,7 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
                       <div className="flex items-center gap-3">
                         {member.image_path ? (
                           <img
-                            src={`http://localhost:8000/storage/${member.image_path}`}
+                            src={`http://localhost:8000/storage/${member.image_path}?t=${Date.now()}`}
                             alt={language === 'en' ? member.name_en || member.name_fr : member.name_fr || member.name_en}
                             className="w-12 h-12 rounded-full object-cover shadow-md"
                           />
@@ -566,7 +558,6 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
             </table>
           </div>
 
-          {/* État vide */}
           {paginatedMembers.length === 0 && (
             <div className="text-center py-16">
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -584,7 +575,6 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
           )}
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-lg mt-6">
             <div className="text-sm text-gray-600">
@@ -628,7 +618,6 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
         )}
       </div>
 
-      {/* Modal de confirmation de suppression */}
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={handleDeleteCancel}

@@ -6,6 +6,7 @@ use App\Models\Speaker;
 use App\Models\Realisation;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 class SpeakerController extends Controller
 {
@@ -74,9 +75,17 @@ class SpeakerController extends Controller
             'speaker' => $speaker,
         ], 201);
     }
-
     public function update(Request $request, $id)
     {
+        // Log::info('Update request received:', [
+        //     'id' => $id,
+        //     'all' => $request->all(),
+        //     'files' => $request->hasFile('image_path') ? $request->file('image_path')->getClientOriginalName() : 'No file',
+        //     'removeImage' => $request->input('removeImage'),
+        //     'method' => $request->method(),
+        //     'has_method_field' => $request->has('_method')
+        // ]);
+
         $speaker = Speaker::find($id);
 
         if (!$speaker) {
@@ -101,16 +110,27 @@ class SpeakerController extends Controller
             'realisations.*.title_en' => 'required|string|max:255',
         ]);
 
-        // Ajouter ou remplacer l'image si présente
-        if ($request->hasFile('image_path')) {
-            if ($speaker->image_path) {
-                \Storage::disk('public')->delete($speaker->image_path);
-            }
-            $validated['image_path'] = $request->file('image_path')->store('images', 'public');
-        }
+        // Log::info('Validated data:', $validated);
 
-        // Mise à jour du speaker
-        $speaker->update($validated);
+        // Préparer les données pour la mise à jour
+        $data = $validated;
+
+        // Gérer image_path
+        if ($request->hasFile('image_path')) {
+            // Nouvelle image téléchargée
+            if ($speaker->image_path && Storage::disk('public')->exists($speaker->image_path)) {
+                Storage::disk('public')->delete($speaker->image_path);
+            }
+            $data['image_path'] = $request->file('image_path')->store('images', 'public');
+        } elseif ($request->input('removeImage') === true || $request->input('removeImage') === 'true') {
+            // Image explicitement supprimée
+            if ($speaker->image_path && Storage::disk('public')->exists($speaker->image_path)) {
+                Storage::disk('public')->delete($speaker->image_path);
+            }
+            $data['image_path'] = null;
+        }
+        // Si ni image_path ni removeImage, conserver l'image existante
+        unset($data['removeImage']); // Retirer removeImage des données de mise à jour
 
         // Traiter les réalisations si fournies
         if ($request->has('realisations')) {
@@ -123,12 +143,19 @@ class SpeakerController extends Controller
                 $realisationIds[] = $realisation->id;
             }
             $speaker->realisations()->sync($realisationIds);
+            unset($data['realisations']);
         } else {
             $speaker->realisations()->detach();
+            unset($data['realisations']);
         }
+
+        // Mise à jour du speaker
+        $speaker->update($data);
 
         // Charger les relations pour réponse complète
         $speaker->load('realisations');
+
+        // Log::info('Updated speaker:', $speaker->toArray());
 
         return response()->json([
             'success' => true,

@@ -24,7 +24,7 @@ interface Member {
 interface ComiteFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (member: Member, imageFile?: File) => void;
+  onSave: (member: Member, imageFile?: File | null, removeImage?: boolean) => void;
   member?: Member | null;
 }
 
@@ -49,46 +49,51 @@ export default function ComiteForm({ isOpen, onClose, onSave, member }: ComiteFo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [removeImage, setRemoveImage] = useState<boolean>(false);
 
-useEffect(() => {
-  console.log('Membre reçu:', member); // Vérifie les données brutes
-  if (member) {
-    const newFormData = {
-      id: member.id,
-      name_fr: member.name_fr || '',
-      name_en: member.name_en || '',
-      institute_fr: member.institute_fr || '',
-      institute_en: member.institute_en || '',
-      job_fr: member.job_fr || 'Membre',
-      job_en: member.job_en || 'Member',
-      special_role: member.special_role || 'member',
-      committee_type: member.committee_type || 'scientific',
-      order: member.order || 0,
-      image_path: member.image_path || ''
-    };
-    setFormData(newFormData);
-    console.log('FormData défini:', newFormData); // Vérifie les données normalisées
-    if (member.image_path) {
-      setImagePreview(`http://localhost:8000/storage/${member.image_path}`);
+  useEffect(() => {
+    console.log('Membre reçu:', member); // Vérifie les données brutes
+    if (member) {
+      const newFormData = {
+        id: member.id,
+        name_fr: member.name_fr || '',
+        name_en: member.name_en || '',
+        institute_fr: member.institute_fr || '',
+        institute_en: member.institute_en || '',
+        job_fr: member.job_fr || 'Membre',
+        job_en: member.job_en || 'Member',
+        special_role: member.special_role || 'member',
+        committee_type: member.committee_type || 'scientific',
+        order: member.order || 0,
+        image_path: member.image_path || ''
+      };
+      setFormData(newFormData);
+      console.log('FormData défini:', newFormData); // Vérifie les données normalisées
+      if (member.image_path) {
+        setImagePreview(`http://localhost:8000/storage/${member.image_path}?t=${Date.now()}`);
+      } else {
+        setImagePreview("");
+      }
+    } else {
+      const defaultFormData = {
+        name_fr: "",
+        name_en: "",
+        institute_fr: "",
+        institute_en: "",
+        job_fr: "Membre",
+        job_en: "Member",
+        special_role: "member",
+        committee_type: "scientific",
+        order: 0,
+        image_path: ""
+      };
+      setFormData(defaultFormData);
+      setImagePreview("");
     }
-  } else {
-    const defaultFormData = {
-      name_fr: "",
-      name_en: "",
-      institute_fr: "",
-      institute_en: "",
-      job_fr: "Membre",
-      job_en: "Member",
-      special_role: "member",
-      committee_type: "scientific",
-      order: 0,
-      image_path: ""
-    };
-    setFormData(defaultFormData);
-    setImagePreview("");
-  }
-  setImageFile(null);
-}, [member]);
+    setImageFile(null);
+    setRemoveImage(false);
+  }, [member]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: name === "order" ? parseInt(value) : value }));
@@ -107,21 +112,20 @@ useEffect(() => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validation du fichier
       if (!file.type.startsWith('image/')) {
         setErrors(prev => ({ ...prev, image: "Veuillez sélectionner un fichier image valide" }));
         return;
       }
       
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      if (file.size > 2 * 1024 * 1024) {
         setErrors(prev => ({ ...prev, image: "L'image ne doit pas dépasser 2MB" }));
         return;
       }
 
       setImageFile(file);
+      setRemoveImage(false);
       setErrors(prev => ({ ...prev, image: undefined }));
 
-      // Créer un aperçu
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string);
@@ -130,11 +134,10 @@ useEffect(() => {
     }
   };
 
-  const removeImage = () => {
+  const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview("");
-    setFormData(prev => ({ ...prev, image_path: "" }));
-    // Reset file input
+    setRemoveImage(true);
     const fileInput = document.getElementById('image-upload') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
@@ -167,7 +170,7 @@ useEffect(() => {
 
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      onSave(formData, imageFile || undefined);
+      onSave(formData, imageFile, removeImage);
       onClose();
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
@@ -193,6 +196,13 @@ useEffect(() => {
             Vice-Président
           </Badge>
         );
+      case "general chair":
+        return (
+          <Badge className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-3 py-1 flex items-center">
+            <Crown className="w-3 h-3 mr-1" />
+            Président Général
+          </Badge>
+        );
       default:
         return (
           <Badge className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-3 py-1 flex items-center">
@@ -209,7 +219,6 @@ useEffect(() => {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <Card className="bg-white shadow-2xl border-0 rounded-2xl">
-          {/* Header */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-t-2xl border-b border-blue-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -236,9 +245,7 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Form */}
           <div className="p-6 space-y-6">
-            {/* Image Upload Section */}
             <div className="space-y-3">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -248,7 +255,6 @@ useEffect(() => {
               </div>
               
               <div className="flex items-start space-x-6">
-                {/* Image Preview */}
                 <div className="flex-shrink-0">
                   <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center bg-gray-50 overflow-hidden">
                     {imagePreview ? (
@@ -266,7 +272,6 @@ useEffect(() => {
                   </div>
                 </div>
 
-                {/* Upload Controls */}
                 <div className="flex-1 space-y-3">
                   <div>
                     <Label htmlFor="image-upload" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -291,7 +296,7 @@ useEffect(() => {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={removeImage}
+                          onClick={handleRemoveImage}
                           className="border-red-300 text-red-600 hover:bg-red-50"
                         >
                           <X className="w-4 h-4 mr-1" />
@@ -313,7 +318,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Personal Information */}
             <div className="space-y-3">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -359,7 +363,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Institute Information */}
             <div className="space-y-3">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -405,7 +408,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Job Information */}
             <div className="space-y-3">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -451,7 +453,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Committee Details */}
             <div className="space-y-3">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -528,7 +529,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Preview Card */}
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Aperçu</h3>
               <Card className="p-4 bg-white border-2 border-gray-200">
@@ -554,7 +554,6 @@ useEffect(() => {
               </Card>
             </div>
 
-            {/* Error Message */}
             {errors.submit && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                 <div className="flex items-center space-x-2 text-red-600">
@@ -564,7 +563,6 @@ useEffect(() => {
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
               <Button
                 type="button"
