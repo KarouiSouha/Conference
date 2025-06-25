@@ -40,7 +40,7 @@ interface Speaker {
   realisations: Realisation[];
   email?: string;
   link?: string;
-  image?: string; // Added image field
+  image_path?: string; // Updated to image_path
 }
 
 interface SpeakersProps {
@@ -215,6 +215,10 @@ const Speakers: React.FC<SpeakersProps> = ({
     return language === 'fr' ? realisation.title_fr : realisation.title_en;
   };
 
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2);
+  };
+
   if (loading) {
     return (
       <section id="speakers" className="py-24 bg-gradient-to-b from-gray-50 to-white">
@@ -274,16 +278,16 @@ const Speakers: React.FC<SpeakersProps> = ({
                     <CardContent className="p-6 flex flex-col relative z-10">
                       {/* Image or Initials */}
                       <div className="relative w-32 h-32 mx-auto mb-6">
-                        {speaker.image ? (
+                        {speaker.image_path ? (
                           <img
-                            src={speaker.image}
+                            src={`http://localhost:8000/storage/${speaker.image_path}`}
                             alt={speaker.name}
                             className="w-full h-full object-cover rounded-full border-4 border-white shadow-md group-hover:scale-105 transition-transform duration-300"
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-300">
                             <span className="text-3xl font-bold text-white">
-                              {speaker.name.split(' ').map(n => n[0]).join('')}
+                              {getInitials(speaker.name)}
                             </span>
                           </div>
                         )}
@@ -326,16 +330,16 @@ const Speakers: React.FC<SpeakersProps> = ({
                               
                               <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
                                 <div className="relative">
-                                  {speaker.image ? (
+                                  {speaker.image_path ? (
                                     <img
-                                      src={speaker.image}
+                                      src={`http://localhost:8000/storage/${speaker.image_path}`}
                                       alt={speaker.name}
                                       className="w-24 h-24 object-cover rounded-2xl border-4 border-white shadow-lg"
                                     />
                                   ) : (
                                     <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center shadow-lg">
                                       <span className="text-2xl font-bold text-white">
-                                        {speaker.name.split(' ').map(n => n[0]).join('')}
+                                        {getInitials(speaker.name)}
                                       </span>
                                     </div>
                                   )}

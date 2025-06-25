@@ -80,7 +80,6 @@ export default function SpeakersManager() {
     try {
       const response = await fetch(`http://localhost:8000/api/Speakers/destroy/${speakerToDelete.id}`, {
         method: 'DELETE',
-        // credentials: 'include',
         headers: {
           'Accept': 'application/json',
         }
@@ -106,65 +105,60 @@ export default function SpeakersManager() {
     setSpeakerToDelete(null);
   };
 
- const handleSaveSpeaker = async (speakerData, imageFile) => {
-  try {
-    const formData = new FormData();
-    // Append all fields except realisations
-    Object.entries(speakerData).forEach(([key, value]) => {
-      if (key !== 'realisations' && value !== null && value !== undefined) {
-        formData.append(key, value.toString());
+  const handleSaveSpeaker = async (speakerData, imageFile) => {
+    try {
+      const formData = new FormData();
+      Object.entries(speakerData).forEach(([key, value]) => {
+        if (key !== 'realisations' && value !== null && value !== undefined) {
+          formData.append(key, value.toString());
+        }
+      });
+      if (speakerData.realisations && Array.isArray(speakerData.realisations)) {
+        speakerData.realisations.forEach((realisation, index) => {
+          if (realisation.title_fr && realisation.title_en) {
+            formData.append(`realisations[${index}][title_fr]`, realisation.title_fr);
+            formData.append(`realisations[${index}][title_en]`, realisation.title_en);
+          }
+        });
       }
-    });
-    // Append realisations as individual array entries
-    if (speakerData.realisations && Array.isArray(speakerData.realisations)) {
-      speakerData.realisations.forEach((realisation, index) => {
-        if (realisation.title_fr && realisation.title_en) {
-          formData.append(`realisations[${index}][title_fr]`, realisation.title_fr);
-          formData.append(`realisations[${index}][title_en]`, realisation.title_en);
-        }
-      });
-    }
-    // Append image file as image_path
-    if (imageFile) {
-      formData.append('image_path', imageFile);
-    }
+      if (imageFile) {
+        formData.append('image_path', imageFile);
+      }
 
-    let response;
-    if (speakerData.id) {
-      formData.append('_method', 'PUT');
-      response = await fetch(`http://localhost:8000/api/Speakers/update/${speakerData.id}`, {
-        method: 'POST',
-        body: formData,
-        // credentials: 'include',
-        headers: {
-          'X-HTTP-Method-Override': 'PUT',
-          'Accept': 'application/json',
-        }
-      });
-    } else {
-      response = await fetch('http://localhost:8000/api/Speakers/store', {
-        method: 'POST',
-        body: formData,
-        // credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-        }
-      });
-    }
+      let response;
+      if (speakerData.id) {
+        formData.append('_method', 'PUT');
+        response = await fetch(`http://localhost:8000/api/Speakers/update/${speakerData.id}`, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-HTTP-Method-Override': 'PUT',
+            'Accept': 'application/json',
+          }
+        });
+      } else {
+        response = await fetch('http://localhost:8000/api/Speakers/store', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+      }
 
-    const result = await response.json();
-    if (response.ok) {
-      await fetchSpeakers();
-      setShowForm(false);
-      setSelectedSpeaker(null);
-    } else {
-      throw new Error(result.message || 'Erreur lors de la sauvegarde');
+      const result = await response.json();
+      if (response.ok) {
+        await fetchSpeakers();
+        setShowForm(false);
+        setSelectedSpeaker(null);
+      } else {
+        throw new Error(result.message || 'Erreur lors de la sauvegarde');
+      }
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      throw error;
     }
-  } catch (error) {
-    console.error("Erreur lors de la sauvegarde:", error);
-    throw error;
-  }
-};
+  };
 
   const getThemeName = (themeId) => {
     return themes[themeId] || "Thème inconnu";
@@ -398,9 +392,17 @@ export default function SpeakersManager() {
                     <td className="py-6 px-6">
                       <div className="flex items-center space-x-4">
                         <div className="flex-shrink-0">
-                          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center ring-2 ring-white shadow-lg">
-                            <span className="text-white font-semibold text-sm">{getInitials(speaker.name)}</span>
-                          </div>
+                          {speaker.image_path ? (
+                            <img
+                              src={`http://localhost:8000/storage/${speaker.image_path}`}
+                              alt={speaker.name}
+                              className="h-12 w-12 rounded-full object-cover ring-2 ring-white shadow-lg"
+                            />
+                          ) : (
+                            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center ring-2 ring-white shadow-lg">
+                              <span className="text-white font-semibold text-sm">{getInitials(speaker.name)}</span>
+                            </div>
+                          )}
                         </div>
                         <div>
                           <div className="text-base font-semibold text-gray-900 flex items-center gap-2">
