@@ -108,11 +108,15 @@ export default function SpeakersManager() {
   const handleSaveSpeaker = async (speakerData, imageFile) => {
     try {
       const formData = new FormData();
+      
+      // Append all fields except image_path and realisations
       Object.entries(speakerData).forEach(([key, value]) => {
-        if (key !== 'realisations' && value !== null && value !== undefined) {
+        if (key !== 'image_path' && key !== 'realisations' && value !== null && value !== undefined) {
           formData.append(key, value.toString());
         }
       });
+
+      // Handle realisations array
       if (speakerData.realisations && Array.isArray(speakerData.realisations)) {
         speakerData.realisations.forEach((realisation, index) => {
           if (realisation.title_fr && realisation.title_en) {
@@ -121,9 +125,16 @@ export default function SpeakersManager() {
           }
         });
       }
-      if (imageFile) {
+
+      // Handle image_path
+      if (imageFile instanceof File) {
+        // New image uploaded
         formData.append('image_path', imageFile);
+      } else if (imageFile === false || imageFile === undefined) {
+        // Image explicitly removed
+        formData.append('image_path', 'null');
       }
+      // If imageFile is null, do nothing (keep existing image)
 
       let response;
       if (speakerData.id) {

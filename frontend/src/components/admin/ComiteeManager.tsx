@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, Edit, Trash, Users, Award, Globe, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Edit, Trash, Users, Award, Globe, ChevronLeft, ChevronRight, Book } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import ComiteForm from "./ComiteForm";
@@ -72,6 +72,7 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
   const [scientificCommittee, setScientificCommittee] = useState<Member[]>([]);
   const [organizingCommittee, setOrganizingCommittee] = useState<Member[]>([]);
   const [honoraryCommittee, setHonoraryCommittee] = useState<Member[]>([]);
+  const [proceedingCommittee, setProceedingCommittee] = useState<Member[]>([]);
 
   const fetchComites = useCallback(async () => {
     try {
@@ -81,7 +82,7 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
       const data = await response.json();
 
       if (data.success) {
-        const { scientific, organizing, honorary } = data.data;
+        const { scientific, organizing, honorary, proceeding } = data.data;
 
         const normalizeMember = (member: Partial<Member>): Member | null => {
           if (!member || (!member.name_fr && !member.name_en)) {
@@ -104,7 +105,6 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
         };
 
         const scientificMembers: Member[] = [];
-        // Handle general_chair, chair, and co_chair as arrays
         scientificMembers.push(
           ...(scientific.general_chair || []).map(normalizeMember).filter((member): member is Member => member !== null),
           ...(scientific.chair || []).map(normalizeMember).filter((member): member is Member => member !== null),
@@ -125,9 +125,14 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
           .map(normalizeMember)
           .filter((member): member is Member => member !== null);
 
+        const proceedingMembers: Member[] = (proceeding.members || [])
+          .map(normalizeMember)
+          .filter((member): member is Member => member !== null);
+
         setScientificCommittee(scientificMembers);
         setOrganizingCommittee(organizingMembers);
         setHonoraryCommittee(honoraryMembers);
+        setProceedingCommittee(proceedingMembers);
       } else {
         throw new Error(data.message || 'Erreur lors du chargement des données');
       }
@@ -161,12 +166,14 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
     try {
       const formData = new FormData();
       
+      // Append all fields except image_path
       Object.entries(memberData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
+        if (key !== 'image_path' && value !== null && value !== undefined) {
           formData.append(key, value.toString());
         }
       });
 
+      // Only append image_path if a new file is provided
       if (imageFile) {
         formData.append('image_path', imageFile);
       }
@@ -201,7 +208,6 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
     }
   };
 
-  // Fonctions pour la suppression avec modal
   const handleDeleteClick = (member: Member) => {
     setMemberToDelete(member);
     setIsDeleteModalOpen(true);
@@ -221,7 +227,6 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
         setIsDeleteModalOpen(false);
         setMemberToDelete(null);
         
-        // Ajuster la page courante si nécessaire
         const currentMembers = getCurrentMembers();
         const newTotalPages = Math.ceil((currentMembers.length - 1) / membersPerPage);
         if (currentPage > newTotalPages && newTotalPages > 0) {
@@ -295,6 +300,7 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
       case 'scientific': return <Globe className="w-4 h-4" />;
       case 'organizing': return <Users className="w-4 h-4" />;
       case 'honorary': return <Award className="w-4 h-4" />;
+      case 'proceeding': return <Book className="w-4 h-4" />;
       default: return <Users className="w-4 h-4" />;
     }
   };
@@ -304,20 +310,22 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
       case 'scientific': return scientificCommittee.length;
       case 'organizing': return organizingCommittee.length;
       case 'honorary': return honoraryCommittee.length;
+      case 'proceeding': return proceedingCommittee.length;
       default: return 0;
     }
   };
 
-  // Fonctions de pagination
   const getCurrentMembers = () => {
     const filteredScientificCommittee = filterMembers(scientificCommittee);
     const filteredOrganizingCommittee = filterMembers(organizingCommittee);
     const filteredHonoraryCommittee = filterMembers(honoraryCommittee);
+    const filteredProceedingCommittee = filterMembers(proceedingCommittee);
 
     switch (activeTab) {
       case 'scientific': return filteredScientificCommittee;
       case 'organizing': return filteredOrganizingCommittee;
       case 'honorary': return filteredHonoraryCommittee;
+      case 'proceeding': return filteredProceedingCommittee;
       default: return [];
     }
   };
@@ -373,7 +381,7 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
     );
   }
 
-  const totalMembers = scientificCommittee.length + organizingCommittee.length + honoraryCommittee.length;
+  const totalMembers = scientificCommittee.length + organizingCommittee.length + honoraryCommittee.length + proceedingCommittee.length;
 
   return (
     <div className="min-h-screen bg-white">
@@ -386,7 +394,7 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
                 Gestion des Comités
               </h1>
               <p className="text-gray-600 text-lg">
-                Organisez et gérez vos comités scientifiques, d'organisation et d'honneur
+                Organisez et gérez vos comités scientifiques, d'organisation, d'honneur et de procédure
               </p>
             </div>
             <Button
@@ -415,62 +423,79 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
 
         {/* Onglets */}
         <div className="bg-white rounded-xl shadow-lg p-2 mb-8 border border-gray-100">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
-                  activeTab === 'scientific'
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-                onClick={() => setActiveTab('scientific')}
-              >
-                {getTabIcon('scientific')}
-                Comité Scientifique
-                <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                  activeTab === 'scientific' 
-                    ? 'bg-white bg-opacity-20 text-white' 
-                    : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {getTabStats('scientific')}
-                </span>
-              </button>
-              <button
-                className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
-                  activeTab === 'organizing'
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-                onClick={() => setActiveTab('organizing')}
-              >
-                {getTabIcon('organizing')}
-                Comité d'Organisation
-                <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                  activeTab === 'organizing' 
-                    ? 'bg-white bg-opacity-20 text-white' 
-                    : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {getTabStats('organizing')}
-                </span>
-              </button>
-              <button
-                className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
-                  activeTab === 'honorary'
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-                onClick={() => setActiveTab('honorary')}
-              >
-                {getTabIcon('honorary')}
-                Comité d'Honneur
-                <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                  activeTab === 'honorary' 
-                    ? 'bg-white bg-opacity-20 text-white' 
-                    : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {getTabStats('honorary')}
-                </span>
-              </button>
-            </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
+                activeTab === 'scientific'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+              onClick={() => setActiveTab('scientific')}
+            >
+              {getTabIcon('scientific')}
+              Comité Scientifique
+              <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                activeTab === 'scientific' 
+                  ? 'bg-white bg-opacity-20 text-white' 
+                  : 'bg-gray-200 text-gray-600'
+              }`}>
+                {getTabStats('scientific')}
+              </span>
+            </button>
+            <button
+              className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
+                activeTab === 'organizing'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+              onClick={() => setActiveTab('organizing')}
+            >
+              {getTabIcon('organizing')}
+              Comité d'Organisation
+              <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                activeTab === 'organizing' 
+                  ? 'bg-white bg-opacity-20 text-white' 
+                  : 'bg-gray-200 text-gray-600'
+              }`}>
+                {getTabStats('organizing')}
+              </span>
+            </button>
+            <button
+              className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
+                activeTab === 'honorary'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+              onClick={() => setActiveTab('honorary')}
+            >
+              {getTabIcon('honorary')}
+              Comité d'Honneur
+              <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                activeTab === 'honorary' 
+                  ? 'bg-white bg-opacity-20 text-white' 
+                  : 'bg-gray-200 text-gray-600'
+              }`}>
+                {getTabStats('honorary')}
+              </span>
+            </button>
+            <button
+              className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg transition-all font-medium ${
+                activeTab === 'proceeding'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+              onClick={() => setActiveTab('proceeding')}
+            >
+              {getTabIcon('proceeding')}
+              Comité de Procédure
+              <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                activeTab === 'proceeding' 
+                  ? 'bg-white bg-opacity-20 text-white' 
+                  : 'bg-gray-200 text-gray-600'
+              }`}>
+                {getTabStats('proceeding')}
+              </span>
+            </button>
           </div>
         </div>
 
@@ -601,22 +626,22 @@ export default function ComiteManager({ language = 'fr' }: ComiteManagerProps) {
             </div>
           </div>
         )}
+      </div>
 
-        {/* Modal de confirmation de suppression */}
-        <DeleteConfirmationModal
-          isOpen={isDeleteModalOpen}
-          onClose={handleDeleteCancel}
-          onConfirm={handleDeleteConfirm}
-          partnerName={memberToDelete ? (language === 'en' ? memberToDelete.name_en : memberToDelete.name_fr) : null}
-        />
+      {/* Modal de confirmation de suppression */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        partnerName={memberToDelete ? (language === 'en' ? memberToDelete.name_en : memberToDelete.name_fr) : null}
+      />
 
-        <ComiteForm
-          isOpen={isFormOpen}
-          onClose={handleCloseForm}
-          member={currentMember}
-          onSave={handleSaveMember}
-        />
+      <ComiteForm
+        isOpen={isFormOpen}
+        onClose={handleCloseForm}
+        member={currentMember}
+        onSave={handleSaveMember}
+      />
     </div>
-    // </div>
   );
 }

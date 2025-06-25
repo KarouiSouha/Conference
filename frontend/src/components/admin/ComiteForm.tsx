@@ -493,6 +493,7 @@ useEffect(() => {
                       <SelectValue placeholder="Sélectionner" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="proceeding">Comité de procédure</SelectItem>
                       <SelectItem value="scientific">Comité Scientifique</SelectItem>
                       <SelectItem value="organizing">Comité d'Organisation</SelectItem>
                       <SelectItem value="honorary">Comité d'Honneur</SelectItem>
