@@ -97,7 +97,8 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
     Route::delete('/{id}', 'destroy');
     Route::patch('/{id}/mark-as-paid', 'markAsPaid');
     Route::get('/statistics', 'statistics'); // GET /api/Registration/statistics
-    Route::get('/{id}/download-badge', 'downloadBadge')->name('api.registration.download-badge');
+    Route::get('/{id}/download-badge/{language}', [RegistrationController::class, 'downloadBadge'])
+    ->name('api.registration.download-badge');
 });
 
 

@@ -113,14 +113,11 @@ class RegistrationController extends Controller
                 'amount' => $request->amount // Added amount from request
             ]);
 
-            // TODO: Envoyer un email de confirmation avec le mot de passe temporaire
-            // Mail::to($registration->email)->send(new RegistrationConfirmation($registration->first_name . ' ' . $registration->last_name, 'http://localhost:8080', $request->language));
-
             $mail = new RegistrationConfirmation(
                 $registration->first_name . ' ' . $registration->last_name,
-                route('api.registration.download-badge', ['id' => $registration->id]), // URL du badge
+                route('api.registration.download-badge', ['id' => $registration->id, 'language' => $request->language]), // URL du badge
                 $request->language,
-                $registration->id // Passer l'ID
+                $registration->id
             );
 
             Mail::to($registration->email)->send($mail);
@@ -141,13 +138,15 @@ class RegistrationController extends Controller
             ], 500);
         }
     }
-    public function downloadBadge($id)
+    public function downloadBadge($id, $language)
     {
         try {
             $registration = Registration::findOrFail($id);
             $nom = $registration->first_name . ' ' . $registration->last_name;
 
-            $badgeImagePath = public_path('badges/challenger_badge.png');
+            // Choisir l'image en fonction de la langue
+            $badgeImageFile = $language === 'fr' ? '1FR.png' : '1EN.png';
+            $badgeImagePath = public_path('badges/' . $badgeImageFile);
 
             if (!file_exists($badgeImagePath)) {
                 return redirect()->back()->with('error', 'Image du badge non trouvée.');
@@ -156,12 +155,13 @@ class RegistrationController extends Controller
             $pdf = Pdf::loadView('badge', [
                 'nom' => $nom,
                 'badgeImagePath' => $badgeImagePath,
+                'language' => $language,
             ]);
 
             $fileName = 'challenger_' . str_replace(' ', '_', strtolower($nom)) . '.pdf';
             $storagePath = 'badges/' . $fileName;
 
-            // 🔥 SUPPRIMER L'ANCIEN FICHIER S'IL EXISTE
+            // Supprimer l'ancien fichier s'il existe
             if (Storage::disk('public')->exists($storagePath)) {
                 $deleted = Storage::disk('public')->delete($storagePath);
                 if (!$deleted) {
@@ -175,7 +175,7 @@ class RegistrationController extends Controller
                 Storage::disk('public')->makeDirectory($directory);
             }
 
-            // Créer le nouveau fichier
+            // Enregistrer le nouveau fichier
             $saved = Storage::disk('public')->put($storagePath, $pdf->output());
 
             if (!$saved) {
@@ -184,12 +184,14 @@ class RegistrationController extends Controller
 
             $downloadUrl = asset('storage/' . $storagePath);
 
-            // 🔁 Rediriger directement vers l'URL du badge
+            // Rediriger directement vers le fichier PDF généré
             return redirect($downloadUrl);
+
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
+
 
 
 

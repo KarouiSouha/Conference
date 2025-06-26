@@ -58,13 +58,21 @@
 <body>
 <!-- Page 1 (badge avec nom personnalisé) -->
 <div class="page">
-    <img src="{{ public_path('badges/challenger_badge.png') }}" class="badge-image" alt="Badge">
+    @if($language === 'fr')
+        <img class="badge-image" src="{{ public_path('badges/1FR.png') }}" alt="Image FR">
+    @else
+        <img class="badge-image" src="{{ public_path('badges/1EN.png') }}" alt="Image EN">
+    @endif
     <div class="name-overlay">{{ $nom }}</div>
 </div>
 
-<!-- Page 2 (image pleine page) -->
+<!-- Page 2 (image pleine page en fonction de la langue) -->
 <div class="page-3">
-    <img class="full-page-image" src="{{ public_path('badges/2.png') }}" alt="Image pleine page">
+    @if($language === 'fr')
+        <img class="full-page-image" src="{{ public_path('badges/2FR.png') }}" alt="Image FR">
+    @else
+        <img class="full-page-image" src="{{ public_path('badges/2EN.png') }}" alt="Image EN">
+    @endif
 </div>
 </body>
 </html>
