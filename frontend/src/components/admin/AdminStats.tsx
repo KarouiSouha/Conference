@@ -112,7 +112,7 @@ export default function AdminStats() {
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent">
-              Dashboard
+              Tableau de bord
             </h1>
             <p className="text-slate-600 text-lg">Votre centre de contrôle intelligent</p>
           </div>

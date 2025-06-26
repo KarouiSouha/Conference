@@ -104,14 +104,71 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
       views: 789,
       created_at: '2023-01-19',
       updated_at: '2023-01-19'
-    }
+    },
+    // Nouvelles photos 2024
+  {
+    id: 6,
+    title_fr: "Atelier d'innovation 2024",
+    title_en: "Innovation Workshop 2024",
+    description_fr: "Atelier interactif présentant les dernières innovations technologiques.",
+    description_en: "Interactive workshop showcasing the latest technological innovations.",
+    type: 'photo',
+    file_path: '/asset/images/gallery/im1.jpg',
+    file_url: '/asset/images/gallery/im1.jpg',
+    year: '2024',
+    views: 450,
+    created_at: '2024-03-01',
+    updated_at: '2024-03-01'
+  },
+  {
+    id: 7,
+    title_fr: "Conférence plénière 2024",
+    title_en: "Plenary Conference 2024",
+    description_fr: "Discours d'ouverture de la conférence 2024 avec des experts internationaux.",
+    description_en: "Opening speech of the 2024 conference with international experts.",
+    type: 'photo',
+    file_path: '/asset/images/gallery/im2.jpg',
+    file_url: '/asset/images/gallery/im2.jpg',
+    year: '2024',
+    views: 672,
+    created_at: '2024-03-02',
+    updated_at: '2024-03-02'
+  },
+  {
+    id: 8,
+    title_fr: "Exposition technologique 2024",
+    title_en: "Technology Exhibition 2024",
+    description_fr: "Exposition des technologies émergentes et des prototypes innovants.",
+    description_en: "Exhibition of emerging technologies and innovative prototypes.",
+    type: 'photo',
+    file_path: '/asset/images/gallery/im3.jpg',
+    file_url: '/asset/images/gallery/im3.jpg',
+    year: '2024',
+    views: 820,
+    created_at: '2024-03-03',
+    updated_at: '2024-03-03'
+  },
+  {
+    id: 9,
+    title_fr: "Gala de clôture 2024",
+    title_en: "Closing Gala 2024",
+    description_fr: "Soirée de gala célébrant la fin de l'événement avec remise des prix.",
+    description_en: "Gala evening celebrating the end of the event with award ceremonies.",
+    type: 'photo',
+    file_path: '/asset/images/gallery/im4.jpg',
+    file_url: '/asset/images/gallery/im4.jpg',
+    year: '2024',
+    views: 950,
+    created_at: '2024-03-04',
+    updated_at: '2024-03-04'
+  }
   ];
 
   // Données statiques pour les vidéos (2023 existantes + nouvelles pour 2024)
   const staticVideos: GalleryItem[] = [
     // Vidéos 2023 (existantes)
     {
-      id: 8,
+      id: 10,
       title_fr: "Nexus Eau-Énergie",
       title_en: "Nexus Eau-Energie",
       description_fr: "Session plénière 3 : « Nexus Eau-Énergie » animée par M. Khaled El Moueddeb, Professeur à l'ESIM.",
@@ -128,7 +185,7 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
       updated_at: '2024-01-25'
     },
     {
-      id: 9,
+      id: 11,
       title_fr: "La cérémonie d'ouverture",
       title_en: "Opening ceremony",
       description_fr: "La cérémonie d'ouverture de la Conférence Internationale sur l'Industrie Intelligente, la Technologie et l'Environnement a officiellement eu lieu.",
@@ -146,7 +203,7 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
     },
     // Nouvelles vidéos 2024
     {
-      id: 7,
+      id: 12,
       title_fr: "Site Web 2024",
       title_en: "Web site 2024",
       description_fr: "Présentation du nouveau site web et des innovations digitales 2024.",
@@ -159,6 +216,23 @@ const Gallery: React.FC<GalleryProps> = ({ language }) => {
       year: '2024',
       duration: '2:30',
       views: 3456,
+      created_at: '2024-02-01',
+      updated_at: '2024-02-01'
+    },
+       {
+      id: 13,
+      title_fr: "TDS",
+      title_en: "TDS",
+      description_fr: "Présentation de TDS.",
+      description_en: "Presentation of TDS",
+      type: 'video',
+      file_path: '/asset/videos/gallery/TDS.mp4',
+      file_url: '/asset/videos/gallery/TDS.mp4',
+      thumbnail_path: '/asset/images/gallery/TDS.png',
+      thumbnail_url: '/asset/images/gallery/TDS.png',
+      year: '2024',
+      duration: '1:29',
+      views: 306,
       created_at: '2024-02-01',
       updated_at: '2024-02-01'
     }

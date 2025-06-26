@@ -13,6 +13,7 @@ import ParticipantsManager from "@/components/admin/ParticipantsManager";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Mail, Lock, Eye, EyeOff, Shield } from 'lucide-react';
 
 interface AdminProps {
   language?: 'fr' | 'en';
@@ -24,13 +25,15 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [authToken, setAuthToken] = useState('');
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  
   interface User {
     id: number;
     name: string;
     email: string;
-    // Add other user properties as needed
   }
   const [user, setUser] = useState<User | null>(null);
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
@@ -38,16 +41,18 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
   const { toast } = useToast();
 
   // Configuration de l'API
-  const API_BASE_URL = 'http://localhost:8000/api'; // Remplacez par votre URL d'API
+  const API_BASE_URL = 'http://localhost:8000/api';
 
   const content = {
     fr: {
       title: 'Administration SITE 2025',
+      subtitle: 'Connectez-vous à votre espace administrateur',
       login: 'Connexion',
-      email: 'Email',
+      email: 'Adresse e-mail',
       password: 'Mot de passe',
       signin: 'Se connecter',
       logout: 'Déconnexion',
+      secureLogin: 'Connexion sécurisée',
       sections: {
         dashboard: 'Tableau de bord',
         partners: 'Partenaires',
@@ -72,11 +77,13 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
     },
     en: {
       title: 'SITE 2025 Administration',
+      subtitle: 'Sign in to your admin dashboard',
       login: 'Login',
-      email: 'Email',
+      email: 'Email address',
       password: 'Password',
       signin: 'Sign In',
       logout: 'Logout',
+      secureLogin: 'Secure Login',
       sections: {
         dashboard: 'Dashboard',
         partners: 'Partners',
@@ -104,7 +111,6 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation des champs
     if (!email || !password) {
       toast({
         title: content[language].errors.loginFailed,
@@ -132,21 +138,15 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
       const data = await response.json();
 
       if (response.ok) {
-        // Connexion réussie
         setIsLoggedIn(true);
         setAuthToken(data.access_token);
         setUser(data.user);
-        
-        // Stocker le token pour les requêtes futures (optionnel, en mémoire seulement)
-        sessionStorage.setItem('auth_token', data.access_token);
-        sessionStorage.setItem('user', JSON.stringify(data.user));
 
         toast({
           title: content[language].success.loginSuccess,
           description: content[language].success.welcomeMessage,
         });
       } else {
-        // Erreur de connexion
         toast({
           title: content[language].errors.loginFailed,
           description: data.message || content[language].errors.invalidCredentials,
@@ -172,10 +172,6 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
     setEmail('');
     setPassword('');
     setActiveSection('dashboard');
-    
-    // Nettoyer le stockage de session
-    sessionStorage.removeItem('auth_token');
-    sessionStorage.removeItem('user');
 
     toast({
       title: language === 'fr' ? 'Déconnexion' : 'Logout',
@@ -196,7 +192,7 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
       case 'speakers':
         return <SpeakersManager />;
       case 'comitee':
-        return <ComiteeManager />;
+        return <ComiteeManager language={language} />;
       case 'news':
         return <NewsManager />;
       case 'archives':
@@ -212,70 +208,147 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
     }
   };
 
-  // Affichage du formulaire de connexion si non connecté
+  // Affichage du formulaire de connexion professionnel
   if (!isLoggedIn) {
     return (
-      <section id="admin" className="py-20 bg-muted/30 min-h-screen flex items-center">
-        <div className="container mx-auto px-4">
-          <div className="max-w-md mx-auto">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-center text-primary">
-                  {content[language].title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      {content[language].email}
-                    </label>
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        {/* Accent subtil */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.03),transparent_70%)]"></div>
+        
+        {/* Conteneur principal */}
+        <div className="relative w-full max-w-md">
+          {/* En-tête avec logo */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-lg mb-6 shadow-lg">
+              <Shield className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">
+              {content[language].title}
+            </h1>
+            <p className="text-slate-600">
+              {content[language].subtitle}
+            </p>
+          </div>
+
+          {/* Carte de connexion */}
+          <Card className="bg-white border border-gray-200 shadow-lg">
+            <CardHeader className="pb-6 pt-8 px-8">
+              <CardTitle className="text-xl font-semibold text-slate-900 text-center">
+                {content[language].login}
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="px-8 pb-8">
+              <div className="space-y-6">
+                {/* Champ Email */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    {content[language].email}
+                  </label>
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">
+                      <Mail className="w-5 h-5" />
+                    </div>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                      required
+                      onFocus={() => setFocusedField('email')}
+                      onBlur={() => setFocusedField(null)}
+                      className={`w-full pl-11 pr-4 py-3 bg-white border rounded-lg focus:outline-none transition-colors duration-200 placeholder-slate-400 ${
+                        focusedField === 'email' 
+                          ? 'border-blue-500 ring-2 ring-blue-500/20' 
+                          : 'border-slate-300 hover:border-slate-400'
+                      }`}
                       disabled={isLoading}
                       placeholder="admin@example.com"
+                      required
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      {content[language].password}
-                    </label>
+                </div>
+
+                {/* Champ Mot de passe */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    {content[language].password}
+                  </label>
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">
+                      <Lock className="w-5 h-5" />
+                    </div>
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                      required
+                      onFocus={() => setFocusedField('password')}
+                      onBlur={() => setFocusedField(null)}
+                      className={`w-full pl-11 pr-12 py-3 bg-white border rounded-lg focus:outline-none transition-colors duration-200 placeholder-slate-400 ${
+                        focusedField === 'password' 
+                          ? 'border-blue-500 ring-2 ring-blue-500/20' 
+                          : 'border-slate-300 hover:border-slate-400'
+                      }`}
                       disabled={isLoading}
+                      placeholder="••••••••"
+                      required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors duration-200 p-1"
+                      disabled={isLoading}
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                </div>
+
+                {/* Bouton de connexion */}
+                <div className="pt-2">
+                  <Button 
+                    type="button"
+                    onClick={handleLogin}
+                    className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
+                    disabled={isLoading}
+                  >
                     {isLoading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        {language === 'fr' ? 'Connexion...' : 'Signing in...'}
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>{language === 'fr' ? 'Connexion...' : 'Signing in...'}</span>
                       </div>
                     ) : (
-                      content[language].signin
+                      <span>{content[language].signin}</span>
                     )}
                   </Button>
-                </form>
-              </CardContent>
-            </Card>
+                </div>
+              </div>
+
+              {/* Informations de sécurité */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+                  <Shield className="w-4 h-4 text-blue-500" />
+                  <span>{content[language].secureLogin}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Footer professionnel */}
+          <div className="text-center mt-8">
+            <p className="text-sm text-slate-600 font-medium mb-1">
+              © 2025 SITE Conference
+            </p>
+            <p className="text-xs text-slate-500">
+              {language === 'fr' ? 'Système d\'administration sécurisé' : 'Secure administration system'}
+            </p>
           </div>
         </div>
-      </section>
+      </div>
     );
   }
 
   // Affichage de l'interface d'administration si connecté
   return (
     <div className="min-h-screen flex w-full bg-gray-50">
-      {/* Sidebar avec fonctionnalité de déconnexion intégrée */}
       <AdminSidebar
         language={language}
         user={user}
@@ -284,7 +357,6 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
         onSectionChange={handleSectionChange}
       />
 
-      {/* Contenu principal */}
       <main className="flex-1 p-6 overflow-y-auto md:ml-0">
         {renderActiveComponent()}
       </main>

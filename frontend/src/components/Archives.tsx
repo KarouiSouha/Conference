@@ -38,7 +38,7 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
         countries: 'Pays'
       },
       actions: {
-        bestPapers: 'Meilleurs Articles',
+        bestPapers: 'Meilleur Article',
         photos: 'Galerie Photos'
       },
       loading: 'Chargement des archives...',
@@ -95,14 +95,14 @@ const Archives: React.FC<ArchivesProps> = ({ language = 'fr' }) => {
     return new Date(dateString).getFullYear().toString();
   };
 
+  // Fonction pour ouvrir le PDF
   const handleViewBestPapers = (archive: Archive) => {
-    const year = getYearFromDate(archive.created_at);
-    setActionStatus(currentLanguage === 'fr'
-      ? `Redirection vers les meilleurs articles de ${year}...`
-      : `Redirecting to best papers from ${year}...`);
+    setActionStatus('Ouverture du PDF des meilleurs articles...');
 
     setTimeout(() => {
-      window.open(`https://site-conf.com/best-papers/${year}`, '_blank');
+      // Chemin vers le fichier PDF dans le dossier public
+      const pdfPath = '/asset/images/gallery/32182.pd.pdf';
+      window.open(pdfPath, '_blank'); // Ouvre le PDF dans un nouvel onglet
       setActionStatus('');
     }, 1000);
   };
