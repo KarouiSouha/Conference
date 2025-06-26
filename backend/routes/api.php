@@ -120,5 +120,5 @@ Route::prefix('News')->controller(NewsController::class)->group(function () {
 
 });
 
-// Route::get('/download-badge/{id}', [BadgeController::class, 'downloadBadge'])->name('download.badge');
+Route::get('/download-badge/{id}', [BadgeController::class, 'downloadBadge'])->name('download.badge');
 

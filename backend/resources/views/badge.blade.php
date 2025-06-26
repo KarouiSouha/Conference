@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <style>
         @page {
+            size: A4;
             margin: 0;
         }
         body {
@@ -13,20 +14,23 @@
         }
         .page {
             page-break-after: always;
-            width: 100vw;
-            height: 100vh;
+            width: 210mm;
+            height: 297mm;
             position: relative;
             text-align: center;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
+            justify-content: center;
             align-items: center;
-            padding-top: 55px; /* Décale l'image vers le bas pour qu'elle soit visible en haut */
+            padding: 0;
         }
         .badge-image {
-            width: 100%;
-            max-width: 700px; /* Légèrement réduit pour assurer la visibilité complète */
-            position: relative;
+            width: 210mm;
+            height: 297mm;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
         .name-overlay {
             position: absolute;
@@ -42,23 +46,24 @@
             padding: 0;
         }
         .full-page-image {
-            width: 100vw;
-            height: 100vh;
+            width: 210mm;
+            height: 297mm;
             object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
     </style>
 </head>
 <body>
 <!-- Page 1 (badge avec nom personnalisé) -->
 <div class="page">
-    <div style="position: relative; display: inline-block;">
-        <img src="{{ public_path('badges/challenger_badge.png') }}" class="badge-image" alt="Badge">
-        <div class="name-overlay">{{ $nom }}</div>
-    </div>
+    <img src="{{ public_path('badges/challenger_badge.png') }}" class="badge-image" alt="Badge">
+    <div class="name-overlay">{{ $nom }}</div>
 </div>
 
 <!-- Page 2 (image pleine page) -->
-<div class="page">
+<div class="page page-3">
     <img class="full-page-image" src="{{ public_path('badges/2.png') }}" alt="Image pleine page">
 </div>
 </body>
