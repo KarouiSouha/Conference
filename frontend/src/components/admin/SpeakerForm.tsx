@@ -62,6 +62,7 @@ export default function SpeakerForm({ isOpen, onClose, onSave, speaker }: FormPr
   const [removeImage, setRemoveImage] = useState<boolean>(false);
 
   const countries = [
+     {fr: "Tunisie", en: "Tunisia" },
     { fr: "France", en: "France" },
     { fr: "États-Unis", en: "United States" },
     { fr: "Royaume-Uni", en: "United Kingdom" },
@@ -71,7 +72,7 @@ export default function SpeakerForm({ isOpen, onClose, onSave, speaker }: FormPr
     { fr: "Canada", en: "Canada" },
     { fr: "Japon", en: "Japan" },
     { fr: "Chine", en: "China" },
-    { fr: "Inde", en: "India" }
+    { fr: "Inde", en: "India" },
   ];
 
   useEffect(() => {
@@ -518,7 +519,7 @@ export default function SpeakerForm({ isOpen, onClose, onSave, speaker }: FormPr
                     </div>
                   )}
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {countries.slice(0, 5).map((country, index) => (
+                    {countries.slice(0, 6).map((country, index) => (
                       <Button
                         key={index}
                         type="button"
