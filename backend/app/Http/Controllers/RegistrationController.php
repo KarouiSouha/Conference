@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RegistrationConfirmation;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RegistrationController extends Controller
 {
@@ -113,7 +114,16 @@ class RegistrationController extends Controller
             ]);
 
             // TODO: Envoyer un email de confirmation avec le mot de passe temporaire
-            Mail::to($registration->email)->send(new RegistrationConfirmation($registration->first_name . ' ' . $registration->last_name, 'http://localhost:8080', $request->language));
+            // Mail::to($registration->email)->send(new RegistrationConfirmation($registration->first_name . ' ' . $registration->last_name, 'http://localhost:8080', $request->language));
+
+            $mail = new RegistrationConfirmation(
+                $registration->first_name . ' ' . $registration->last_name,
+                route('api.registration.download-badge', ['id' => $registration->id]), // URL du badge
+                $request->language,
+                $registration->id // Passer l'ID
+            );
+
+            Mail::to($registration->email)->send($mail);
 
             return response()->json([
                 'success' => true,
@@ -131,6 +141,36 @@ class RegistrationController extends Controller
             ], 500);
         }
     }
+    public function downloadBadge($id)
+    {
+        try {
+            $registration = Registration::findOrFail($id);
+            $nom = $registration->first_name . ' ' . $registration->last_name;
+
+            $badgeImagePath = public_path('badges/challenger_badge.png');
+
+            if (!file_exists($badgeImagePath)) {
+                return redirect()->back()->with('error', 'Image du badge non trouvée.');
+            }
+
+            $pdf = Pdf::loadView('badge', [
+                'nom' => $nom,
+                'badgeImagePath' => $badgeImagePath,
+            ]);
+
+            $fileName = 'challenger_' . str_replace(' ', '_', strtolower($nom)) . '.pdf';
+            $storagePath = 'badges/' . $fileName;
+            Storage::disk('public')->put($storagePath, $pdf->output());
+
+            $downloadUrl = asset('storage/' . $storagePath);
+
+            // 🔁 Rediriger directement vers l'URL du badge
+            return redirect($downloadUrl);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage());
+        }
+    }
+
 
     /**
      * Display a specific registration.
@@ -227,7 +267,7 @@ class RegistrationController extends Controller
                 $filename = time() . '_' . Str::slug($registration->last_name . '_' . $registration->first_name) . '.' . $file->getClientOriginalExtension();
                 $updateData['payment_proof'] = $file->storeAs('payment-proofs', $filename, 'public');
             }
-            
+
             $registration->update($updateData);
 
             // Recalculer le montant si le type d'hébergement ou les accompagnants ont changé

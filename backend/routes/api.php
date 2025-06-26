@@ -13,7 +13,7 @@ use App\Http\Controllers\ProgrammeController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\NewsController;
-
+use App\Http\Controllers\BadgeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -97,6 +97,7 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
     Route::delete('/{id}', 'destroy');
     Route::patch('/{id}/mark-as-paid', 'markAsPaid');
     Route::get('/statistics', 'statistics'); // GET /api/Registration/statistics
+    Route::get('/{id}/download-badge', 'downloadBadge')->name('api.registration.download-badge');
 });
 
 
@@ -118,3 +119,6 @@ Route::prefix('News')->controller(NewsController::class)->group(function () {
     Route::get('/count', 'count');
 
 });
+
+// Route::get('/download-badge/{id}', [BadgeController::class, 'downloadBadge'])->name('download.badge');
+

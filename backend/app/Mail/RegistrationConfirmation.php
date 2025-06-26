@@ -11,6 +11,7 @@ use Illuminate\Queue\SerializesModels;
 class RegistrationConfirmation extends Mailable
 {
     use Queueable, SerializesModels;
+
     /**
      * Create a new message instance.
      *
@@ -19,12 +20,14 @@ class RegistrationConfirmation extends Mailable
     public $nom;
     public $url;
     public $language;
+    public $registrationId; // Ajouter cette propriété
 
-    public function __construct($nom,$url,$language)
+    public function __construct($nom, $url, $language, $registrationId = null)
     {
-         $this->nom = $nom;
-            $this->url = $url;
+        $this->nom = $nom;
+        $this->url = $url;
         $this->language = $language;
+        $this->registrationId = $registrationId; // Initialiser la propriété
     }
 
     /**
@@ -34,8 +37,12 @@ class RegistrationConfirmation extends Mailable
      */
     public function envelope()
     {
+        $subject = $this->language === 'fr'
+            ? 'Confirmation d\'inscription'
+            : 'Registration Confirmation';
+
         return new Envelope(
-            subject: 'Confirmation d\'inscription',
+            subject: $subject,
         );
     }
 
@@ -47,16 +54,16 @@ class RegistrationConfirmation extends Mailable
     public function content()
     {
         return new Content(
-            markdown: 'emailViewINscription',
+            html: 'emailViewINscription',
             with: [
                 'nom' => $this->nom,
                 'url' => $this->url,
                 'language' => $this->language,
-
+                'registrationId' => $this->registrationId, // Passer l'ID à la vue
             ],
         );
     }
-    
+
     /**
      * Get the attachments for the message.
      *
