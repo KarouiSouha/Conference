@@ -34,7 +34,7 @@
         }
         .name-overlay {
             position: absolute;
-            top: 45%; /* Position ajustée pour être sous "participant" */
+            top: 65%; /* Position ajustée pour être sous "participant" */
             left: 50%;
             transform: translate(-50%, -50%);
             font-size: 32px;
@@ -63,7 +63,7 @@
 </div>
 
 <!-- Page 2 (image pleine page) -->
-<div class="page page-3">
+<div class="page-3">
     <img class="full-page-image" src="{{ public_path('badges/2.png') }}" alt="Image pleine page">
 </div>
 </body>

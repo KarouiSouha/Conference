@@ -160,7 +160,27 @@ class RegistrationController extends Controller
 
             $fileName = 'challenger_' . str_replace(' ', '_', strtolower($nom)) . '.pdf';
             $storagePath = 'badges/' . $fileName;
-            Storage::disk('public')->put($storagePath, $pdf->output());
+
+            // 🔥 SUPPRIMER L'ANCIEN FICHIER S'IL EXISTE
+            if (Storage::disk('public')->exists($storagePath)) {
+                $deleted = Storage::disk('public')->delete($storagePath);
+                if (!$deleted) {
+                    return redirect()->back()->with('error', 'Impossible de supprimer l\'ancien fichier.');
+                }
+            }
+
+            // Créer le dossier s'il n'existe pas
+            $directory = dirname($storagePath);
+            if (!Storage::disk('public')->exists($directory)) {
+                Storage::disk('public')->makeDirectory($directory);
+            }
+
+            // Créer le nouveau fichier
+            $saved = Storage::disk('public')->put($storagePath, $pdf->output());
+
+            if (!$saved) {
+                return redirect()->back()->with('error', 'Impossible d\'enregistrer le nouveau fichier.');
+            }
 
             $downloadUrl = asset('storage/' . $storagePath);
 
@@ -170,6 +190,7 @@ class RegistrationController extends Controller
             return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
+
 
 
     /**
