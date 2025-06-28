@@ -30,7 +30,7 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [authToken, setAuthToken] = useState('');
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  
+
   interface User {
     id: number;
     name: string;
@@ -113,7 +113,7 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast({
         title: content[language].errors.loginFailed,
@@ -190,10 +190,10 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
     switch (activeSection) {
       case 'dashboard':
         return <AdminStats />;
-      case 'partners':
-        return <PartnersManager />;
       case 'speakers':
         return <SpeakersManager />;
+      case 'partners':
+        return <PartnersManager />;
       case 'comitee':
         return <ComiteeManager language={language} />;
       case 'news':
@@ -219,7 +219,7 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         {/* Accent subtil */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.03),transparent_70%)]"></div>
-        
+
         {/* Conteneur principal */}
         <div className="relative w-full max-w-md">
           {/* En-tête avec logo */}
@@ -260,11 +260,10 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
                       onChange={(e) => setEmail(e.target.value)}
                       onFocus={() => setFocusedField('email')}
                       onBlur={() => setFocusedField(null)}
-                      className={`w-full pl-11 pr-4 py-3 bg-white border rounded-lg focus:outline-none transition-colors duration-200 placeholder-slate-400 ${
-                        focusedField === 'email' 
-                          ? 'border-blue-500 ring-2 ring-blue-500/20' 
+                      className={`w-full pl-11 pr-4 py-3 bg-white border rounded-lg focus:outline-none transition-colors duration-200 placeholder-slate-400 ${focusedField === 'email'
+                          ? 'border-blue-500 ring-2 ring-blue-500/20'
                           : 'border-slate-300 hover:border-slate-400'
-                      }`}
+                        }`}
                       disabled={isLoading}
                       placeholder="admin@example.com"
                       required
@@ -287,11 +286,10 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
                       onChange={(e) => setPassword(e.target.value)}
                       onFocus={() => setFocusedField('password')}
                       onBlur={() => setFocusedField(null)}
-                      className={`w-full pl-11 pr-12 py-3 bg-white border rounded-lg focus:outline-none transition-colors duration-200 placeholder-slate-400 ${
-                        focusedField === 'password' 
-                          ? 'border-blue-500 ring-2 ring-blue-500/20' 
+                      className={`w-full pl-11 pr-12 py-3 bg-white border rounded-lg focus:outline-none transition-colors duration-200 placeholder-slate-400 ${focusedField === 'password'
+                          ? 'border-blue-500 ring-2 ring-blue-500/20'
                           : 'border-slate-300 hover:border-slate-400'
-                      }`}
+                        }`}
                       disabled={isLoading}
                       placeholder="••••••••"
                       required
@@ -309,10 +307,10 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
 
                 {/* Bouton de connexion */}
                 <div className="pt-2">
-                  <Button 
+                  <Button
                     type="button"
                     onClick={handleLogin}
-                    className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
+                    className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={isLoading}
                   >
                     {isLoading ? (
