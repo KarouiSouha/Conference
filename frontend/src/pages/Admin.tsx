@@ -10,6 +10,7 @@ import ArchivesManager from "@/components/admin/ArchivesManager";
 import ProgramManager from "@/components/admin/ProgramManager";
 import ThemesManager from "@/components/admin/ThemesManager";
 import ParticipantsManager from "@/components/admin/ParticipantsManager";
+import ContactManager from "@/components/admin/ContactManager"; // Ajout de l'importation
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +20,7 @@ interface AdminProps {
   language?: 'fr' | 'en';
 }
 
-type AdminSection = 'dashboard' | 'partners' | 'speakers' | 'comitee' | 'news' | 'archives' | 'program' | 'themes' | 'participants';
+type AdminSection = 'dashboard' | 'partners' | 'speakers' | 'comitee' | 'news' | 'archives' | 'program' | 'themes' | 'participants' | 'contacts'; // Ajout de 'contacts'
 
 const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -62,7 +63,8 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
         archives: 'Archives',
         program: 'Programme',
         themes: 'Thèmes',
-        participants: 'Participants'
+        participants: 'Participants',
+        contacts: 'Contacts' // Ajout de l'entrée pour "Contacts"
       },
       errors: {
         loginFailed: 'Erreur de connexion',
@@ -93,7 +95,8 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
         archives: 'Archives',
         program: 'Program',
         themes: 'Themes',
-        participants: 'Participants'
+        participants: 'Participants',
+        contacts: 'Contacts' // Ajout de l'entrée pour "Contacts"
       },
       errors: {
         loginFailed: 'Login Failed',
@@ -203,6 +206,8 @@ const Admin: React.FC<AdminProps> = ({ language = 'fr' }) => {
         return <ThemesManager />;
       case 'participants':
         return <ParticipantsManager />;
+      case 'contacts': // Ajout du cas pour "contacts"
+        return <ContactManager language={language} />; // Assurez-vous que ContactManager accepte 'language' comme prop
       default:
         return <AdminStats />;
     }

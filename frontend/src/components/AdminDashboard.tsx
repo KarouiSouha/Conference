@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, FileText, Calendar, Settings, Eye, Edit, Trash2, Plus, Send, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import ContactManager from './admin/ContactManager';
 
 interface AdminDashboardProps {
   language: 'fr' | 'en';
@@ -561,11 +562,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ language }) => {
           </div>
 
           <Tabs defaultValue="registrations" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="registrations">{content[language].registrations}</TabsTrigger>
               <TabsTrigger value="submissions">{content[language].submissions}</TabsTrigger>
               <TabsTrigger value="news">{content[language].news}</TabsTrigger>
               <TabsTrigger value="settings">{content[language].settings}</TabsTrigger>
+              <TabsTrigger value="contacts">{language === 'fr' ? 'Contacts' : 'Contacts'}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="registrations">
@@ -926,6 +928,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ language }) => {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+            
+            <TabsContent value="contacts">
+              <ContactManager language={language} />
             </TabsContent>
           </Tabs>
 

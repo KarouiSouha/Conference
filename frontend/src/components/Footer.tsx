@@ -1,5 +1,5 @@
 import React from 'react';
-import { Facebook, Linkedin, Calendar, MapPin } from 'lucide-react';
+import { Facebook, Linkedin, Calendar, MapPin, Mail, Phone, Users } from 'lucide-react';
 
 interface FooterProps {
   language: 'fr' | 'en';
@@ -41,7 +41,7 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
         
 
           {/* Main content grid */}
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid md:grid-cols-5 gap-6 mb-8">
             
             {/* Brand section */}
             <div className="space-y-4">
@@ -111,6 +111,55 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
               </div>
             </div>
 
+            {/* Contact section */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-base relative">
+                {language === 'fr' ? 'Contact' : 'Contact'}
+                <div className="absolute -bottom-1 left-0 w-8 h-0.5 bg-primary-foreground/50 rounded-full"></div>
+              </h4>
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3">
+                  <Mail className="w-4 h-4 mt-1 flex-shrink-0 opacity-80" />
+                  <div>
+                    <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-1">
+                      Email
+                    </div>
+                    <a 
+                      href="mailto:contact@site2025.tn" 
+                      className="text-sm hover:opacity-100 transition-opacity duration-200 break-all"
+                    >
+                      contact@site2025.tn
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <Phone className="w-4 h-4 mt-1 flex-shrink-0 opacity-80" />
+                  <div>
+                    <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-1">
+                      {language === 'fr' ? 'Téléphone' : 'Phone'}
+                    </div>
+                    <a 
+                      href="tel:+21698954990" 
+                      className="text-sm hover:opacity-100 transition-opacity duration-200"
+                    >
+                      +216 98 954 990
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <Users className="w-4 h-4 mt-1 flex-shrink-0 opacity-80" />
+                  <div>
+                    <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-1">
+                      {language === 'fr' ? 'Organisateur' : 'Organizer'}
+                    </div>
+                    <span className="text-sm">
+                      {language === 'fr' ? 'Comité d\'organisation SITE 2025' : 'SITE 2025 Organization Committee'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Social media */}
             <div className="space-y-4">
               <h4 className="font-semibold text-base relative">
@@ -166,6 +215,31 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
         </div>
       </div>
     </footer>
+  );
+};
+
+// Demo component with language toggle
+const FooterDemo = () => {
+  const [language, setLanguage] = React.useState<'fr' | 'en'>('fr');
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {/* Toggle language button */}
+      <div className="p-4 text-center">
+        <button
+          onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          {language === 'fr' ? 'Switch to English' : 'Passer au français'}
+        </button>
+      </div>
+      
+      {/* Spacer to push footer to bottom */}
+      <div className="flex-1"></div>
+      
+      {/* Footer */}
+      <Footer language={language} />
+    </div>
   );
 };
 

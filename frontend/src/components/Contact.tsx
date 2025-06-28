@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Calendar, Mail, Phone, Users, Eye, X } from 'lucide-react';
+import { MapPin, Calendar, Mail, Eye, X, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface ContactProps {
   language: 'fr' | 'en';
@@ -8,7 +8,7 @@ interface ContactProps {
 
 const VirtualTour: React.FC<{ language: 'fr' | 'en'; onClose: () => void }> = ({ language, onClose }) => {
   const [currentView, setCurrentView] = useState(0);
-  
+ 
   const views = {
     fr: [
       {
@@ -70,7 +70,7 @@ const VirtualTour: React.FC<{ language: 'fr' | 'en'; onClose: () => void }> = ({
             <X className="w-6 h-6 text-slate-600" />
           </button>
         </div>
-        
+       
         <div className="p-6">
           <div className="relative mb-6">
             <img
@@ -83,7 +83,7 @@ const VirtualTour: React.FC<{ language: 'fr' | 'en'; onClose: () => void }> = ({
               <h4 className="text-xl font-bold mb-1">{views[language][currentView].title}</h4>
               <p className="text-sm opacity-90">{views[language][currentView].description}</p>
             </div>
-            
+           
             {/* Navigation dots */}
             <div className="absolute top-4 right-4 flex gap-2">
               {views[language].map((_, index) => (
@@ -97,7 +97,7 @@ const VirtualTour: React.FC<{ language: 'fr' | 'en'; onClose: () => void }> = ({
               ))}
             </div>
           </div>
-          
+         
           {/* Thumbnails */}
           <div className="grid grid-cols-4 gap-3">
             {views[language].map((view, index) => (
@@ -105,8 +105,8 @@ const VirtualTour: React.FC<{ language: 'fr' | 'en'; onClose: () => void }> = ({
                 key={index}
                 onClick={() => setCurrentView(index)}
                 className={`relative rounded-lg overflow-hidden transition-all duration-200 ${
-                  currentView === index 
-                    ? 'ring-2 ring-blue-500 ring-offset-2' 
+                  currentView === index
+                    ? 'ring-2 ring-blue-500 ring-offset-2'
                     : 'hover:scale-105'
                 }`}
               >
@@ -132,6 +132,17 @@ const VirtualTour: React.FC<{ language: 'fr' | 'en'; onClose: () => void }> = ({
 
 const Contact: React.FC<ContactProps> = ({ language }) => {
   const [showVirtualTour, setShowVirtualTour] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   const content = {
     fr: {
@@ -156,6 +167,12 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
         email: 'contact@site2025.tn',
         phone: '+216 98 954 990',
         organizer: 'Comité d\'organisation SITE 2025'
+      },
+      messages: {
+        success: 'Votre message a été envoyé avec succès !',
+        error: 'Une erreur s\'est produite. Veuillez réessayer.',
+        sending: 'Envoi en cours...',
+        send: 'Envoyer'
       }
     },
     en: {
@@ -180,7 +197,65 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
         email: 'contact@site2025.tn',
         phone: '+216 98 954 990',
         organizer: 'SITE 2025 Organizing Committee'
+      },
+      messages: {
+        success: 'Your message has been sent successfully!',
+        error: 'An error occurred. Please try again.',
+        sending: 'Sending...',
+        send: 'Send'
       }
+    }
+  };
+
+  // Auto-hide notification after 4 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 4000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setNotification(null);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/Contact/store', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setNotification({
+          type: 'success',
+          message: content[language].messages.success
+        });
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      } else {
+        throw new Error('Failed to submit the form');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setNotification({
+        type: 'error',
+        message: content[language].messages.error
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -192,7 +267,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
             <h2 className="text-3xl md:text-4xl font-bold text-center text-primary mb-12">
               {content[language].title}
             </h2>
-           
+
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Card Lieu avec Visite Virtuelle */}
               <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:-translate-y-1">
@@ -215,8 +290,6 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                     <p className="text-sm text-slate-500 italic mb-4">
                       {content[language].venue.description}
                     </p>
-                    
-                    {/* Bouton Visite Virtuelle */}
                     <button
                       onClick={() => setShowVirtualTour(true)}
                       className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
@@ -227,7 +300,7 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                   </div>
                 </CardContent>
               </Card>
-             
+
               {/* Card Hébergement */}
               <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:-translate-y-1">
                 <CardHeader className="pb-4">
@@ -256,8 +329,8 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                   </div>
                 </CardContent>
               </Card>
-             
-              {/* Card Contact */}
+
+              {/* Card Contact Form */}
               <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:-translate-y-1">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-3 text-lg">
@@ -268,42 +341,76 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-5">
-                    <div className="group/contact hover:bg-slate-50 p-3 rounded-lg transition-colors duration-200">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Mail className="w-4 h-4 text-purple-600" />
-                        <span className="text-sm font-medium text-slate-700">Email</span>
-                      </div>
-                      <a href={`mailto:${content[language].contact.email}`} 
-                         className="text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200 text-sm">
-                        {content[language].contact.email}
-                      </a>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        {language === 'fr' ? 'Nom' : 'Name'} <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                        placeholder={language === 'fr' ? 'Votre nom complet' : 'Your full name'}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Email <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                        placeholder={language === 'fr' ? 'votre.email@exemple.com' : 'your.email@example.com'}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        {language === 'fr' ? 'Sujet' : 'Subject'} <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="subject"
+                        value={formData.subject}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                        placeholder={language === 'fr' ? 'Objet de votre message' : 'Subject of your message'}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Message <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        name="message"
+                        value={formData.message}
+                        onChange={handleInputChange}
+                        required
+                        rows={4}
+                        className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all duration-200 bg-white/50 backdrop-blur-sm resize-none"
+                        placeholder={language === 'fr' ? 'Votre message...' : 'Your message...'}
+                      ></textarea>
                     </div>
                     
-                    <div className="group/contact hover:bg-slate-50 p-3 rounded-lg transition-colors duration-200">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Phone className="w-4 h-4 text-purple-600" />
-                        <span className="text-sm font-medium text-slate-700">
-                          {language === 'fr' ? 'Téléphone' : 'Phone'}
-                        </span>
-                      </div>
-                      <a href={`tel:${content[language].contact.phone}`}
-                         className="text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200 text-sm">
-                        {content[language].contact.phone}
-                      </a>
-                    </div>
-                    
-                    <div className="group/contact hover:bg-slate-50 p-3 rounded-lg transition-colors duration-200">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Users className="w-4 h-4 text-purple-600" />
-                        <span className="text-sm font-medium text-slate-700">
-                          {language === 'fr' ? 'Organisateur' : 'Organizer'}
-                        </span>
-                      </div>
-                      <p className="text-slate-600 text-sm leading-relaxed">
-                        {content[language].contact.organizer}
-                      </p>
-                    </div>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      onClick={handleSubmit}
+                      className={`w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg ${
+                        isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      {isSubmitting
+                        ? content[language].messages.sending
+                        : content[language].messages.send}
+                    </button>
                   </div>
                 </CardContent>
               </Card>
@@ -311,12 +418,53 @@ const Contact: React.FC<ContactProps> = ({ language }) => {
           </div>
         </div>
       </section>
-      
-      {/* Modal Visite Virtuelle */}
+
+      {/* Notification Toast - Positioned at top-right */}
+      {notification && (
+        <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-right-full duration-300">
+          <div className={`
+            flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl backdrop-blur-md border
+            ${notification.type === 'success' 
+              ? 'bg-emerald-50/95 border-emerald-200 text-emerald-800' 
+              : 'bg-red-50/95 border-red-200 text-red-800'
+            }
+            min-w-[320px] max-w-md
+          `}>
+            <div className={`
+              p-1 rounded-full
+              ${notification.type === 'success' ? 'bg-emerald-100' : 'bg-red-100'}
+            `}>
+              {notification.type === 'success' ? (
+                <CheckCircle className="w-5 h-5 text-emerald-600" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              )}
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-sm leading-relaxed">
+                {notification.message}
+              </p>
+            </div>
+            <button
+              onClick={() => setNotification(null)}
+              className={`
+                p-1 rounded-full transition-colors duration-200
+                ${notification.type === 'success' 
+                  ? 'hover:bg-emerald-100 text-emerald-600' 
+                  : 'hover:bg-red-100 text-red-600'
+                }
+              `}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {showVirtualTour && (
-        <VirtualTour 
-          language={language} 
-          onClose={() => setShowVirtualTour(false)} 
+        <VirtualTour
+          language={language}
+          onClose={() => setShowVirtualTour(false)}
         />
       )}
     </>

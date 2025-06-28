@@ -31,7 +31,8 @@ export function AdminSidebar({
     partners: null,
     speakers: null,
     news: null,
-    participants: null
+    participants: null,
+    contacts: null // Ajout de contacts dans les counts pour une éventuelle statistique
   });
 
   useEffect(() => {
@@ -42,14 +43,16 @@ export function AdminSidebar({
           partners: { data: { total_partners: 12 } },
           speakers: { data: { total_speakers: 25 } },
           news: { data: { total_news: 8 } },
-          participants: { data: { total_registrations: 156 } }
+          participants: { data: { total_registrations: 156 } },
+          contacts: { data: { total_contacts: 50 } } // Exemple de statistique pour les contacts
         };
         
         setCounts({
           partners: mockData.partners.data.total_partners,
           speakers: mockData.speakers.data.total_speakers,
           news: mockData.news.data.total_news,
-          participants: mockData.participants.data.total_registrations
+          participants: mockData.participants.data.total_registrations,
+          contacts: mockData.contacts.data.total_contacts // Ajout de la statistique pour contacts
         });
       } catch (error) {
         console.error("Erreur lors du chargement des statistiques :", error);
@@ -80,6 +83,7 @@ export function AdminSidebar({
         { title: "Programme", url: "program", icon: Calendar, badge: "NEW", description: "Planning des événements" },
         { title: "Thèmes", url: "themes", icon: Tags, badge: null, description: "Sujets de recherche" },
         { title: "Participants", url: "participants", icon: UserCheck, badge: counts.participants?.toString() || null, description: "Inscrits à l'événement" },
+        { title: "Contacts", url: "contacts", icon: Users, badge: counts.contacts?.toString() || null, description: "Gestion des contacts" } // Ajout de la section Contacts
       ]
     },
     en: {
@@ -102,6 +106,7 @@ export function AdminSidebar({
         { title: "Program", url: "program", icon: Calendar, badge: "NEW", description: "Event schedule" },
         { title: "Themes", url: "themes", icon: Tags, badge: null, description: "Research topics" },
         { title: "Participants", url: "participants", icon: UserCheck, badge: counts.participants?.toString() || null, description: "Event registrants" },
+        { title: "Contacts", url: "contacts", icon: Users, badge: counts.contacts?.toString() || null, description: "Contacts management" } // Ajout de la section Contacts
       ]
     }
   };

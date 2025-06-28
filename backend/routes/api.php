@@ -14,6 +14,7 @@ use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\BadgeController;
+use App\Http\Controllers\ContactController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,10 +26,15 @@ use App\Http\Controllers\BadgeController;
 |
 */
 
-// Exemple de route protégée (facultatif)
-// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//     return $request->user();
-// });
+Route::prefix('Contact')->controller(ContactController::class)->group(function () {
+    Route::get('/', 'index');       
+    Route::post('/store', 'store');      
+    Route::get('/{id}', 'displayOne');  
+    Route::put('/{id}', 'update');      
+    Route::delete('/{id}', 'destroy'); 
+    Route::get('/{id}/view',  'view');
+    Route::post('/{id}/send-reply',  'sendReply');  
+});
 
 Route::apiResource('dates', ImportantDateController::class);
 Route::prefix('Speakers')->controller(SpeakerController::class)->group(function () {
