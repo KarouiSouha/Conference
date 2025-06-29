@@ -92,20 +92,6 @@ Route::prefix('Programme')->controller(ProgrammeController::class)->group(functi
     Route::put('/{id}', 'update');                  // PUT /api/Programme/{id}
     Route::delete('/{id}', 'destroy');              // DELETE /api/Programme/{id}
 });
-// Routes pour les inscriptions
-// Route::prefix('Registration')->controller(RegistrationController::class)->group(function () {
-//     Route::get('/all', 'index');
-//     Route::get('/count', 'count');               // 👈 Mettre AVANT /{id}
-//     Route::get('/statistics', 'statistics');     // 👈 Mettre AVANT /{id}
-//     Route::get('/{id}', 'show');
-//     Route::post('/', 'store');
-//     Route::post('update/{id}', 'update');
-//     Route::delete('/{id}', 'destroy');
-//     Route::patch('/{id}/mark-as-paid', 'markAsPaid');
-//     Route::get('/statistics', 'statistics'); // GET /api/Registration/statistics
-//     Route::get('/{id}/download-badge/{language}', [RegistrationController::class, 'downloadBadge'])
-//     ->name('api.registration.download-badge');
-// });
 
 Route::prefix('Registration')->controller(RegistrationController::class)->group(function () {
     // Routes spécifiques AVANT les routes avec paramètres
@@ -114,6 +100,7 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
     Route::get('/statistics', 'statistics');
     Route::get('/all-participants-by-country', 'allParticipantsByCountry'); // 👈 CORRIGÉ
     Route::get('/participants-by-country/{countryCode}', 'participantsByCountry'); // 👈 CORRIGÉ
+    Route::get('/recent','recent');
 
     // Routes avec paramètres APRÈS
     Route::get('/{id}', 'show');
@@ -123,6 +110,7 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
     Route::patch('/{id}/mark-as-paid', 'markAsPaid');
     Route::get('/{id}/download-badge/{language}', 'downloadBadge')
         ->name('api.registration.download-badge');
+    
 });
 
 Route::prefix('Archive')->controller(ArchiveController::class)->group(function () {

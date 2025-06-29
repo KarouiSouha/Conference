@@ -451,4 +451,24 @@ class RegistrationController extends Controller
             ], 500);
         }
     }
+    /**
+ * Get recent registrations.
+ */
+public function recent(): JsonResponse
+{
+    try {
+        $recentRegistrations = Registration::orderBy('created_at', 'desc')->take(3)->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $recentRegistrations,
+            'message' => 'Recent registrations retrieved successfully'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error retrieving recent registrations: ' . $e->getMessage()
+        ], 500);
+    }
+}
 }

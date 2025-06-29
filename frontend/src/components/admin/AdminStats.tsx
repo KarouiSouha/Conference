@@ -15,7 +15,7 @@ interface Stats {
   themes: { count: number };
   news: { count: number; thisWeek: number };
   archives: { count: number };
-  activities: Array<{ type: string; description: string; time: string }>;
+  activities: Array<{ type: string; description: string; timeAgo: string }>;
 }
 
 export default function AdminStats() {
@@ -34,6 +34,7 @@ export default function AdminStats() {
     activities: [],
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -47,6 +48,7 @@ export default function AdminStats() {
           themesRes,
           newsRes,
           archivesRes,
+          registrationActivityRes,
         ] = await Promise.all([
           axios.get("/api/Registration/statistics"),
           axios.get("/api/Speakers/statistics"),
@@ -55,44 +57,51 @@ export default function AdminStats() {
           axios.get("/api/Theme/all"),
           axios.get("/api/News/all"),
           axios.get("/api/Archive/all"),
+          axios.get("/api/Registration/recent"),
         ]);
 
-        // Extraire les données
-        const participantsCount = registrationStatsRes.data.data.total || 0;
-        const revenueTotal = registrationStatsRes.data.data.total_amount || 0;
-        const speakersCount = speakersStatsRes.data.data.total || 0;
-        const speakersActiveThisMonth = speakersStatsRes.data.data.active_this_month || 0;
+        const participantsCount = registrationStatsRes.data.data?.total || 0;
+        const revenueTotal = registrationStatsRes.data.data?.total_amount || 0;
+        const speakersCount = speakersStatsRes.data.data?.total || 0;
+        const speakersActiveThisMonth = speakersStatsRes.data.data?.active_this_month || 0;
         const sessionsCount = programmeRes.data.length || 0;
-        const partnersCount = partnersRes.data.total_partners || 0; // Changé de count à total_partners
-        const themesCount = themesRes.data.data.length || 0;
+        const partnersCount = partnersRes.data?.total_partners || 0;
+        const themesCount = themesRes.data.data?.length || 0;
         const newsCount = newsRes.data.length || 0;
         const archivesCount = archivesRes.data.length || 0;
 
-        // Définir un type pour les objets news
-        type NewsItem = { title_fr?: string; title_en?: string };
-        // Simuler des données pour les activités
-        const activities = newsRes.data.slice(0, 4).map((news: NewsItem) => ({
+        type NewsItem = { title_fr?: string; title_en?: string; created_at?: string };
+        type RegistrationItem = { first_name: string; last_name: string; email: string; created_at: string };
+        const now = new Date(); // Current time: 04:07 PM CET, June 29, 2025
+        const recentNews = newsRes.data.slice(0, 2).map((news: NewsItem) => ({
           type: "Actualité",
-          description: news.title_fr || news.title_en,
-          time: `${Math.floor(Math.random() * 60)} min`,
+          description: news.title_fr || news.title_en || "No title",
+          timeAgo: news.created_at ? getTimeAgo(new Date(news.created_at), now) : "No date",
         }));
+        const recentRegistrations = registrationActivityRes.data.data?.slice(0, 3).map((reg: RegistrationItem) => ({
+          type: "Inscription",
+          description: `${reg.first_name} ${reg.last_name} (${reg.email})`,
+          timeAgo: getTimeAgo(new Date(reg.created_at), now),
+        })) || [];
+        const activities = [...recentNews, ...recentRegistrations];
 
         setStats({
-          participants: { count: participantsCount, previousMonth: Math.round(participantsCount * 0.88) }, // Simuler +12%
+          participants: { count: participantsCount, previousMonth: Math.round(participantsCount * 0.88) },
           speakers: { count: speakersCount, activeThisMonth: speakersActiveThisMonth },
-          sessions: { count: sessionsCount, thisWeek: Math.round(sessionsCount * 0.15) }, // Simuler 15%
-          revenue: { total: revenueTotal, thisMonth: Math.round(revenueTotal * 0.82) }, // Simuler +18%
-          performance: { satisfaction: 94 }, // Statique
-          goals: { achieved: 87 }, // Statique
-          growth: { percentage: 24 }, // Statique
-          partners: { count: partnersCount, thisMonth: 2 }, // Simuler +2
+          sessions: { count: sessionsCount, thisWeek: Math.round(sessionsCount * 0.15) },
+          revenue: { total: revenueTotal, thisMonth: Math.round(revenueTotal * 0.82) },
+          performance: { satisfaction: 94 },
+          goals: { achieved: 87 },
+          growth: { percentage: 24 },
+          partners: { count: partnersCount, thisMonth: 2 },
           themes: { count: themesCount },
-          news: { count: newsCount, thisWeek: 5 }, // Simuler +5
+          news: { count: newsCount, thisWeek: 5 },
           archives: { count: archivesCount },
           activities,
         });
       } catch (error) {
-        console.error("Erreur lors du chargement des statistiques :", error);
+        console.error("Error fetching stats:", error);
+        setError("Failed to load statistics. Please check the console for details.");
       } finally {
         setLoading(false);
       }
@@ -101,14 +110,33 @@ export default function AdminStats() {
     fetchStats();
   }, []);
 
+  // Function to calculate time ago
+  const getTimeAgo = (date: Date, now: Date): string => {
+    const diffMs = now.getTime() - date.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    const diffMonths = Math.floor(diffDays / 30);
+
+    if (diffMonths > 0) return `il y a ${diffMonths} mois`;
+    if (diffDays > 0) return `il y a ${diffDays} jours`;
+    if (diffHours > 0) return `il y a ${diffHours} heures`;
+    if (diffMinutes > 0) return `il y a ${diffMinutes} minutes`;
+    return `il y a ${diffSeconds} secondes`;
+  };
+
   if (loading) {
     return <div className="min-h-screen bg-white p-6">Chargement...</div>;
+  }
+
+  if (error) {
+    return <div className="min-h-screen bg-white p-6 text-red-500">{error}</div>;
   }
 
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header Navigation */}
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent">
@@ -130,7 +158,6 @@ export default function AdminStats() {
           </div>
         </div>
 
-        {/* Quick Actions Bar */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="relative">
@@ -155,7 +182,6 @@ export default function AdminStats() {
           </div>
         </div>
 
-        {/* Main Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 hover:border-blue-300 transition-all duration-500 hover:scale-105 shadow-sm hover:shadow-md">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-100/50 to-transparent"></div>
@@ -268,7 +294,6 @@ export default function AdminStats() {
           </Card>
         </div>
 
-        {/* Performance Metrics */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="bg-white border border-slate-200 shadow-sm">
             <div className="p-6">
@@ -325,9 +350,7 @@ export default function AdminStats() {
           </Card>
         </div>
 
-        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Activity Feed */}
           <div className="lg:col-span-2">
             <Card className="bg-white border border-slate-200 shadow-sm">
               <div className="p-8">
@@ -345,12 +368,16 @@ export default function AdminStats() {
                   {stats.activities.map((activity, index) => (
                     <div
                       key={index}
-                      className="group flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-transparent rounded-2xl border border-emerald-200 hover:border-emerald-300 transition-all duration-300"
+                      className={`group flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${
+                        activity.type === "Inscription"
+                          ? "bg-gradient-to-r from-blue-50 to-transparent border-blue-200 hover:border-blue-300"
+                          : "bg-gradient-to-r from-emerald-50 to-transparent border-emerald-200 hover:border-emerald-300"
+                      }`}
                     >
                       <div className="flex items-center space-x-4">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                        <div className="w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: activity.type === "Inscription" ? "#3b82f6" : "#10b981" }}></div>
                         <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-full flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: activity.type === "Inscription" ? "linear-gradient(to bottom right, #60a5fa, #3b82f6)" : "linear-gradient(to bottom right, #34d399, #10b981)" }}>
                             <Users className="h-4 w-4 text-white" />
                           </div>
                           <div>
@@ -359,7 +386,7 @@ export default function AdminStats() {
                           </div>
                         </div>
                       </div>
-                      <span className="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">{activity.time}</span>
+                      <span className="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">{activity.timeAgo}</span>
                     </div>
                   ))}
                 </div>
@@ -367,7 +394,6 @@ export default function AdminStats() {
             </Card>
           </div>
 
-          {/* Resource Overview */}
           <div>
             <Card className="bg-white border border-slate-200 shadow-sm">
               <div className="p-8">

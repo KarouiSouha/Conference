@@ -33,9 +33,8 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   const API_BASE_URL = 'http://localhost:8000/api/Contact';
-  const EMAIL_API_URL = 'http://localhost:8000/api/Contact'; // Base URL pour l'envoi d'emails
+  const EMAIL_API_URL = 'http://localhost:8000/api/Contact';
 
-  // Charger les messages depuis l'API
   const fetchMessages = async () => {
     try {
       setLoading(true);
@@ -101,7 +100,6 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
       replyPlaceholder: 'Tapez votre réponse ici...',
       subjectPlaceholder: 'Re: ',
       originalMessage: 'Message original'
-
     },
     en: {
       title: 'Message Management',
@@ -154,19 +152,19 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'nouveau': return <Circle className="w-4 h-4 text-blue-500" />;
-      case 'en attente': return <Clock className="w-4 h-4 text-orange-500" />;
-      case 'traité': return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'nouveau': return <Circle className="w-4 h-4 text-blue-600" />;
+      case 'en attente': return <Clock className="w-4 h-4 text-orange-600" />;
+      case 'traité': return <CheckCircle className="w-4 h-4 text-green-600" />;
       default: return <Circle className="w-4 h-4 text-gray-400" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'nouveau': return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'en attente': return 'bg-orange-50 text-orange-700 border-orange-200';
-      case 'traité': return 'bg-green-50 text-green-700 border-green-200';
-      default: return 'bg-gray-50 text-gray-500 border-gray-200';
+      case 'nouveau': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'en attente': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'traité': return 'bg-green-100 text-green-800 border-green-300';
+      default: return 'bg-gray-100 text-gray-600 border-gray-300';
     }
   };
 
@@ -181,12 +179,10 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
     });
   };
 
-  // Fonction pour gérer la visualisation d'un message
   const handleView = async (message: Message) => {
     setSelectedMessage(message);
     setNotes(message.notes || '');
     
-    // Si le message est "nouveau", le passer automatiquement à "en attente"
     if (message.status === 'nouveau') {
       try {
         const response = await fetch(`${API_BASE_URL}/${message.id}/view`, {
@@ -211,14 +207,12 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
     }
   };
 
-  // Fonction pour envoyer un email de réponse
   const handleReply = async () => {
     if (!selectedMessage || !replyMessage.trim()) return;
 
     setSending(true);
     
     try {
-      // Préparer les données de l'email
       const emailData = {
         to: selectedMessage.email,
         subject: replySubject || `Re: ${selectedMessage.subject || 'Votre message'}`,
@@ -232,7 +226,6 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
         }
       };
 
-      // Envoyer l'email
       const emailResponse = await fetch(`${EMAIL_API_URL}/${selectedMessage.id}/send-reply`, {
         method: 'POST',
         headers: {
@@ -244,12 +237,10 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
       if (emailResponse.ok) {
         showNotification('success', content[language].emailSent);
         
-        // Réinitialiser le formulaire
         setReplyMessage('');
         setReplySubject('');
         setShowReplyModal(false);
         
-        // Actualiser la liste des messages
         fetchMessages();
       } else {
         const errorData = await emailResponse.json();
@@ -263,7 +254,6 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
     }
   };
 
-  // Fonction pour changer le statut d'un message
   const handleStatusChange = async (id: number, newStatus: Message['status'], showNotif: boolean = true) => {
     try {
       const response = await fetch(`${API_BASE_URL}/${id}`, {
@@ -275,7 +265,6 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
       });
 
       if (response.ok) {
-        // Mettre à jour l'état local
         setMessages(messages.map(m => m.id === id ? { ...m, status: newStatus } : m));
         if (selectedMessage?.id === id) {
           setSelectedMessage({ ...selectedMessage, status: newStatus });
@@ -318,7 +307,6 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
     }
   };
 
-  // Préparer le sujet de réponse quand on ouvre le modal
   const openReplyModal = () => {
     if (selectedMessage) {
       setReplySubject(`Re: ${selectedMessage.subject || 'Votre message'}`);
@@ -343,160 +331,117 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement des messages...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-700 font-medium">{content[language].sending}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Notification */}
+    <div className="min-h-screen bg-gray-100 p-8">
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
-          notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        <div className={`fixed top-6 right-6 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+          notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
         }`}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {notification.type === 'success' ? 
               <CheckSquare className="w-5 h-5" /> : 
               <AlertCircle className="w-5 h-5" />
             }
-            {notification.message}
+            <span className="font-medium">{notification.message}</span>
           </div>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{content[language].title}</h1>
-          <p className="text-gray-600">{content[language].subtitle}</p>
+      <div className="max-w-7xl mx-auto space-y-8">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">{content[language].title}</h1>
+          <p className="text-lg text-gray-600">{content[language].subtitle}</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-0 shadow-sm bg-white hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{content[language].totalMessages}</p>
-                  <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { label: content[language].totalMessages, value: stats.total, icon: Mail, color: 'blue' },
+            { label: content[language].newMessages, value: stats.new, icon: Circle, color: 'blue' },
+            { label: content[language].pending, value: stats.pending, icon: Clock, color: 'orange' },
+            { label: content[language].resolved, value: stats.resolved, icon: CheckCircle, color: 'green' },
+          ].map((stat, index) => (
+            <Card key={index} className="border-none shadow-lg bg-white hover:shadow-xl transition-shadow duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-600">{stat.label}</p>
+                    <p className={`text-3xl font-bold text-${stat.color}-600`}>{stat.value}</p>
+                  </div>
+                  <div className={`p-3 bg-${stat.color}-100 rounded-full`}>
+                    <stat.icon className={`w-6 h-6 text-${stat.color}-600`} />
+                  </div>
                 </div>
-                <div className="p-3 bg-blue-50 rounded-full">
-                  <Mail className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm bg-white hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{content[language].newMessages}</p>
-                  <p className="text-3xl font-bold text-blue-600">{stats.new}</p>
-                </div>
-                <div className="p-3 bg-blue-50 rounded-full">
-                  <Circle className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm bg-white hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{content[language].pending}</p>
-                  <p className="text-3xl font-bold text-orange-600">{stats.pending}</p>
-                </div>
-                <div className="p-3 bg-orange-50 rounded-full">
-                  <Clock className="w-6 h-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm bg-white hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{content[language].resolved}</p>
-                  <p className="text-3xl font-bold text-green-600">{stats.resolved}</p>
-                </div>
-                <div className="p-3 bg-green-50 rounded-full">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Messages List */}
           <div className="lg:col-span-2">
-            <Card className="border-0 shadow-sm bg-white">
-              <CardHeader className="border-b border-gray-100 pb-4">
+            <Card className="border-none shadow-lg bg-white">
+              <CardHeader className="border-b border-gray-200 p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                       type="text"
                       placeholder={content[language].search}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                   </div>
-                  <div className="flex gap-2">
-                    <select
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      {Object.entries(content[language].filters).map(([key, value]) => (
-                        <option key={key} value={key}>{value}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  >
+                    {Object.entries(content[language].filters).map(([key, value]) => (
+                      <option key={key} value={key}>{value}</option>
+                    ))}
+                  </select>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
                 {filteredMessages.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500">
-                    <Mail className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p>{content[language].noMessages}</p>
+                  <div className="p-10 text-center text-gray-500">
+                    <Mail className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-medium">{content[language].noMessages}</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-gray-200">
                     {filteredMessages.map(message => (
                       <div
                         key={message.id}
-                        className={`p-6 hover:bg-gray-50 cursor-pointer transition-colors ${
-                          selectedMessage?.id === message.id ? 'bg-blue-50 border-r-4 border-blue-500' : ''
-                        } ${message.status === 'nouveau' ? 'border-l-4 border-l-blue-400' : ''}`}
+                        className={`p-6 hover:bg-gray-50 cursor-pointer transition-colors duration-150 ${
+                          selectedMessage?.id === message.id ? 'bg-blue-50 border-r-4 border-blue-600' : ''
+                        } ${message.status === 'nouveau' ? 'border-l-4 border-blue-600' : ''}`}
                         onClick={() => handleView(message)}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3 mb-2">
                               {getStatusIcon(message.status)}
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(message.status)}`}>
+                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(message.status)}`}>
                                 {content[language].statuses[message.status]}
                               </span>
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">
-                              {message.subject || 'Sans sujet'}
-                            </h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">{message.subject || 'Sans sujet'}</h3>
                             <p className="text-sm text-gray-600 mb-1">
                               <strong>{message.name || 'Anonyme'}</strong> - {message.email || 'Pas d\'email'}
                             </p>
                             <p className="text-sm text-gray-500">{formatDate(message.created_at)}</p>
                           </div>
-                          <div className="flex gap-1 ml-4">
+                          <div className="flex gap-2 ml-4">
                             <Button
                               size="sm"
                               variant="ghost"
@@ -504,9 +449,9 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
                                 e.stopPropagation();
                                 handleDelete(message.id);
                               }}
-                              className="text-gray-400 hover:text-red-500"
+                              className="text-gray-400 hover:text-red-600 hover:bg-red-100"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-5 h-5" />
                             </Button>
                           </div>
                         </div>
@@ -518,27 +463,26 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
             </Card>
           </div>
 
-          {/* Message Details */}
           <div className="lg:col-span-1">
             {selectedMessage ? (
-              <Card className="border-0 shadow-sm bg-white sticky top-6">
-                <CardHeader className="border-b border-gray-100">
+              <Card className="border-none shadow-lg bg-white sticky top-8">
+                <CardHeader className="border-b border-gray-200 p-6">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{content[language].messageDetails}</CardTitle>
+                    <CardTitle className="text-xl font-semibold">{content[language].messageDetails}</CardTitle>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => setSelectedMessage(null)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-5 h-5" />
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-3">{selectedMessage.subject || 'Sans sujet'}</h3>
-                    <div className="space-y-2 text-sm">
+                    <h3 className="font-semibold text-gray-900 text-lg mb-3">{selectedMessage.subject || 'Sans sujet'}</h3>
+                    <div className="space-y-2 text-sm text-gray-700">
                       <p><span className="font-medium text-gray-600">{content[language].from}:</span> {selectedMessage.name || 'Anonyme'}</p>
                       <p><span className="font-medium text-gray-600">Email:</span> {selectedMessage.email || 'Pas d\'email'}</p>
                       <p><span className="font-medium text-gray-600">{content[language].date}:</span> {formatDate(selectedMessage.created_at)}</p>
@@ -546,18 +490,18 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
                   </div>
 
                   <div>
-                    <h4 className="font-medium text-gray-700 mb-2">Message</h4>
-                    <div className="p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-semibold text-gray-700 mb-2">Message</h4>
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                       <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedMessage.message || 'Pas de message'}</p>
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="font-medium text-gray-700 mb-2">Statut</h4>
+                    <h4 className="font-semibold text-gray-700 mb-2">Statut</h4>
                     <select
                       value={selectedMessage.status}
                       onChange={(e) => handleStatusChange(selectedMessage.id, e.target.value as Message['status'])}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     >
                       {Object.entries(content[language].statuses).map(([key, value]) => (
                         <option key={key} value={key}>{value}</option>
@@ -567,38 +511,37 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
 
                   <Button
                     onClick={openReplyModal}
-                    className="w-full"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-all"
                     disabled={!selectedMessage.email}
                   >
-                    <Send className="w-4 h-4 mr-2" />
+                    <Send className="w-5 h-5 mr-2" />
                     {content[language].actions.reply}
                   </Button>
                   
                   {!selectedMessage.email && (
-                    <p className="text-xs text-gray-500 text-center">
+                    <p className="text-sm text-gray-500 text-center mt-2">
                       Email non disponible pour ce message
                     </p>
                   )}
                 </CardContent>
               </Card>
             ) : (
-              <Card className="border-0 shadow-sm bg-white">
+              <Card className="border-none shadow-lg bg-white">
                 <CardContent className="p-12 text-center">
                   <Mail className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                  <p className="text-gray-500">Sélectionnez un message pour voir les détails</p>
+                  <p className="text-lg font-medium text-gray-500">Sélectionnez un message pour voir les détails</p>
                 </CardContent>
               </Card>
             )}
           </div>
         </div>
 
-        {/* Reply Modal */}
         {showReplyModal && selectedMessage && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto">
-              <CardHeader className="border-b border-gray-100">
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-6 z-50">
+            <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto border-none shadow-xl bg-white">
+              <CardHeader className="border-b border-gray-200 p-6">
                 <div className="flex items-center justify-between">
-                  <CardTitle>Répondre à: {selectedMessage.name || 'Anonyme'}</CardTitle>
+                  <CardTitle className="text-xl font-semibold">Répondre à: {selectedMessage.name || 'Anonyme'}</CardTitle>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -607,87 +550,83 @@ const ContactManager: React.FC<ContactManagerProps> = ({ language }) => {
                       setReplyMessage('');
                       setReplySubject('');
                     }}
+                    className="text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-5 h-5" />
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-6">
-                  {/* Message original */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-700 mb-2">{content[language].originalMessage}</h4>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p><strong>De:</strong> {selectedMessage.name} ({selectedMessage.email})</p>
-                      <p><strong>Sujet:</strong> {selectedMessage.subject}</p>
-                      <p><strong>Date:</strong> {formatDate(selectedMessage.created_at)}</p>
-                      <div className="mt-2 p-3 bg-white rounded border-l-4 border-blue-300">
-                        <p className="whitespace-pre-wrap">{selectedMessage.message}</p>
-                      </div>
+              <CardContent className="p-6 space-y-6">
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h4 className="font-semibold text-gray-700 mb-2">{content[language].originalMessage}</h4>
+                  <div className="text-sm text-gray-600 space-y-2">
+                    <p><strong>De:</strong> {selectedMessage.name} ({selectedMessage.email})</p>
+                    <p><strong>Sujet:</strong> {selectedMessage.subject}</p>
+                    <p><strong>Date:</strong> {formatDate(selectedMessage.created_at)}</p>
+                    <div className="mt-3 p-4 bg-white rounded-lg border-l-4 border-blue-400">
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedMessage.message}</p>
                     </div>
                   </div>
+                </div>
 
-                  {/* Formulaire de réponse */}
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {content[language].replySubject}
-                      </label>
-                      <input
-                        type="text"
-                        value={replySubject}
-                        onChange={(e) => setReplySubject(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder={content[language].subjectPlaceholder}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {content[language].yourReply}
-                      </label>
-                      <textarea
-                        value={replyMessage}
-                        onChange={(e) => setReplyMessage(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        rows={8}
-                        placeholder={content[language].replyPlaceholder}
-                      />
-                    </div>
-
-                  
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      {content[language].replySubject}
+                    </label>
+                    <input
+                      type="text"
+                      value={replySubject}
+                      onChange={(e) => setReplySubject(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      placeholder={content[language].subjectPlaceholder}
+                    />
                   </div>
 
-                  <div className="flex gap-3 justify-end">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setShowReplyModal(false);
-                        setReplyMessage('');
-                        setReplySubject('');
-                      }}
-                      disabled={sending}
-                    >
-                      {content[language].actions.close}
-                    </Button>
-                    <Button 
-                      onClick={handleReply}
-                      disabled={sending || !replyMessage.trim()}
-                      className="min-w-[120px]"
-                    >
-                      {sending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {content[language].sending}
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4 mr-2" />
-                          {content[language].actions.send}
-                        </>
-                      )}
-                    </Button>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      {content[language].yourReply}
+                    </label>
+                    <textarea
+                      value={replyMessage}
+                      onChange={(e) => setReplyMessage(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      rows={8}
+                      placeholder={content[language].replyPlaceholder}
+                    />
                   </div>
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowReplyModal(false);
+                      setReplyMessage('');
+                      setReplySubject('');
+                    }}
+                    disabled={sending}
+                    className="px-4 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+                  >
+                    {content[language].actions.close}
+                  </Button>
+                  <Button 
+                    onClick={handleReply}
+                    disabled={sending || !replyMessage.trim()}
+                    className="min-w-[120px] bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-all"
+                  >
+                    {sending ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        {content[language].sending}
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5 mr-2" />
+                        {content[language].actions.send}
+                      </>
+                    )}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

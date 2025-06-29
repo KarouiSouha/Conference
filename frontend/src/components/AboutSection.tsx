@@ -8,7 +8,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ language }) => {
   const content = {
     fr: {
       title: 'À propos de SITE 2025',
-      description: 'La conférence SITE 2025 rassemble chercheurs, industriels et experts pour échanger sur les dernières avancées en industrie intelligente, technologie et environnement. Organisée par l\'ISET de Bizerte, cette conférence vise à promouvoir l\'innovation et la collaboration dans ces domaines cruciaux.',
+      description: 'La conférence SITE 2025 rassemble chercheurs, industriels et experts pour échanger sur les dernières avancées en industrie intelligente, technologie et environnement. Organisée par l\'ISET de Bizerte en association avec ADT, cette conférence vise à promouvoir l\'innovation et la collaboration dans ces domaines cruciaux.',
       objectives: [
         'Promouvoir la recherche en industrie intelligente',
         'Favoriser les échanges entre académiques et industriels',
@@ -19,7 +19,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ language }) => {
     },
     en: {
       title: 'About SITE 2025',
-      description: 'The SITE 2025 conference brings together researchers, industry professionals and experts to exchange ideas on the latest advances in smart industry, technology and environment. Organized by ISET Bizerte, this conference aims to promote innovation and collaboration in these crucial fields.',
+      description: 'The SITE 2025 conference brings together researchers, industry professionals and experts to exchange ideas on the latest advances in smart industry, technology and environment. Organized by ISET Bizerte in association with ADT, this conference aims to promote innovation and collaboration in these crucial fields.',
       objectives: [
         'Promote research in smart industry',
         'Foster exchanges between academics and industry',
@@ -85,7 +85,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ language }) => {
                 </div>
                 <div className="text-center p-4 bg-primary/5 rounded-lg border border-primary/10">
                   <div className="text-2xl font-bold text-primary mb-1">ISET</div>
-                  <div className="text-sm text-muted-foreground">Bizerte</div>
+                  <div className="text-sm text-muted-foreground">Bizerte & ADT</div>
                 </div>
               </div>
             </div>
