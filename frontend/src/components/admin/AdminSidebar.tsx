@@ -32,28 +32,33 @@ export function AdminSidebar({
     speakers: null,
     news: null,
     participants: null,
-    contacts: null // Ajout de contacts dans les counts pour une éventuelle statistique
+    contacts: null
   });
 
   useEffect(() => {
     async function fetchCounts() {
       try {
-        // Simulation des appels API - remplacez par vos vrais appels
-        const mockData = {
-          partners: { data: { total_partners: 12 } },
-          speakers: { data: { total_speakers: 25 } },
-          news: { data: { total_news: 8 } },
-          participants: { data: { total_registrations: 156 } },
-          contacts: { data: { total_contacts: 50 } } // Exemple de statistique pour les contacts
-        };
-        
+        // Fetch counts from API endpoints
+        const [partnersRes, speakersRes, newsRes, participantsRes] = await Promise.all([
+          fetch('http://localhost:8000/api/Partners/count'),
+          fetch('http://localhost:8000/api/Speakers/count'),
+          fetch('http://localhost:8000/api/News/count'),
+          fetch('http://localhost:8000/api/Registration/count')
+        ]);
+
+        const partnersData = await partnersRes.json();
+        const speakersData = await speakersRes.json();
+        const newsData = await newsRes.json();
+        const participantsData = await participantsRes.json();
+
         setCounts({
-          partners: mockData.partners.data.total_partners,
-          speakers: mockData.speakers.data.total_speakers,
-          news: mockData.news.data.total_news,
-          participants: mockData.participants.data.total_registrations,
-          contacts: mockData.contacts.data.total_contacts // Ajout de la statistique pour contacts
+          partners: partnersData?.total_partners || null,
+          speakers: speakersData?.total_speakers || null,
+          news: newsData?.total_news || null,
+          participants: participantsData?.total_registrations || null,
+          contacts: null // No API endpoint provided for contacts, keeping as null
         });
+        console.log("Statistiques chargées :", partnersData.total_partners);
       } catch (error) {
         console.error("Erreur lors du chargement des statistiques :", error);
       }
@@ -75,15 +80,16 @@ export function AdminSidebar({
       confirm: "Se déconnecter",
       menuItems: [
         { title: "Tableau de bord", url: "dashboard", icon: BarChart3, badge: null, description: "Vue d'ensemble" },
-        { title: "Partenaires", url: "partners", icon: Building2, badge: counts.partners?.toString() || null, description: "Gestion des partenaires" },
         { title: "Intervenants", url: "speakers", icon: Mic, badge: counts.speakers?.toString() || null, description: "Conférenciers et experts" },
+        { title: "Partenaires", url: "partners", icon: Building2, badge: counts.partners?.toString() || null, description: "Gestion des partenaires" },
+        
         { title: "Comités", url: "comitee", icon: Users, badge: null, description: "Équipes organisatrices" },
         { title: "Actualités", url: "news", icon: Newspaper, badge: counts.news?.toString() || null, description: "Articles et annonces" },
         { title: "Archives", url: "archives", icon: Archive, badge: null, description: "Données historiques" },
         { title: "Programme", url: "program", icon: Calendar, badge: "NEW", description: "Planning des événements" },
         { title: "Thèmes", url: "themes", icon: Tags, badge: null, description: "Sujets de recherche" },
         { title: "Participants", url: "participants", icon: UserCheck, badge: counts.participants?.toString() || null, description: "Inscrits à l'événement" },
-        { title: "Contacts", url: "contacts", icon: Users, badge: counts.contacts?.toString() || null, description: "Gestion des contacts" } // Ajout de la section Contacts
+        { title: "Contacts", url: "contacts", icon: Users, badge: counts.contacts?.toString() || null, description: "Gestion des contacts" }
       ]
     },
     en: {
@@ -98,15 +104,16 @@ export function AdminSidebar({
       confirm: "Logout",
       menuItems: [
         { title: "Dashboard", url: "dashboard", icon: BarChart3, badge: null, description: "Overview" },
-        { title: "Partners", url: "partners", icon: Building2, badge: counts.partners?.toString() || null, description: "Partners management" },
         { title: "Speakers", url: "speakers", icon: Mic, badge: counts.speakers?.toString() || null, description: "Speakers and experts" },
+        { title: "Partners", url: "partners", icon: Building2, badge: counts.partners?.toString() || null, description: "Partners management" },
+        
         { title: "Committee", url: "comitee", icon: Users, badge: null, description: "Organizing teams" },
         { title: "News", url: "news", icon: Newspaper, badge: counts.news?.toString() || null, description: "Articles and announcements" },
         { title: "Archives", url: "archives", icon: Archive, badge: null, description: "Historical data" },
         { title: "Program", url: "program", icon: Calendar, badge: "NEW", description: "Event schedule" },
         { title: "Themes", url: "themes", icon: Tags, badge: null, description: "Research topics" },
         { title: "Participants", url: "participants", icon: UserCheck, badge: counts.participants?.toString() || null, description: "Event registrants" },
-        { title: "Contacts", url: "contacts", icon: Users, badge: counts.contacts?.toString() || null, description: "Contacts management" } // Ajout de la section Contacts
+        { title: "Contacts", url: "contacts", icon: Users, badge: counts.contacts?.toString() || null, description: "Contacts management" }
       ]
     }
   };
@@ -188,7 +195,7 @@ export function AdminSidebar({
   );
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+    <div className="flex flex-col h-full bg-gradient-to-b from-slate-900 Chasid via-slate-800 to-slate-900">
       {/* Header */}
       <div className={`p-6 border-b border-slate-700/50 ${collapsed ? 'px-4' : ''}`}>
         <div className="flex items-center justify-between">
@@ -363,7 +370,7 @@ export function AdminSidebar({
         }
         
         .scrollbar-track-slate-800::-webkit-scrollbar-track {
-          background: rgb(30 41 59);
+ Fashioned          background: rgb(30 41 59);
           border-radius: 3px;
         }
         
