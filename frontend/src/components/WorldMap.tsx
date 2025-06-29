@@ -18,6 +18,64 @@ const API_CONFIG = {
   }
 };
 
+// Liste des codes ISO3 valides pour validation
+const VALID_ISO3_CODES = new Set([
+  'ABW', 'AFG', 'AGO', 'AIA', 'ALA', 'ALB', 'AND', 'ARE', 'ARG', 'ARM', 'ASM', 'ATA', 'ATF', 'ATG', 'AUS', 'AUT', 'AZE',
+  'BDI', 'BEL', 'BEN', 'BES', 'BFA', 'BGD', 'BGR', 'BHR', 'BHS', 'BIH', 'BLM', 'BLR', 'BLZ', 'BMU', 'BOL', 'BRA', 'BRB', 'BRN', 'BTN', 'BVT', 'BWA',
+  'CAF', 'CAN', 'CCK', 'CHE', 'CHL', 'CHN', 'CIV', 'CMR', 'COD', 'COG', 'COK', 'COL', 'COM', 'CPV', 'CRI', 'CUB', 'CUW', 'CXR', 'CYM', 'CYP', 'CZE',
+  'DEU', 'DJI', 'DMA', 'DNK', 'DOM', 'DZA',
+  'ECU', 'EGY', 'ERI', 'ESH', 'ESP', 'EST', 'ETH',
+  'FIN', 'FJI', 'FLK', 'FRA', 'FRO', 'FSM',
+  'GAB', 'GBR', 'GEO', 'GGY', 'GHA', 'GIB', 'GIN', 'GLP', 'GMB', 'GNB', 'GNQ', 'GRC', 'GRD', 'GRL', 'GTM', 'GUF', 'GUM', 'GUY',
+  'HKG', 'HMD', 'HND', 'HRV', 'HTI', 'HUN',
+  'IDN', 'IMN', 'IND', 'IOT', 'IRL', 'IRN', 'IRQ', 'ISL', 'ISR', 'ITA',
+  'JAM', 'JEY', 'JOR', 'JPN',
+  'KAZ', 'KEN', 'KGZ', 'KHM', 'KIR', 'KNA', 'KOR', 'KWT',
+  'LAO', 'LBN', 'LBR', 'LBY', 'LCA', 'LIE', 'LKA', 'LSO', 'LTU', 'LUX', 'LVA',
+  'MAC', 'MAF', 'MAR', 'MCO', 'MDA', 'MDG', 'MDV', 'MEX', 'MHL', 'MKD', 'MLI', 'MLT', 'MMR', 'MNE', 'MNG', 'MNP', 'MOZ', 'MRT', 'MSR', 'MTQ', 'MUS', 'MWI', 'MYS',
+  'NAM', 'NCL', 'NER', 'NFK', 'NGA', 'NIC', 'NIU', 'NLD', 'NOR', 'NPL', 'NRU', 'NZL',
+  'OMN',
+  'PAK', 'PAN', 'PCN', 'PER', 'PHL', 'PLW', 'PNG', 'POL', 'PRI', 'PRK', 'PRT', 'PRY', 'PSE',
+  'QAT',
+  'REU', 'ROU', 'RUS', 'RWA',
+  'SAU', 'SDN', 'SEN', 'SGP', 'SGS', 'SHN', 'SJM', 'SLB', 'SLE', 'SVK', 'SVN', 'SWE', 'SWZ', 'SXM', 'SYC', 'SYR',
+  'TCA', 'TCD', 'TGO', 'THA', 'TJK', 'TKL', 'TKM', 'TLS', 'TON', 'TTO', 'TUN', 'TUR', 'TUV', 'TWN',
+  'UKR', 'URY', 'USA', 'UZB',
+  'VCT', 'VEN', 'VGB', 'VIR', 'VNM', 'VUT',
+  'WLF', 'WSM',
+  'YEM',
+  'ZAF', 'ZMB', 'ZWE'
+]);
+
+// Mapping ISO2 vers ISO3 pour normaliser les données de l'API
+const iso2ToIso3: { [key: string]: string } = {
+  'AD': 'AND', 'AE': 'ARE', 'AF': 'AFG', 'AG': 'ATG', 'AI': 'AIA', 'AL': 'ALB', 'AM': 'ARM', 'AO': 'AGO', 'AQ': 'ATA', 'AR': 'ARG', 'AS': 'ASM', 'AT': 'AUT', 'AU': 'AUS', 'AW': 'ABW', 'AX': 'ALA', 'AZ': 'AZE',
+  'BA': 'BIH', 'BB': 'BRB', 'BD': 'BGD', 'BE': 'BEL', 'BF': 'BFA', 'BG': 'BGR', 'BH': 'BHR', 'BI': 'BDI', 'BJ': 'BEN', 'BL': 'BLM', 'BM': 'BMU', 'BN': 'BRN', 'BO': 'BOL', 'BQ': 'BES', 'BR': 'BRA', 'BS': 'BHS', 'BT': 'BTN', 'BV': 'BVT', 'BW': 'BWA', 'BY': 'BLR', 'BZ': 'BLZ',
+  'CA': 'CAN', 'CC': 'CCK', 'CD': 'COD', 'CF': 'CAF', 'CG': 'COG', 'CH': 'CHE', 'CI': 'CIV', 'CK': 'COK', 'CL': 'CHL', 'CM': 'CMR', 'CN': 'CHN', 'CO': 'COL', 'CR': 'CRI', 'CU': 'CUB', 'CV': 'CPV', 'CW': 'CUW', 'CX': 'CXR', 'CY': 'CYP', 'CZ': 'CZE',
+  'DE': 'DEU', 'DJ': 'DJI', 'DK': 'DNK', 'DM': 'DMA', 'DO': 'DOM', 'DZ': 'DZA',
+  'EC': 'ECU', 'EE': 'EST', 'EG': 'EGY', 'EH': 'ESH', 'ER': 'ERI', 'ES': 'ESP', 'ET': 'ETH',
+  'FI': 'FIN', 'FJ': 'FJI', 'FM': 'FSM', 'FO': 'FRO', 'FR': 'FRA',
+  'GA': 'GAB', 'GB': 'GBR', 'GD': 'GRD', 'GE': 'GEO', 'GF': 'GUF', 'GG': 'GGY', 'GH': 'GHA', 'GI': 'GIB', 'GL': 'GRL', 'GM': 'GMB', 'GN': 'GIN', 'GP': 'GLP', 'GQ': 'GNQ', 'GR': 'GRC', 'GS': 'SGS', 'GT': 'GTM', 'GU': 'GUM', 'GW': 'GNB', 'GY': 'GUY',
+  'HK': 'HKG', 'HM': 'HMD', 'HN': 'HND', 'HR': 'HRV', 'HT': 'HTI', 'HU': 'HUN',
+  'ID': 'IDN', 'IE': 'IRL', 'IL': 'ISR', 'IM': 'IMN', 'IN': 'IND', 'IO': 'IOT', 'IQ': 'IRQ', 'IR': 'IRN', 'IS': 'ISL', 'IT': 'ITA',
+  'JE': 'JEY', 'JM': 'JAM', 'JO': 'JOR', 'JP': 'JPN',
+  'KE': 'KEN', 'KG': 'KGZ', 'KH': 'KHM', 'KI': 'KIR', 'KM': 'COM', 'KN': 'KNA', 'KP': 'PRK', 'KR': 'KOR', 'KW': 'KWT', 'KY': 'CYM', 'KZ': 'KAZ',
+  'LA': 'LAO', 'LB': 'LBN', 'LC': 'LCA', 'LI': 'LIE', 'LK': 'LKA', 'LR': 'LBR', 'LS': 'LSO', 'LT': 'LTU', 'LU': 'LUX', 'LV': 'LVA', 'LY': 'LBY',
+  'MA': 'MAR', 'MC': 'MCO', 'MD': 'MDA', 'ME': 'MNE', 'MF': 'MAF', 'MG': 'MDG', 'MH': 'MHL', 'MK': 'MKD', 'ML': 'MLI', 'MM': 'MMR', 'MN': 'MNG', 'MO': 'MAC', 'MP': 'MNP', 'MQ': 'MTQ', 'MR': 'MRT', 'MS': 'MSR', 'MT': 'MLT', 'MU': 'MUS', 'MV': 'MDV', 'MW': 'MWI', 'MX': 'MEX', 'MY': 'MYS', 'MZ': 'MOZ',
+  'NA': 'NAM', 'NC': 'NCL', 'NE': 'NER', 'NF': 'NFK', 'NG': 'NGA', 'NI': 'NIC', 'NL': 'NLD', 'NO': 'NOR', 'NP': 'NPL', 'NR': 'NRU', 'NU': 'NIU', 'NZ': 'NZL',
+  'OM': 'OMN',
+  'PA': 'PAN', 'PE': 'PER', 'PF': 'PYF', 'PG': 'PNG', 'PH': 'PHL', 'PK': 'PAK', 'PL': 'POL', 'PM': 'SPM', 'PN': 'PCN', 'PR': 'PRI', 'PS': 'PSE', 'PT': 'PRT', 'PW': 'PLW', 'PY': 'PRY',
+  'QA': 'QAT',
+  'RE': 'REU', 'RO': 'ROU', 'RS': 'SRB', 'RU': 'RUS', 'RW': 'RWA',
+  'SA': 'SAU', 'SB': 'SLB', 'SC': 'SYC', 'SD': 'SDN', 'SE': 'SWE', 'SG': 'SGP', 'SH': 'SHN', 'SI': 'SVN', 'SJ': 'SJM', 'SK': 'SVK', 'SL': 'SLE', 'SM': 'SMR', 'SN': 'SEN', 'SO': 'SOM', 'SR': 'SUR', 'SS': 'SSD', 'ST': 'STP', 'SV': 'SLV', 'SX': 'SXM', 'SY': 'SYR', 'SZ': 'SWZ',
+  'TC': 'TCA', 'TD': 'TCD', 'TF': 'ATF', 'TG': 'TGO', 'TH': 'THA', 'TJ': 'TJK', 'TK': 'TKL', 'TL': 'TLS', 'TM': 'TKM', 'TN': 'TUN', 'TO': 'TON', 'TR': 'TUR', 'TT': 'TTO', 'TV': 'TUV', 'TW': 'TWN',
+  'UA': 'UKR', 'UG': 'UGA', 'UM': 'UMI', 'US': 'USA', 'UY': 'URY', 'UZ': 'UZB',
+  'VA': 'VAT', 'VC': 'VCT', 'VE': 'VEN', 'VG': 'VGB', 'VI': 'VIR', 'VN': 'VNM', 'VU': 'VUT',
+  'WF': 'WLF', 'WS': 'WSM',
+  'YE': 'YEM', 'YT': 'MYT',
+  'ZA': 'ZAF', 'ZM': 'ZMB', 'ZW': 'ZWE'
+};
+
 const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [participantData, setParticipantData] = useState<ParticipantData>({});
@@ -29,84 +87,86 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
 
   const baseUrl = apiBaseUrl || API_CONFIG.baseUrl;
 
-  // Fonction utilitaire pour extraire le code pays depuis les données GeoJSON
-  const getCountryCode = useCallback((properties: any): string | null => {
-    // Essayer différentes propriétés possibles pour le code ISO2
-    const possibleCodes = [
-      properties?.ISO_A2,
-      properties?.iso_a2,
-      properties?.ADM0_A3, // Code ISO3 qu'on peut convertir
-      properties?.WB_A2,
-      properties?.country_code,
-      properties?.ADMIN // Nom du pays qu'on peut mapper
-    ];
-    
-    for (const code of possibleCodes) {
-      if (code && typeof code === 'string' && code.length === 2) {
-        return code.toUpperCase();
-      }
+  // Fonction utilitaire pour extraire le code pays (ISO3) depuis les données GeoJSON
+  const getCountryCode = useCallback((feature: any): string | null => {
+    // Prioriser l'identifiant 'id' du GeoJSON (ISO3)
+    const id = feature?.id;
+    if (id && typeof id === 'string' && id.length === 3 && VALID_ISO3_CODES.has(id.toUpperCase())) {
+      return id.toUpperCase();
     }
-    
-    // Si aucun code ISO2 trouvé, essayer de mapper depuis le nom du pays
-    const countryName = properties?.NAME || properties?.name || properties?.ADMIN;
+
+    // Fallback sur le nom du pays pour le mapping
+    const countryName = feature?.properties?.NAME || feature?.properties?.name || feature?.properties?.ADMIN;
     if (countryName) {
-      // Mapping manuel pour quelques pays problématiques
       const countryMapping: { [key: string]: string } = {
-        'United States of America': 'US',
-        'United Kingdom': 'GB',
-        'France': 'FR',
-        'Germany': 'DE',
-        'Italy': 'IT',
-        'Spain': 'ES',
-        'Canada': 'CA',
-        'Australia': 'AU',
-        'Brazil': 'BR',
-        'China': 'CN',
-        'India': 'IN',
-        'Japan': 'JP',
-        'Russia': 'RU',
-        'South Africa': 'ZA',
-        'Mexico': 'MX',
-        'Argentina': 'AR',
-        'Egypt': 'EG',
-        'Nigeria': 'NG',
-        'Kenya': 'KE',
-        'Morocco': 'MA',
-        'Tunisia': 'TN',
-        'Algeria': 'DZ',
-        'Libya': 'LY',
-        'Sudan': 'SD',
-        'Ethiopia': 'ET',
-        'Ghana': 'GH',
-        'Ivory Coast': 'CI',
-        'Senegal': 'SN',
-        'Mali': 'ML',
-        'Burkina Faso': 'BF',
-        'Niger': 'NE',
-        'Chad': 'TD',
-        'Cameroon': 'CM',
-        'Central African Republic': 'CF',
-        'Democratic Republic of the Congo': 'CD',
-        'Republic of the Congo': 'CG',
-        'Gabon': 'GA',
-        'Equatorial Guinea': 'GQ',
-        'Sao Tome and Principe': 'ST',
-        'Angola': 'AO',
-        'Zambia': 'ZM',
-        'Zimbabwe': 'ZW',
-        'Botswana': 'BW',
-        'Namibia': 'NA',
-        'Lesotho': 'LS',
-        'Swaziland': 'SZ',
-        'Madagascar': 'MG',
-        'Mauritius': 'MU',
-        'Seychelles': 'SC',
-        'Comoros': 'KM'
+        'United States of America': 'USA',
+        'United Kingdom': 'GBR',
+        'France': 'FRA',
+        'Germany': 'DEU',
+        'Italy': 'ITA',
+        'Spain': 'ESP',
+        'Canada': 'CAN',
+        'Australia': 'AUS',
+        'Brazil': 'BRA',
+        'China': 'CHN',
+        'India': 'IND',
+        'Japan': 'JPN',
+        'Russia': 'RUS',
+        'South Africa': 'ZAF',
+        'Mexico': 'MEX',
+        'Argentina': 'ARG',
+        'Egypt': 'EGY',
+        'Nigeria': 'NGA',
+        'Kenya': 'KEN',
+        'Morocco': 'MAR',
+        'Tunisia': 'TUN',
+        'Algeria': 'DZA',
+        'Libya': 'LBY',
+        'Sudan': 'SDN',
+        'Ethiopia': 'ETH',
+        'Ghana': 'GHA',
+        'Ivory Coast': 'CIV',
+        'Senegal': 'SEN',
+        'Mali': 'MLI',
+        'Burkina Faso': 'BFA',
+        'Niger': 'NER',
+        'Chad': 'TCD',
+        'Cameroon': 'CMR',
+        'Central African Republic': 'CAF',
+        'Democratic Republic of the Congo': 'COD',
+        'Republic of the Congo': 'COG',
+        'Gabon': 'GAB',
+        'Equatorial Guinea': 'GNQ',
+        'Sao Tome and Principe': 'STP',
+        'Angola': 'AGO',
+        'Zambia': 'ZMB',
+        'Zimbabwe': 'ZWE',
+        'Botswana': 'BWA',
+        'Namibia': 'NAM',
+        'Lesotho': 'LSO',
+        'Eswatini': 'SWZ',
+        'Madagascar': 'MDG',
+        'Mauritius': 'MUS',
+        'Seychelles': 'SYC',
+        'Comoros': 'COM',
+        'South Korea': 'KOR',
+        'North Korea': 'PRK',
+        'Taiwan': 'TWN',
+        'Hong Kong': 'HKG',
+        'Macau': 'MAC',
+        'Palestine': 'PSE',
+        'Kosovo': 'XKX',
+        'Western Sahara': 'ESH',
+        'South Sudan': 'SSD'
       };
-      
-      return countryMapping[countryName] || null;
+
+      const code = countryMapping[countryName];
+      if (code && VALID_ISO3_CODES.has(code)) {
+        return code;
+      }
+      console.warn(`No valid ISO3 code found for country: ${countryName}`);
     }
-    
+
     return null;
   }, []);
 
@@ -118,15 +178,26 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
         if (!response.ok) throw new Error(`Failed to load GeoJSON: ${response.status}`);
         const data = await response.json();
         console.log('GeoJSON loaded successfully');
-        
-        // Debug: afficher quelques propriétés des pays pour comprendre la structure
-        console.log('Sample country properties:', data.features.slice(0, 3).map((f: any) => ({
-          name: f.properties?.NAME || f.properties?.name,
-          iso_a2: f.properties?.ISO_A2 || f.properties?.iso_a2,
-          admin: f.properties?.ADMIN,
-          all_props: Object.keys(f.properties || {})
-        })));
-        
+
+        // Vérifier les doublons dans les codes pays (id)
+        const codeMap = new Map<string, string[]>();
+        data.features.forEach((feature: any) => {
+          const code = getCountryCode(feature);
+          if (code) {
+            if (!codeMap.has(code)) {
+              codeMap.set(code, []);
+            }
+            codeMap.get(code)!.push(feature.properties?.NAME || feature.properties?.name || 'Unknown');
+          }
+        });
+
+        // Log des codes dupliqués
+        codeMap.forEach((names, code) => {
+          if (names.length > 1) {
+            console.warn(`Duplicate country code ${code}: ${names.join(', ')}`);
+          }
+        });
+
         setWorldData(data);
       } catch (err) {
         console.error('Error loading GeoJSON:', err);
@@ -135,44 +206,52 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
     };
 
     loadWorldData();
-  }, [language]);
+  }, [language, getCountryCode]);
 
   // Charger les données des participants depuis le backend
   useEffect(() => {
     const fetchAllParticipants = async () => {
       setIsLoading(true);
       setError('');
-      
+
       try {
         const url = `${baseUrl}${API_CONFIG.endpoints.allParticipantsByCountry}`;
         console.log('Fetching participants data from:', url);
-        
+
         const response = await fetch(url, {
           method: 'GET',
-          headers: { 
+          headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           }
         });
-        
+
         console.log('API response status:', response.status, response.statusText);
-        
+
         if (response.ok) {
           const result = await response.json();
           console.log('Raw API response:', result);
-          
+
           if (result.success && result.data) {
-            // Normaliser les codes pays et s'assurer qu'ils sont en majuscules
+            // Normaliser les codes pays vers ISO3 et gérer les doublons
             const normalizedData: ParticipantData = {};
             Object.entries(result.data).forEach(([countryCode, count]) => {
               if (countryCode && Number(count) > 0) {
-                const normalizedCode = countryCode.trim().toUpperCase();
-                if (normalizedCode.length === 2) {
-                  normalizedData[normalizedCode] = Number(count);
+                let normalizedCode = countryCode.trim().toUpperCase();
+                // Si le code est ISO2 (2 caractères), le convertir en ISO3
+                if (normalizedCode.length === 2 && iso2ToIso3[normalizedCode]) {
+                  normalizedCode = iso2ToIso3[normalizedCode];
+                }
+                // Vérifier si le code est un ISO3 valide
+                if (normalizedCode.length === 3 && VALID_ISO3_CODES.has(normalizedCode)) {
+                  // Additionner les comptes pour les codes dupliqués
+                  normalizedData[normalizedCode] = (normalizedData[normalizedCode] || 0) + Number(count);
+                } else {
+                  console.warn(`Invalid or unsupported country code: ${normalizedCode}`);
                 }
               }
             });
-            
+
             console.log('Normalized participant data:', normalizedData);
             setParticipantData(normalizedData);
           } else {
@@ -245,9 +324,9 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
       .append("path")
       .attr("d", path)
       .attr("fill", (d: GeoJSON.Feature<GeoJSON.Geometry, GeoJSON.GeoJsonProperties>) => {
-        const countryCode = getCountryCode(d.properties);
+        const countryCode = getCountryCode(d);
         const participants = getParticipantCount(countryCode);
-        
+
         if (participants > 0) {
           const intensity = Math.min(participants / maxParticipants, 1);
           const color = d3.interpolateBlues(0.3 + intensity * 0.7);
@@ -263,12 +342,12 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
         event: MouseEvent,
         d: GeoJSON.Feature<GeoJSON.Geometry, GeoJSON.GeoJsonProperties>
       ) {
-        const countryCode = getCountryCode(d.properties);
+        const countryCode = getCountryCode(d);
         const countryName = d.properties?.NAME || d.properties?.name || d.properties?.ADMIN;
         const participants = getParticipantCount(countryCode);
-        
+
         console.log(`Hover on ${countryName} (${countryCode}): ${participants} participants`);
-        
+
         // Highlight du pays
         d3.select(this)
           .attr("stroke", "#333")
@@ -291,7 +370,7 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
         tooltip.transition()
           .duration(200)
           .style("opacity", 0.9);
-          
+
         tooltip.html(`
           <div style="font-weight: bold; margin-bottom: 4px;">${countryName}</div>
           <div>${participants} ${language === 'fr' ? 'participant(s)' : 'participant(s)'}</div>
@@ -310,7 +389,7 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
         event: MouseEvent,
         d: GeoJSON.Feature<GeoJSON.Geometry, GeoJSON.GeoJsonProperties>
       ) {
-        const countryCode = getCountryCode(d.properties);
+        const countryCode = getCountryCode(d);
         const countryName = d.properties?.NAME || d.properties?.name || d.properties?.ADMIN;
         if (countryName) {
           handleCountryClick(countryCode, countryName);
@@ -321,18 +400,18 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
     Object.entries(participantData).forEach(([countryCode, count]) => {
       const feature = worldData.features.find(
         (f: GeoJSON.Feature<GeoJSON.Geometry, GeoJSON.GeoJsonProperties>) => {
-          const featureCode = getCountryCode(f.properties);
+          const featureCode = getCountryCode(f);
           return featureCode === countryCode;
         }
       );
-      
+
       if (feature && count > 0) {
         const centroid = path.centroid(feature);
         if (centroid && !isNaN(centroid[0]) && !isNaN(centroid[1])) {
-          const radius = Math.sqrt(count / Math.PI) * 3 + 4; // Augmenter la taille des cercles
-          
+          const radius = Math.sqrt(count / Math.PI) * 3 + 4;
+
           console.log(`Adding circle for ${countryCode} at`, centroid, `with radius ${radius}`);
-          
+
           mapGroup.append("circle")
             .attr("cx", centroid[0])
             .attr("cy", centroid[1])
@@ -344,7 +423,7 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
             .style("cursor", "pointer")
             .on("mouseover", function(event: MouseEvent) {
               d3.select(this).attr("opacity", 1);
-              
+
               const tooltip = d3.select("body").append("div")
                 .attr("class", "world-map-tooltip")
                 .style("opacity", 0)
@@ -361,7 +440,7 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
               tooltip.transition()
                 .duration(200)
                 .style("opacity", 0.9);
-                
+
               tooltip.html(`
                 <div style="font-weight: bold; margin-bottom: 4px;">${feature.properties?.NAME || feature.properties?.name}</div>
                 <div>${count} ${language === 'fr' ? 'participant(s)' : 'participant(s)'}</div>
@@ -421,7 +500,7 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
         {language === 'fr' ? 'Participants par pays' : 'Participants by Country'}
       </h3>
-      
+
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-start">
           <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 mr-3" />
@@ -479,7 +558,7 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
             {language === 'fr' ? 'Pays sélectionné' : 'Selected Country'}: {selectedCountry}
           </p>
           <p className="text-sm text-gray-600">
-            {language === 'fr' ? 'Nombre de participants' : 'Number of Participants'}: 
+            {language === 'fr' ? 'Nombre de participants' : 'Number of Participants'}:
             <span className="font-semibold ml-1 text-blue-600">
               {participantCount !== null ? participantCount : 'N/A'}
             </span>
