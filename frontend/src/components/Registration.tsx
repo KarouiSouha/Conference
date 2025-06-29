@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,13 @@ import { User, Building, Mail, Phone, FileText, CreditCard, Upload, CheckCircle,
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Recu from './Recu.tsx';
 import WorldMap from './WorldMap.tsx';
-import { countries } from 'countries-list';
+// import { countries } from 'countries-list';
+import { countries, ICountry } from 'countries-list';
+
+// Extend the ICountry type to include emoji
+interface ExtendedCountry extends ICountry {
+  emoji?: string;
+}
 
 interface RegistrationProps {
   language: 'fr' | 'en';
@@ -85,12 +91,23 @@ interface SelectFieldProps {
   onValueChange: (value: string) => void;
   error?: string;
   placeholder?: string;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; emoji?: string }[];
+  language: 'fr' | 'en';
 }
 
 const SelectField: React.FC<SelectFieldProps> = ({
-  id, label, icon: Icon, required = false, value, onValueChange, error, placeholder, options
+  id, label, icon: Icon, required = false, value, onValueChange, error, placeholder, options, language
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredOptions = useMemo(() => {
+    return options
+      .filter(option => 
+        id === 'country' ? option.label.toLowerCase().includes(searchTerm.toLowerCase()) : true
+      )
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [options, searchTerm, id]);
+
   const getIconForOption = (optionValue: string) => {
     switch(optionValue) {
       case 'student': return <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">E</div>;
@@ -100,6 +117,11 @@ const SelectField: React.FC<SelectFieldProps> = ({
     }
   };
 
+  const handleValueChange = (selectedValue: string) => {
+    onValueChange(selectedValue);
+    setSearchTerm(''); // Reset search term after selection
+  };
+
   return (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-sm font-semibold text-gray-800 flex items-center">
@@ -107,7 +129,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
-      <Select value={value} onValueChange={onValueChange}>
+      <Select value={value} onValueChange={handleValueChange}>
         <SelectTrigger className={`h-12 border-2 rounded-xl transition-all duration-200 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-gradient-to-r from-white to-gray-50 ${
           error ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-300'
         } ${value ? 'bg-blue-50/30' : ''}`}>
@@ -121,17 +143,35 @@ const SelectField: React.FC<SelectFieldProps> = ({
           />
         </SelectTrigger>
         <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-xl backdrop-blur-sm max-h-64 overflow-y-auto">
+          {id === 'country' && (
+            <div className="p-2 sticky top-0 bg-white z-10 border-b border-gray-200">
+              <Input
+                type="text"
+                placeholder={language === 'fr' ? 'Rechercher un pays...' : 'Search for a country...'}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-10 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                onKeyDown={(e) => e.stopPropagation()} // Prevent dropdown from closing on keypress
+              />
+            </div>
+          )}
           <div className="p-1">
-            {options.map((option) => (
+            {filteredOptions.map((option) => (
               <SelectItem
                 key={option.value}
                 value={option.value}
                 className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 focus:bg-gradient-to-r focus:from-blue-50 focus:to-indigo-50 cursor-pointer hover:scale-[1.02] focus:scale-[1.02] my-1"
               >
                 <div className="flex items-center group">
-                  <div className="mr-3 group-hover:scale-110 transition-transform duration-200">
-                    {getIconForOption(option.value)}
-                  </div>
+                  {option.value === 'student' || option.value === 'academic' || option.value === 'professional' ? (
+                    <div className="mr-3 group-hover:scale-110 transition-transform duration-200">
+                      {getIconForOption(option.value)}
+                    </div>
+                  ) : (
+                    <span className="mr-3 text-lg" style={{ fontFamily: 'Twemoji Mozilla, Apple Color Emoji, Noto Color Emoji, sans-serif' }}>
+                      {option.emoji || '🌐'}
+                    </span>
+                  )}
                   <span className="font-medium text-gray-800 group-hover:text-blue-700 transition-colors duration-200">
                     {option.label}
                   </span>
@@ -206,10 +246,16 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
 
   const baseUrl = apiBaseUrl || API_CONFIG.baseUrl;
 
-  const countryOptions = Object.entries(countries).map(([code, country]) => ({
-    value: code,
-    label: country.name
-  }));
+  const countryOptions = useMemo(() => 
+    Object.entries(countries)
+      .map(([code, country]) => ({
+        value: code,
+        label: (country as ExtendedCountry).name,
+        emoji: (country as ExtendedCountry).emoji || '🌐'
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+    []
+  );
 
   const content = React.useMemo(() => ({
     fr: {
@@ -670,6 +716,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                         { value: 'academic', label: content[language].form.titleOptions.academic },
                         { value: 'professional', label: content[language].form.titleOptions.professional },
                       ]}
+                      language={language}
                     />
                     <SelectField
                       id="country"
@@ -681,6 +728,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                       error={errors.country}
                       placeholder={language === 'fr' ? 'Sélectionnez votre pays' : 'Select your country'}
                       options={countryOptions}
+                      language={language}
                     />
                   </div>
 
