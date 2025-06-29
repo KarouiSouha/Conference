@@ -508,13 +508,6 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
         </div>
       )}
 
-      {/* Debug info */}
-      {Object.keys(participantData).length > 0 && (
-        <div className="mb-4 p-2 bg-yellow-50 rounded text-xs">
-          <strong>Debug:</strong> Codes pays avec participants: {Object.keys(participantData).join(', ')}
-        </div>
-      )}
-
       <div className="w-full bg-blue-50 rounded-lg overflow-hidden mb-4">
         <svg
           ref={svgRef}

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Recu from './Recu.tsx';
 import WorldMap from './WorldMap.tsx';
 import { countries, ICountry } from 'countries-list';
+import i18nCountries from 'i18n-iso-countries';
+import frLocale from 'i18n-iso-countries/langs/fr.json';
+import enLocale from 'i18n-iso-countries/langs/en.json';
 
+// Register language locales for i18n-iso-countries
+i18nCountries.registerLocale(frLocale);
+i18nCountries.registerLocale(enLocale);
 
 interface RegistrationProps {
   language: 'fr' | 'en';
@@ -94,14 +100,41 @@ const SelectField: React.FC<SelectFieldProps> = ({
   id, label, icon: Icon, required = false, value, onValueChange, error, placeholder, options, language
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce search term updates
+  useEffect(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    if (searchTerm === '') {
+      setDebouncedSearchTerm('');
+      return;
+    }
+    debounceTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   const filteredOptions = useMemo(() => {
+    if (id !== 'country' || !debouncedSearchTerm) {
+      return options.sort((a, b) => a.label.localeCompare(b.label, language));
+    }
     return options
       .filter(option => 
-        id === 'country' ? option.label.toLowerCase().includes(searchTerm.toLowerCase()) : true
+        option.label.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        option.value.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
       )
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [options, searchTerm, id]);
+      .sort((a, b) => a.label.localeCompare(b.label, language));
+  }, [options, debouncedSearchTerm, id, language]);
 
   const getIconForOption = (optionValue: string) => {
     switch(optionValue) {
@@ -114,7 +147,17 @@ const SelectField: React.FC<SelectFieldProps> = ({
 
   const handleValueChange = (selectedValue: string) => {
     onValueChange(selectedValue);
-    setSearchTerm(''); // Reset search term after selection
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+  };
+
+  // Auto-focus the search input when the dropdown opens
+  const handleOpen = () => {
+    setTimeout(() => {
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
+      }
+    }, 100);
   };
 
   return (
@@ -124,7 +167,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
-      <Select value={value} onValueChange={handleValueChange}>
+      <Select value={value} onValueChange={handleValueChange} onOpenChange={(open) => open && handleOpen()}>
         <SelectTrigger className={`h-12 border-2 rounded-xl transition-all duration-200 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-gradient-to-r from-white to-gray-50 ${
           error ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-300'
         } ${value ? 'bg-blue-50/30' : ''}`}>
@@ -141,21 +184,28 @@ const SelectField: React.FC<SelectFieldProps> = ({
           {id === 'country' && (
             <div className="p-2 sticky top-0 bg-white z-10 border-b border-gray-200">
               <Input
+                ref={searchInputRef}
                 type="text"
                 placeholder={language === 'fr' ? 'Rechercher un pays...' : 'Search for a country...'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-10 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
-                onKeyDown={(e) => e.stopPropagation()} // Prevent dropdown from closing on keypress
+                className="w-full h-10 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-all duration-200"
+                onKeyDown={(e) => e.stopPropagation()}
+                aria-label={language === 'fr' ? 'Rechercher un pays' : 'Search for a country'}
               />
             </div>
           )}
           <div className="p-1">
+            {filteredOptions.length === 0 && id === 'country' && (
+              <div className="p-3 text-center text-gray-500 text-sm">
+                {language === 'fr' ? 'Aucun pays trouvé' : 'No countries found'}
+              </div>
+            )}
             {filteredOptions.map((option) => (
               <SelectItem
                 key={option.value}
                 value={option.value}
-                className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 focus:bg-gradient-to-r focus:from-blue-50 focus:to-indigo-50 cursor-pointer hover:scale-[1.02] focus:scale-[1.02] my-1"
+                className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 focus:bg-gradient-to-r focus:from-blue-50 focus:to-indigo-50 cursor-pointer hover:scale-[1.02] focus:scale-[1.02] my-1 transition-transform duration-150"
               >
                 <div className="flex items-center group">
                   {option.value === 'student' || option.value === 'academic' || option.value === 'professional' ? (
@@ -240,24 +290,30 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
   const [submitError, setSubmitError] = useState<string>('');
 
   const baseUrl = apiBaseUrl || API_CONFIG.baseUrl;
-const getFlagEmoji = (countryCode: string) => {
-  if (!countryCode || countryCode.length !== 2) return '🌐';
-  const codePoints = countryCode
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
-};
-const countryOptions = useMemo(() =>
-  Object.entries(countries)
-    .map(([code, country]) => ({
-      value: code,
-      label: (country as ICountry).name,
-      emoji: getFlagEmoji(code)
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label)),
-  []
-);
+
+  const getFlagEmoji = (countryCode: string) => {
+    if (!countryCode || countryCode.length !== 2) return '🌐';
+    const codePoints = countryCode
+      .toUpperCase()
+      .split('')
+      .map(char => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+  };
+
+  const countryOptions = useMemo(() => {
+    return Object.entries(countries)
+      .map(([code, country]) => {
+        const countryData = country as ICountry;
+        const label = i18nCountries.getName(code, language, { select: 'official' });
+        return {
+          value: code,
+          label: label || countryData.name, // Fallback to countries-list name if i18n-iso-countries fails
+          emoji: getFlagEmoji(code)
+        };
+      })
+      .filter(option => option.label) // Remove entries with no valid label
+      .sort((a, b) => a.label.localeCompare(b.label, language));
+  }, [language]);
 
   const content = React.useMemo(() => ({
     fr: {
@@ -296,7 +352,8 @@ const countryOptions = useMemo(() =>
         submit: 'Finaliser l\'inscription',
         next: 'Suivant',
         previous: 'Précédent',
-        submitting: 'Inscription en cours...'
+        submitting: 'Inscription en cours...',
+        paymentMethod:'Méthode de paiement'
       },
       success: 'Inscription envoyée avec succès!',
       successMessage: 'Votre inscription a été enregistrée. Nous vous contacterons prochainement.',
@@ -344,7 +401,8 @@ const countryOptions = useMemo(() =>
         submit: 'Complete Registration',
         next: 'Next',
         previous: 'Previous',
-        submitting: 'Submitting...'
+        submitting: 'Submitting...',
+        paymentMethod:'Payment Method'
       },
       success: 'Registration submitted successfully!',
       successMessage: 'Your registration has been recorded. We will contact you soon.',
@@ -470,33 +528,33 @@ const countryOptions = useMemo(() =>
     const newErrors: Record<string, string> = {};
 
     if (step === 1) {
-      if (!formData.firstName.trim()) newErrors.firstName = content[language].form.firstName + ' requis';
-      if (!formData.lastName.trim()) newErrors.lastName = content[language].form.lastName + ' requis';
-      if (!formData.establishment.trim()) newErrors.establishment = content[language].form.establishment + ' requis';
-      if (!formData.title.trim()) newErrors.title = content[language].form.title + ' requis';
-      if (!formData.email.trim()) newErrors.email = content[language].form.email + ' requis';
-      else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email invalide';
-      if (!formData.phone.trim()) newErrors.phone = content[language].form.phone + ' requis';
+      if (!formData.firstName.trim()) newErrors.firstName = content[language].form.firstName + (language === 'fr' ? ' requis' : ' required');
+      if (!formData.lastName.trim()) newErrors.lastName = content[language].form.lastName + (language === 'fr' ? ' requis' : ' required');
+      if (!formData.establishment.trim()) newErrors.establishment = content[language].form.establishment + (language === 'fr' ? ' requis' : ' required');
+      if (!formData.title.trim()) newErrors.title = content[language].form.title + (language === 'fr' ? ' requis' : ' required');
+      if (!formData.email.trim()) newErrors.email = content[language].form.email + (language === 'fr' ? ' requis' : ' required');
+      else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = language === 'fr' ? 'Email invalide' : 'Invalid email';
+      if (!formData.phone.trim()) newErrors.phone = content[language].form.phone + (language === 'fr' ? ' requis' : ' required');
       if (!formData.country.trim()) newErrors.country = content[language].errors.countryRequired;
     } else if (step === 2) {
-      if (!formData.participationType) newErrors.participationType = 'Type de participation requis';
-      if (!formData.hasAccompanying) newErrors.hasAccompanying = 'Réponse requise';
+      if (!formData.participationType) newErrors.participationType = language === 'fr' ? 'Type de participation requis' : 'Participation type required';
+      if (!formData.hasAccompanying) newErrors.hasAccompanying = language === 'fr' ? 'Réponse requise' : 'Response required';
       if (formData.hasAccompanying === 'yes' && formData.accompanyingPersons.length === 0) {
-        newErrors.accompanyingDetails = 'Au moins un accompagnateur est requis';
+        newErrors.accompanyingDetails = language === 'fr' ? 'Au moins un accompagnateur est requis' : 'At least one accompanying person is required';
       }
       formData.accompanyingPersons.forEach((_, index) => {
         if (!formData.accompanyingPersons[index].name.trim()) {
-          newErrors[`accompanyingPersons[${index}].name`] = `Nom de l'accompagnateur ${index + 1} requis`;
+          newErrors[`accompanyingPersons[${index}].name`] = language === 'fr' ? `Nom de l'accompagnateur ${index + 1} requis` : `Name of accompanying person ${index + 1} required`;
         }
         if (formData.accompanyingPersons[index].age === 0) {
-          newErrors[`accompanyingPersons[${index}].age`] = `Âge de l'accompagnateur ${index + 1} requis`;
+          newErrors[`accompanyingPersons[${index}].age`] = language === 'fr' ? `Âge de l'accompagnateur ${index + 1} requis` : `Age of accompanying person ${index + 1} required`;
         }
       });
     } else if (step === 3) {
-      if (!formData.accommodationType) newErrors.accommodationType = 'Type d\'hébergement requis';
-      if (!formData.paymentMethod) newErrors.paymentMethod = 'Mode de paiement requis';
+      if (!formData.accommodationType) newErrors.accommodationType = language === 'fr' ? 'Type d\'hébergement requis' : 'Accommodation type required';
+      if (!formData.paymentMethod) newErrors.paymentMethod = language === 'fr' ? 'Mode de paiement requis' : 'Payment method required';
       if (!formData.paymentProof && formData.paymentMethod !== 'administrative-order') {
-        newErrors.paymentProof = content[language].form.paymentProof + ' requis';
+        newErrors.paymentProof = content[language].form.paymentProof + (language === 'fr' ? ' requis' : ' required');
       }
     }
 
@@ -774,7 +832,7 @@ const countryOptions = useMemo(() =>
                 <div className="space-y-6">
                   <div>
                     <Label className="text-base font-medium text-gray-900 mb-3 block">
-                      Type de participation {errors.participationType && <span className="text-red-500 text-sm">*</span>}
+                      {language === 'fr' ? 'Type de participation' : 'Participation Type'} {errors.participationType && <span className="text-red-500 text-sm">*</span>}
                     </Label>
                     <RadioGroup
                       value={formData.participationType}
@@ -832,14 +890,14 @@ const countryOptions = useMemo(() =>
                         <div key={index} className="flex items-center space-x-4 mb-4">
                           <InputField
                             id={`accompanyingName${index}`}
-                            label={`Nom de l'accompagnateur ${index + 1}`}
+                            label={language === 'fr' ? `Nom de l'accompagnateur ${index + 1}` : `Name of accompanying person ${index + 1}`}
                             value={person.name}
                             onChange={(e) => updateAccompanyingPerson(index, 'name', e.target.value)}
                             error={errors[`accompanyingPersons[${index}].name`]}
                           />
                           <InputField
                             id={`accompanyingAge${index}`}
-                            label={`Âge de l'accompagnateur ${index + 1}`}
+                            label={language === 'fr' ? `Âge de l'accompagnateur ${index + 1}` : `Age of accompanying person ${index + 1}`}
                             type="number"
                             value={person.age.toString()}
                             onChange={(e) => updateAccompanyingPerson(index, 'age', e.target.value)}
@@ -851,7 +909,7 @@ const countryOptions = useMemo(() =>
                             className="mt-6 px-2 py-1 rounded-lg border hover:bg-gray-50"
                             disabled={formData.accompanyingPersons.length <= 1}
                           >
-                            Supprimer
+                            {language === 'fr' ? 'Supprimer' : 'Remove'}
                           </Button>
                         </div>
                       ))}
@@ -859,7 +917,7 @@ const countryOptions = useMemo(() =>
                         onClick={addAccompanyingPerson}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mt-2"
                       >
-                        Ajouter un accompagnateur
+                        {language === 'fr' ? 'Ajouter un accompagnateur' : 'Add accompanying person'}
                       </Button>
                       <p className="text-xs text-gray-600 mt-2">
                         {language === 'fr'
@@ -919,7 +977,7 @@ const countryOptions = useMemo(() =>
 
                   <div>
                     <Label className="text-base font-medium text-gray-900 mb-3 block">
-                      Mode de paiement {errors.paymentMethod && <span className="text-red-500 text-sm">*</span>}
+                      {content[language].form.paymentMethod} {errors.paymentMethod && <span className="text-red-500 text-sm">*</span>}
                     </Label>
                     <RadioGroup
                       value={formData.paymentMethod}
@@ -967,7 +1025,7 @@ const countryOptions = useMemo(() =>
                     </p>
                     {formData.paymentProof && (
                       <p className="text-green-600 text-xs mt-1">
-                        Fichier sélectionné: {formData.paymentProof.name}
+                        {language === 'fr' ? 'Fichier sélectionné' : 'Selected file'}: {formData.paymentProof.name}
                       </p>
                     )}
                     {errors.paymentProof && <p className="text-red-500 text-xs mt-1">{errors.paymentProof}</p>}
