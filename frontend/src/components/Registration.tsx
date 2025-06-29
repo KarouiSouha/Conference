@@ -8,13 +8,8 @@ import { User, Building, Mail, Phone, FileText, CreditCard, Upload, CheckCircle,
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Recu from './Recu.tsx';
 import WorldMap from './WorldMap.tsx';
-// import { countries } from 'countries-list';
 import { countries, ICountry } from 'countries-list';
 
-// Extend the ICountry type to include emoji
-interface ExtendedCountry extends ICountry {
-  emoji?: string;
-}
 
 interface RegistrationProps {
   language: 'fr' | 'en';
@@ -245,17 +240,24 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
   const [submitError, setSubmitError] = useState<string>('');
 
   const baseUrl = apiBaseUrl || API_CONFIG.baseUrl;
-
-  const countryOptions = useMemo(() => 
-    Object.entries(countries)
-      .map(([code, country]) => ({
-        value: code,
-        label: (country as ExtendedCountry).name,
-        emoji: (country as ExtendedCountry).emoji || '🌐'
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label)),
-    []
-  );
+const getFlagEmoji = (countryCode: string) => {
+  if (!countryCode || countryCode.length !== 2) return '🌐';
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+};
+const countryOptions = useMemo(() =>
+  Object.entries(countries)
+    .map(([code, country]) => ({
+      value: code,
+      label: (country as ICountry).name,
+      emoji: getFlagEmoji(code)
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label)),
+  []
+);
 
   const content = React.useMemo(() => ({
     fr: {
