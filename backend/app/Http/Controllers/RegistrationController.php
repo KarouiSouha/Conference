@@ -11,6 +11,9 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RegistrationConfirmation;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 
 class RegistrationController extends Controller
 {
@@ -36,6 +39,53 @@ class RegistrationController extends Controller
     }
 
     /**
+     * Get participant count by country code.
+     */
+    public function participantsByCountry($countryCode): JsonResponse
+    {
+        try {
+            $count = Registration::where('country', $countryCode)->count();
+            return response()->json([
+                'success' => true,
+                'count' => $count,
+                'message' => 'Participant count retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in participantsByCountry: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Database error: Unable to retrieve participant count'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get participant counts for all countries.
+     */
+    public function allParticipantsByCountry(): JsonResponse
+    {
+        try {
+            $counts = Registration::select('country', DB::raw('count(*) as count'))
+                ->groupBy('country')
+                ->get()
+                ->pluck('count', 'country')
+                ->toArray();
+            return response()->json([
+                'success' => true,
+                'data' => $counts,
+                'message' => 'Participant counts retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in allParticipantsByCountry: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Database error: Unable to retrieve participant counts'
+            ], 500);
+        }
+    }
+
+
+    /**
      * Store a new registration.
      */
     public function store(Request $request): JsonResponse
@@ -49,13 +99,14 @@ class RegistrationController extends Controller
                 'title' => 'required|string|max:255',
                 'email' => 'required|email|unique:registrations,email',
                 'phone' => 'required|string|max:20',
+                'country' => 'required|string|size:2',
                 'participation_type' => 'required|in:without-article,with-article',
                 'has_accompanying' => 'required|in:yes,no',
                 'accompanying_details' => 'nullable|string',
                 'accommodation_type' => 'required|in:without-accommodation,with-accommodation',
                 'payment_method' => 'required|in:bank-transfer,administrative-order,check',
-                'payment_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
-                'amount' => 'required|numeric' // Added amount validation
+                'payment_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+                'amount' => 'required|numeric'
             ], [
                 'email.unique' => 'Cette adresse email est déjà utilisée pour une inscription.',
                 'first_name.required' => 'Le prénom est requis.',
@@ -65,6 +116,8 @@ class RegistrationController extends Controller
                 'email.required' => 'L\'adresse email est requise.',
                 'email.email' => 'L\'adresse email doit être valide.',
                 'phone.required' => 'Le numéro de téléphone est requis.',
+                'country.required' => 'Le pays est requis.',
+                'country.size' => 'Le code du pays doit être un code ISO_A2 valide (2 caractères).',
                 'participation_type.required' => 'Le type de participation est requis.',
                 'has_accompanying.required' => 'Veuillez indiquer si vous avez des accompagnateurs.',
                 'accommodation_type.required' => 'Le type d\'hébergement est requis.',
@@ -101,8 +154,9 @@ class RegistrationController extends Controller
                 'establishment' => $request->establishment,
                 'title' => $request->title,
                 'email' => $request->email,
-                'password' => $temporaryPassword, // Sera hashé automatiquement par le mutateur
+                'password' => $temporaryPassword,
                 'phone' => $request->phone,
+                'country' => strtoupper($request->country),
                 'participation_type' => $request->participation_type,
                 'has_accompanying' => $request->has_accompanying,
                 'accompanying_details' => $request->has_accompanying === 'yes' ? $request->accompanying_details : null,
@@ -110,12 +164,12 @@ class RegistrationController extends Controller
                 'payment_method' => $request->payment_method,
                 'payment_proof' => $paymentProofPath,
                 'status' => 'pending',
-                'amount' => $request->amount // Added amount from request
+                'amount' => $request->amount
             ]);
 
             $mail = new RegistrationConfirmation(
                 $registration->first_name . ' ' . $registration->last_name,
-                route('api.registration.download-badge', ['id' => $registration->id, 'language' => $request->language]), // URL du badge
+                route('api.registration.download-badge', ['id' => $registration->id, 'language' => $request->language]),
                 $request->language,
                 $registration->id
             );
@@ -126,7 +180,7 @@ class RegistrationController extends Controller
                 'success' => true,
                 'data' => [
                     'registration' => $registration->fresh(),
-                    'temporary_password' => $temporaryPassword, // À supprimer en production
+                    'temporary_password' => $temporaryPassword,
                 ],
                 'message' => 'Inscription créée avec succès'
             ], 201);
@@ -138,6 +192,10 @@ class RegistrationController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Download a badge for a registration.
+     */
     public function downloadBadge($id, $language)
     {
         try {
@@ -149,7 +207,10 @@ class RegistrationController extends Controller
             $badgeImagePath = public_path('badges/' . $badgeImageFile);
 
             if (!file_exists($badgeImagePath)) {
-                return redirect()->back()->with('error', 'Image du badge non trouvée.');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Image du badge non trouvée.'
+                ], 404);
             }
 
             $pdf = Pdf::loadView('badge', [
@@ -159,41 +220,16 @@ class RegistrationController extends Controller
             ]);
 
             $fileName = 'challenger_' . str_replace(' ', '_', strtolower($nom)) . '.pdf';
-            $storagePath = 'badges/' . $fileName;
 
-            // Supprimer l'ancien fichier s'il existe
-            if (Storage::disk('public')->exists($storagePath)) {
-                $deleted = Storage::disk('public')->delete($storagePath);
-                if (!$deleted) {
-                    return redirect()->back()->with('error', 'Impossible de supprimer l\'ancien fichier.');
-                }
-            }
-
-            // Créer le dossier s'il n'existe pas
-            $directory = dirname($storagePath);
-            if (!Storage::disk('public')->exists($directory)) {
-                Storage::disk('public')->makeDirectory($directory);
-            }
-
-            // Enregistrer le nouveau fichier
-            $saved = Storage::disk('public')->put($storagePath, $pdf->output());
-
-            if (!$saved) {
-                return redirect()->back()->with('error', 'Impossible d\'enregistrer le nouveau fichier.');
-            }
-
-            $downloadUrl = asset('storage/' . $storagePath);
-
-            // Rediriger directement vers le fichier PDF généré
-            return redirect($downloadUrl);
+            return $pdf->download($fileName);
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erreur: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la génération du badge: ' . $e->getMessage()
+            ], 500);
         }
     }
-
-
-
 
     /**
      * Display a specific registration.
@@ -231,6 +267,7 @@ class RegistrationController extends Controller
                 'title' => 'sometimes|required|string|max:255',
                 'email' => 'sometimes|required|email|unique:registrations,email,' . $id,
                 'phone' => 'sometimes|required|string|max:20',
+                'country' => 'sometimes|required|string|size:2',
                 'participation_type' => 'sometimes|required|in:without-article,with-article',
                 'has_accompanying' => 'sometimes|required|in:yes,no',
                 'accompanying_details' => 'nullable|string',
@@ -263,6 +300,8 @@ class RegistrationController extends Controller
                 $updateData['email'] = $request->email;
             if ($request->has('phone'))
                 $updateData['phone'] = $request->phone;
+            if ($request->has('country'))
+                $updateData['country'] = strtoupper($request->country);
             if ($request->has('participation_type'))
                 $updateData['participation_type'] = $request->participation_type;
             if ($request->has('has_accompanying'))
@@ -278,7 +317,6 @@ class RegistrationController extends Controller
             if ($request->has('amount'))
                 $updateData['amount'] = $request->amount;
 
-
             // Traitement du nouveau fichier de justificatif
             if ($request->hasFile('payment_proof')) {
                 // Supprimer l'ancien fichier
@@ -292,11 +330,6 @@ class RegistrationController extends Controller
             }
 
             $registration->update($updateData);
-
-            // Recalculer le montant si le type d'hébergement ou les accompagnants ont changé
-            // if (isset($updateData['accommodation_type']) || isset($updateData['accompanying_details']) || isset($updateData['has_accompanying'])) {
-            //     $registration->update(['amount' => $registration->calculateAmount()]);
-            // }
 
             return response()->json([
                 'success' => true,
@@ -395,10 +428,25 @@ class RegistrationController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get total registration count.
+     */
     public function count(): JsonResponse
     {
-        $count = Registration::count();
-        return response()->json(['total_registrations' => $count]);
+        try {
+            $count = Registration::count();
+            return response()->json([
+                'success' => true,
+                'total_registrations' => $count,
+                'message' => 'Total registrations retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in count: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Database error: Unable to retrieve total registrations'
+            ], 500);
+        }
     }
-
 }

@@ -7,6 +7,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { User, Building, Mail, Phone, FileText, CreditCard, Upload, CheckCircle, AlertCircle, Loader2, Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Recu from './Recu.tsx';
+import WorldMap from './WorldMap.tsx';
+import { countries } from 'countries-list';
 
 interface RegistrationProps {
   language: 'fr' | 'en';
@@ -94,8 +96,6 @@ const SelectField: React.FC<SelectFieldProps> = ({
       case 'student': return <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">E</div>;
       case 'academic': return <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white text-xs font-bold">A</div>;
       case 'professional': return <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold">P</div>;
-      case 'Tunisia': return <div className="w-6 h-6 bg-gradient-to-br from-red-600 to-white rounded-full flex items-center justify-center text-white text-xs font-bold">TN</div>;
-      case 'International': return <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-white rounded-full flex items-center justify-center text-white text-xs font-bold">INT</div>;
       default: return <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">?</div>;
     }
   };
@@ -120,7 +120,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
             className="font-medium"
           />
         </SelectTrigger>
-        <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-xl backdrop-blur-sm">
+        <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-xl backdrop-blur-sm max-h-64 overflow-y-auto">
           <div className="p-1">
             {options.map((option) => (
               <SelectItem
@@ -206,6 +206,11 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
 
   const baseUrl = apiBaseUrl || API_CONFIG.baseUrl;
 
+  const countryOptions = Object.entries(countries).map(([code, country]) => ({
+    value: code,
+    label: country.name
+  }));
+
   const content = React.useMemo(() => ({
     fr: {
       title: 'Inscription SITE 2025',
@@ -227,10 +232,6 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         email: 'Adresse e-mail',
         phone: 'Numéro de téléphone',
         country: 'Pays',
-        countryOptions: {
-          tunisia: 'Tunisie',
-          international: 'International'
-        },
         participationWithoutArticle: 'Participation sans soumission d\'article',
         participationWithArticle: 'Participation avec soumission d\'article',
         withAccompanying: 'Avec personne accompagnante',
@@ -279,10 +280,6 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
         email: 'Email Address',
         phone: 'Phone Number',
         country: 'Country',
-        countryOptions: {
-          tunisia: 'Tunisia',
-          international: 'International'
-        },
         participationWithoutArticle: 'Participation without article submission',
         participationWithArticle: 'Participation with article submission',
         withAccompanying: 'With accompanying person',
@@ -314,7 +311,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
   }), [language]);
 
   const getRegistrationFees = () => {
-    const isTunisia = formData.country === 'Tunisia';
+    const isTunisia = formData.country === 'TN';
     const participantType = formData.title;
 
     const fees = {
@@ -333,7 +330,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
   };
 
   const calculateAccompanyingFees = () => {
-    const isTunisia = formData.country === 'Tunisia';
+    const isTunisia = formData.country === 'TN';
     let totalAccompanyingFees = 0;
     let adultCount = 0;
     let childCount = 0;
@@ -609,346 +606,349 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
   return (
     <section className="min-h-screen bg-white py-12" id="registration">
       <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
-              {content[language].title}
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              {content[language].subtitle}
-            </p>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 max-w-2xl mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
+                {content[language].title}
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                {content[language].subtitle}
+              </p>
+            </div>
 
-          <StepIndicator />
+            <StepIndicator />
 
-          {submitError && <ErrorAlert message={submitError} />}
+            {submitError && <ErrorAlert message={submitError} />}
 
-          {currentStep === 1 && (
-            <FormSection icon={User} title={content[language].personalInfo}>
-              <div className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-3">
+            {currentStep === 1 && (
+              <FormSection icon={User} title={content[language].personalInfo}>
+                <div className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <InputField
+                      id="lastName"
+                      label={content[language].form.lastName}
+                      icon={User}
+                      required
+                      value={formData.lastName}
+                      onChange={(e) => updateFormData('lastName', e.target.value)}
+                      error={errors.lastName}
+                    />
+                    <InputField
+                      id="firstName"
+                      label={content[language].form.firstName}
+                      icon={User}
+                      required
+                      value={formData.firstName}
+                      onChange={(e) => updateFormData('firstName', e.target.value)}
+                      error={errors.firstName}
+                    />
+                  </div>
+
                   <InputField
-                    id="lastName"
-                    label={content[language].form.lastName}
-                    icon={User}
+                    id="establishment"
+                    label={content[language].form.establishment}
+                    icon={Building}
                     required
-                    value={formData.lastName}
-                    onChange={(e) => updateFormData('lastName', e.target.value)}
-                    error={errors.lastName}
+                    value={formData.establishment}
+                    onChange={(e) => updateFormData('establishment', e.target.value)}
+                    error={errors.establishment}
                   />
-                  <InputField
-                    id="firstName"
-                    label={content[language].form.firstName}
-                    icon={User}
-                    required
-                    value={formData.firstName}
-                    onChange={(e) => updateFormData('firstName', e.target.value)}
-                    error={errors.firstName}
-                  />
+
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <SelectField
+                      id="title"
+                      label={content[language].form.title}
+                      icon={FileText}
+                      required
+                      value={formData.title}
+                      onValueChange={(value) => updateFormData('title', value)}
+                      error={errors.title}
+                      placeholder={language === 'fr' ? 'Sélectionnez votre fonction' : 'Select your position'}
+                      options={[
+                        { value: 'student', label: content[language].form.titleOptions.student },
+                        { value: 'academic', label: content[language].form.titleOptions.academic },
+                        { value: 'professional', label: content[language].form.titleOptions.professional },
+                      ]}
+                    />
+                    <SelectField
+                      id="country"
+                      label={content[language].form.country}
+                      icon={Globe}
+                      required
+                      value={formData.country}
+                      onValueChange={(value) => updateFormData('country', value)}
+                      error={errors.country}
+                      placeholder={language === 'fr' ? 'Sélectionnez votre pays' : 'Select your country'}
+                      options={countryOptions}
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <InputField
+                      id="email"
+                      label={content[language].form.email}
+                      type="email"
+                      icon={Mail}
+                      required
+                      value={formData.email}
+                      onChange={(e) => updateFormData('email', e.target.value)}
+                      error={errors.email}
+                    />
+                    <InputField
+                      id="phone"
+                      label={content[language].form.phone}
+                      type="tel"
+                      icon={Phone}
+                      required
+                      value={formData.phone}
+                      onChange={(e) => updateFormData('phone', e.target.value)}
+                      error={errors.phone}
+                    />
+                  </div>
                 </div>
 
-                <InputField
-                  id="establishment"
-                  label={content[language].form.establishment}
-                  icon={Building}
-                  required
-                  value={formData.establishment}
-                  onChange={(e) => updateFormData('establishment', e.target.value)}
-                  error={errors.establishment}
-                />
-
-                <div className="grid md:grid-cols-2 gap-3">
-                  <SelectField
-                    id="title"
-                    label={content[language].form.title}
-                    icon={FileText}
-                    required
-                    value={formData.title}
-                    onValueChange={(value) => updateFormData('title', value)}
-                    error={errors.title}
-                    placeholder={language === 'fr' ? 'Sélectionnez votre fonction' : 'Select your position'}
-                    options={[
-                      { value: 'student', label: content[language].form.titleOptions.student },
-                      { value: 'academic', label: content[language].form.titleOptions.academic },
-                      { value: 'professional', label: content[language].form.titleOptions.professional },
-                    ]}
-                  />
-                  <SelectField
-                    id="country"
-                    label={content[language].form.country}
-                    icon={Globe}
-                    required
-                    value={formData.country}
-                    onValueChange={(value) => updateFormData('country', value)}
-                    error={errors.country}
-                    placeholder={language === 'fr' ? 'Sélectionnez votre pays' : 'Select your country'}
-                    options={[
-                      { value: 'Tunisia', label: content[language].form.countryOptions.tunisia },
-                      { value: 'International', label: content[language].form.countryOptions.international }
-                    ]}
-                  />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-3">
-                  <InputField
-                    id="email"
-                    label={content[language].form.email}
-                    type="email"
-                    icon={Mail}
-                    required
-                    value={formData.email}
-                    onChange={(e) => updateFormData('email', e.target.value)}
-                    error={errors.email}
-                  />
-                  <InputField
-                    id="phone"
-                    label={content[language].form.phone}
-                    type="tel"
-                    icon={Phone}
-                    required
-                    value={formData.phone}
-                    onChange={(e) => updateFormData('phone', e.target.value)}
-                    error={errors.phone}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end mt-6">
-                <Button
-                  onClick={nextStep}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
-                >
-                  {content[language].form.next}
-                </Button>
-              </div>
-            </FormSection>
-          )}
-
-          {currentStep === 2 && (
-            <FormSection icon={FileText} title={content[language].participation}>
-              <div className="space-y-6">
-                <div>
-                  <Label className="text-base font-medium text-gray-900 mb-3 block">
-                    Type de participation {errors.participationType && <span className="text-red-500 text-sm">*</span>}
-                  </Label>
-                  <RadioGroup
-                    value={formData.participationType}
-                    onValueChange={(value) => updateFormData('participationType', value)}
-                    className="space-y-2"
+                <div className="flex justify-end mt-6">
+                  <Button
+                    onClick={nextStep}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
                   >
-                    <RadioOption
-                      value="without-article"
-                      id="without-article"
-                      label={content[language].form.participationWithoutArticle}
-                      isSelected={formData.participationType === 'without-article'}
-                    />
-                    <RadioOption
-                      value="with-article"
-                      id="with-article"
-                      label={content[language].form.participationWithArticle}
-                      isSelected={formData.participationType === 'with-article'}
-                    />
-                  </RadioGroup>
-                  {errors.participationType && <p className="text-red-500 text-xs mt-1">{errors.participationType}</p>}
+                    {content[language].form.next}
+                  </Button>
                 </div>
+              </FormSection>
+            )}
 
-                <div>
-                  <Label className="text-base font-medium text-gray-900 mb-3 block">
-                    {content[language].form.withAccompanying} {errors.hasAccompanying && <span className="text-red-500 text-sm">*</span>}
-                  </Label>
-                  <RadioGroup
-                    value={formData.hasAccompanying}
-                    onValueChange={(value) => updateFormData('hasAccompanying', value)}
-                    className="space-y-2"
-                  >
-                    <RadioOption
-                      value="yes"
-                      id="accompanying-yes"
-                      label={content[language].form.yes}
-                      isSelected={formData.hasAccompanying === 'yes'}
-                    />
-                    <RadioOption
-                      value="no"
-                      id="accompanying-no"
-                      label={content[language].form.no}
-                      isSelected={formData.hasAccompanying === 'no'}
-                    />
-                  </RadioGroup>
-                  {errors.hasAccompanying && <p className="text-red-500 text-xs mt-1">{errors.hasAccompanying}</p>}
-                </div>
-
-                {formData.hasAccompanying === 'yes' && (
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                      {content[language].form.accompanyingDetails}
-                      {errors.accompanyingDetails && <span className="text-red-500 ml-1">*</span>}
+            {currentStep === 2 && (
+              <FormSection icon={FileText} title={content[language].participation}>
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-medium text-gray-900 mb-3 block">
+                      Type de participation {errors.participationType && <span className="text-red-500 text-sm">*</span>}
                     </Label>
-                    {formData.accompanyingPersons.map((person, index) => (
-                      <div key={index} className="flex items-center space-x-4 mb-4">
-                        <InputField
-                          id={`accompanyingName${index}`}
-                          label={`Nom de l'accompagnateur ${index + 1}`}
-                          value={person.name}
-                          onChange={(e) => updateAccompanyingPerson(index, 'name', e.target.value)}
-                          error={errors[`accompanyingPersons[${index}].name`]}
-                        />
-                        <InputField
-                          id={`accompanyingAge${index}`}
-                          label={`Âge de l'accompagnateur ${index + 1}`}
-                          type="number"
-                          value={person.age.toString()}
-                          onChange={(e) => updateAccompanyingPerson(index, 'age', e.target.value)}
-                          error={errors[`accompanyingPersons[${index}].age`]}
-                        />
-                        <Button
-                          variant="outline"
-                          onClick={() => removeAccompanyingPerson(index)}
-                          className="mt-6 px-2 py-1 rounded-lg border hover:bg-gray-50"
-                          disabled={formData.accompanyingPersons.length <= 1}
-                        >
-                          Supprimer
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      onClick={addAccompanyingPerson}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mt-2"
+                    <RadioGroup
+                      value={formData.participationType}
+                      onValueChange={(value) => updateFormData('participationType', value)}
+                      className="space-y-2"
                     >
-                      Ajouter un accompagnateur
-                    </Button>
+                      <RadioOption
+                        value="without-article"
+                        id="without-article"
+                        label={content[language].form.participationWithoutArticle}
+                        isSelected={formData.participationType === 'without-article'}
+                      />
+                      <RadioOption
+                        value="with-article"
+                        id="with-article"
+                        label={content[language].form.participationWithArticle}
+                        isSelected={formData.participationType === 'with-article'}
+                      />
+                    </RadioGroup>
+                    {errors.participationType && <p className="text-red-500 text-xs mt-1">{errors.participationType}</p>}
+                  </div>
+
+                  <div>
+                    <Label className="text-base font-medium text-gray-900 mb-3 block">
+                      {content[language].form.withAccompanying} {errors.hasAccompanying && <span className="text-red-500 text-sm">*</span>}
+                    </Label>
+                    <RadioGroup
+                      value={formData.hasAccompanying}
+                      onValueChange={(value) => updateFormData('hasAccompanying', value)}
+                      className="space-y-2"
+                    >
+                      <RadioOption
+                        value="yes"
+                        id="accompanying-yes"
+                        label={content[language].form.yes}
+                        isSelected={formData.hasAccompanying === 'yes'}
+                      />
+                      <RadioOption
+                        value="no"
+                        id="accompanying-no"
+                        label={content[language].form.no}
+                        isSelected={formData.hasAccompanying === 'no'}
+                      />
+                    </RadioGroup>
+                    {errors.hasAccompanying && <p className="text-red-500 text-xs mt-1">{errors.hasAccompanying}</p>}
+                  </div>
+
+                  {formData.hasAccompanying === 'yes' && (
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                        {content[language].form.accompanyingDetails}
+                        {errors.accompanyingDetails && <span className="text-red-500 ml-1">*</span>}
+                      </Label>
+                      {formData.accompanyingPersons.map((person, index) => (
+                        <div key={index} className="flex items-center space-x-4 mb-4">
+                          <InputField
+                            id={`accompanyingName${index}`}
+                            label={`Nom de l'accompagnateur ${index + 1}`}
+                            value={person.name}
+                            onChange={(e) => updateAccompanyingPerson(index, 'name', e.target.value)}
+                            error={errors[`accompanyingPersons[${index}].name`]}
+                          />
+                          <InputField
+                            id={`accompanyingAge${index}`}
+                            label={`Âge de l'accompagnateur ${index + 1}`}
+                            type="number"
+                            value={person.age.toString()}
+                            onChange={(e) => updateAccompanyingPerson(index, 'age', e.target.value)}
+                            error={errors[`accompanyingPersons[${index}].age`]}
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={() => removeAccompanyingPerson(index)}
+                            className="mt-6 px-2 py-1 rounded-lg border hover:bg-gray-50"
+                            disabled={formData.accompanyingPersons.length <= 1}
+                          >
+                            Supprimer
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        onClick={addAccompanyingPerson}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mt-2"
+                      >
+                        Ajouter un accompagnateur
+                      </Button>
+                      <p className="text-xs text-gray-600 mt-2">
+                        {language === 'fr'
+                          ? 'Frais supplémentaires: 240 TND/160 € par nuit par adulte (>12 ans), enfants < 2 ans gratuits, 2-11 ans 50% réduction avec 2 adultes, 30% avec 1 adulte.'
+                          : 'Additional fees: 240 TND/160 € per night per adult (>12 years), children < 2 years free, 2-11 years 50% discount with 2 adults, 30% with 1 adult.'}
+                      </p>
+                      {errors.accompanyingDetails && <p className="text-red-500 text-xs mt-1">{errors.accompanyingDetails}</p>}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center mt-6">
+                  <Button
+                    onClick={prevStep}
+                    variant="outline"
+                    className="px-6 py-2 rounded-lg border hover:bg-gray-50"
+                  >
+                    {content[language].form.previous}
+                  </Button>
+                  <Button
+                    onClick={nextStep}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+                  >
+                    {content[language].form.next}
+                  </Button>
+                </div>
+              </FormSection>
+            )}
+
+            {currentStep === 3 && (
+              <FormSection icon={CreditCard} title={content[language].payment}>
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-base font-medium text-gray-900 mb-3 block">
+                      {content[language].form.registrationFees} {errors.accommodationType && <span className="text-red-500 text-sm">*</span>}
+                    </Label>
+                    <RadioGroup
+                      value={formData.accommodationType}
+                      onValueChange={(value) => updateFormData('accommodationType', value)}
+                      className="space-y-2"
+                    >
+                      <RadioOption
+                        value="without-accommodation"
+                        id="without-accommodation"
+                        label={`${content[language].form.withoutAccommodation}: ${getRegistrationFees().withoutAccommodation} ${formData.country === 'TN' ? 'TND' : 'TND'}`}
+                        isSelected={formData.accommodationType === 'without-accommodation'}
+                      />
+                      <RadioOption
+                        value="with-accommodation"
+                        id="with-accommodation"
+                        label={`${content[language].form.withAccommodation}: ${getRegistrationFees().withAccommodation} ${formData.country === 'TN' ? 'TND' : 'TND'}`}
+                        isSelected={formData.accommodationType === 'with-accommodation'}
+                      />
+                    </RadioGroup>
+                    {errors.accommodationType && <p className="text-red-500 text-xs mt-1">{errors.accommodationType}</p>}
+                  </div>
+
+                  <div>
+                    <Label className="text-base font-medium text-gray-900 mb-3 block">
+                      Mode de paiement {errors.paymentMethod && <span className="text-red-500 text-sm">*</span>}
+                    </Label>
+                    <RadioGroup
+                      value={formData.paymentMethod}
+                      onValueChange={(value) => updateFormData('paymentMethod', value)}
+                      className="space-y-2"
+                    >
+                      <RadioOption
+                        value="bank-transfer"
+                        id="bank-transfer"
+                        label={content[language].form.bankTransfer}
+                        isSelected={formData.paymentMethod === 'bank-transfer'}
+                      />
+                      <RadioOption
+                        value="administrative-order"
+                        id="administrative-order"
+                        label={content[language].form.administrativeOrder}
+                        isSelected={formData.paymentMethod === 'administrative-order'}
+                      />
+                      <RadioOption
+                        value="check"
+                        id="check"
+                        label={content[language].form.checkPayment}
+                        isSelected={formData.paymentMethod === 'check'}
+                      />
+                    </RadioGroup>
+                    {errors.paymentMethod && <p className="text-red-500 text-xs mt-1">{errors.paymentMethod}</p>}
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <Label htmlFor="paymentProof" className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                      <Upload className="w-4 h-4 mr-2 text-blue-600" />
+                      {content[language].form.paymentProof}
+                    </Label>
+                    <Input
+                      id="paymentProof"
+                      type="file"
+                      onChange={handleFileChange}
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="border border-gray-300 rounded-lg"
+                    />
                     <p className="text-xs text-gray-600 mt-2">
                       {language === 'fr'
-                        ? 'Frais supplémentaires: 240 TND/160 € par nuit par adulte (>12 ans), enfants < 2 ans gratuits, 2-11 ans 50% réduction avec 2 adultes, 30% avec 1 adulte.'
-                        : 'Additional fees: 240 TND/160 € per night per adult (>12 years), children < 2 years free, 2-11 years 50% discount with 2 adults, 30% with 1 adult.'}
+                        ? 'Formats acceptés: PDF, JPG, PNG (max 5MB)'
+                        : 'Accepted formats: PDF, JPG, PNG (max 5MB)'}
                     </p>
-                    {errors.accompanyingDetails && <p className="text-red-500 text-xs mt-1">{errors.accompanyingDetails}</p>}
+                    {formData.paymentProof && (
+                      <p className="text-green-600 text-xs mt-1">
+                        Fichier sélectionné: {formData.paymentProof.name}
+                      </p>
+                    )}
+                    {errors.paymentProof && <p className="text-red-500 text-xs mt-1">{errors.paymentProof}</p>}
                   </div>
-                )}
-              </div>
+                </div>
 
-              <div className="flex justify-between items-center mt-6">
-                <Button
-                  onClick={prevStep}
-                  variant="outline"
-                  className="px-6 py-2 rounded-lg border hover:bg-gray-50"
-                >
-                  {content[language].form.previous}
-                </Button>
-                <Button
-                  onClick={nextStep}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
-                >
-                  {content[language].form.next}
-                </Button>
-              </div>
-            </FormSection>
-          )}
-
-          {currentStep === 3 && (
-            <FormSection icon={CreditCard} title={content[language].payment}>
-              <div className="space-y-6">
-                <div>
-                  <Label className="text-base font-medium text-gray-900 mb-3 block">
-                    {content[language].form.registrationFees} {errors.accommodationType && <span className="text-red-500 text-sm">*</span>}
-                  </Label>
-                  <RadioGroup
-                    value={formData.accommodationType}
-                    onValueChange={(value) => updateFormData('accommodationType', value)}
-                    className="space-y-2"
+                <div className="flex justify-between mt-6">
+                  <Button
+                    onClick={() => setCurrentStep(2)}
+                    variant="outline"
+                    className="px-6 py-2 rounded-lg border hover:bg-gray-50"
+                    disabled={isLoading}
                   >
-                    <RadioOption
-                      value="without-accommodation"
-                      id="without-accommodation"
-                      label={`${content[language].form.withoutAccommodation}: ${getRegistrationFees().withoutAccommodation} ${formData.country === 'Tunisia' ? 'TND' : 'TND'}`}
-                      isSelected={formData.accommodationType === 'without-accommodation'}
-                    />
-                    <RadioOption
-                      value="with-accommodation"
-                      id="with-accommodation"
-                      label={`${content[language].form.withAccommodation}: ${getRegistrationFees().withAccommodation} ${formData.country === 'Tunisia' ? 'TND' : '€'}`}
-                      isSelected={formData.accommodationType === 'with-accommodation'}
-                    />
-                  </RadioGroup>
-                  {errors.accommodationType && <p className="text-red-500 text-xs mt-1">{errors.accommodationType}</p>}
-                </div>
-
-                <div>
-                  <Label className="text-base font-medium text-gray-900 mb-3 block">
-                    Mode de paiement {errors.paymentMethod && <span className="text-red-500 text-sm">*</span>}
-                  </Label>
-                  <RadioGroup
-                    value={formData.paymentMethod}
-                    onValueChange={(value) => updateFormData('paymentMethod', value)}
-                    className="space-y-2"
+                    {content[language].form.previous}
+                  </Button>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isLoading || isSubmitted}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center"
                   >
-                    <RadioOption
-                      value="bank-transfer"
-                      id="bank-transfer"
-                      label={content[language].form.bankTransfer}
-                      isSelected={formData.paymentMethod === 'bank-transfer'}
-                    />
-                    <RadioOption
-                      value="administrative-order"
-                      id="administrative-order"
-                      label={content[language].form.administrativeOrder}
-                      isSelected={formData.paymentMethod === 'administrative-order'}
-                    />
-                    <RadioOption
-                      value="check"
-                      id="check"
-                      label={content[language].form.checkPayment}
-                      isSelected={formData.paymentMethod === 'check'}
-                    />
-                  </RadioGroup>
-                  {errors.paymentMethod && <p className="text-red-500 text-xs mt-1">{errors.paymentMethod}</p>}
+                    {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {isLoading ? content[language].form.submitting : content[language].form.submit}
+                  </Button>
                 </div>
+              </FormSection>
+            )}
+          </div>
 
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <Label htmlFor="paymentProof" className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                    <Upload className="w-4 h-4 mr-2 text-blue-600" />
-                    {content[language].form.paymentProof}
-                  </Label>
-                  <Input
-                    id="paymentProof"
-                    type="file"
-                    onChange={handleFileChange}
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    className="border border-gray-300 rounded-lg"
-                  />
-                  <p className="text-xs text-gray-600 mt-2">
-                    {language === 'fr'
-                      ? 'Formats acceptés: PDF, JPG, PNG (max 5MB)'
-                      : 'Accepted formats: PDF, JPG, PNG (max 5MB)'}
-                  </p>
-                  {formData.paymentProof && (
-                    <p className="text-green-600 text-xs mt-1">
-                      Fichier sélectionné: {formData.paymentProof.name}
-                    </p>
-                  )}
-                  {errors.paymentProof && <p className="text-red-500 text-xs mt-1">{errors.paymentProof}</p>}
-                </div>
-              </div>
-
-              <div className="flex justify-between mt-6">
-                <Button
-                  onClick={() => setCurrentStep(2)}
-                  variant="outline"
-                  className="px-6 py-2 rounded-lg border hover:bg-gray-50"
-                  disabled={isLoading}
-                >
-                  {content[language].form.previous}
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isLoading || isSubmitted}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center"
-                >
-                  {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {isLoading ? content[language].form.submitting : content[language].form.submit}
-                </Button>
-              </div>
-            </FormSection>
-          )}
+          <div className="lg:col-span-1">
+            <WorldMap language={language} apiBaseUrl={apiBaseUrl} />
+          </div>
         </div>
       </div>
     </section>

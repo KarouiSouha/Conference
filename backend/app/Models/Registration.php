@@ -25,6 +25,7 @@ class Registration extends Authenticatable
         'email',
         'password',
         'phone',
+        'country',
         'participation_type',
         'has_accompanying',
         'accompanying_details',
