@@ -66,6 +66,8 @@ class RegistrationController extends Controller
     {
         try {
             $counts = Registration::select('country', DB::raw('count(*) as count'))
+                ->whereNotNull('country')
+                ->where('country', '!=', '')
                 ->groupBy('country')
                 ->get()
                 ->pluck('count', 'country')

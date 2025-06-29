@@ -29,6 +29,87 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
 
   const baseUrl = apiBaseUrl || API_CONFIG.baseUrl;
 
+  // Fonction utilitaire pour extraire le code pays depuis les données GeoJSON
+  const getCountryCode = useCallback((properties: any): string | null => {
+    // Essayer différentes propriétés possibles pour le code ISO2
+    const possibleCodes = [
+      properties?.ISO_A2,
+      properties?.iso_a2,
+      properties?.ADM0_A3, // Code ISO3 qu'on peut convertir
+      properties?.WB_A2,
+      properties?.country_code,
+      properties?.ADMIN // Nom du pays qu'on peut mapper
+    ];
+    
+    for (const code of possibleCodes) {
+      if (code && typeof code === 'string' && code.length === 2) {
+        return code.toUpperCase();
+      }
+    }
+    
+    // Si aucun code ISO2 trouvé, essayer de mapper depuis le nom du pays
+    const countryName = properties?.NAME || properties?.name || properties?.ADMIN;
+    if (countryName) {
+      // Mapping manuel pour quelques pays problématiques
+      const countryMapping: { [key: string]: string } = {
+        'United States of America': 'US',
+        'United Kingdom': 'GB',
+        'France': 'FR',
+        'Germany': 'DE',
+        'Italy': 'IT',
+        'Spain': 'ES',
+        'Canada': 'CA',
+        'Australia': 'AU',
+        'Brazil': 'BR',
+        'China': 'CN',
+        'India': 'IN',
+        'Japan': 'JP',
+        'Russia': 'RU',
+        'South Africa': 'ZA',
+        'Mexico': 'MX',
+        'Argentina': 'AR',
+        'Egypt': 'EG',
+        'Nigeria': 'NG',
+        'Kenya': 'KE',
+        'Morocco': 'MA',
+        'Tunisia': 'TN',
+        'Algeria': 'DZ',
+        'Libya': 'LY',
+        'Sudan': 'SD',
+        'Ethiopia': 'ET',
+        'Ghana': 'GH',
+        'Ivory Coast': 'CI',
+        'Senegal': 'SN',
+        'Mali': 'ML',
+        'Burkina Faso': 'BF',
+        'Niger': 'NE',
+        'Chad': 'TD',
+        'Cameroon': 'CM',
+        'Central African Republic': 'CF',
+        'Democratic Republic of the Congo': 'CD',
+        'Republic of the Congo': 'CG',
+        'Gabon': 'GA',
+        'Equatorial Guinea': 'GQ',
+        'Sao Tome and Principe': 'ST',
+        'Angola': 'AO',
+        'Zambia': 'ZM',
+        'Zimbabwe': 'ZW',
+        'Botswana': 'BW',
+        'Namibia': 'NA',
+        'Lesotho': 'LS',
+        'Swaziland': 'SZ',
+        'Madagascar': 'MG',
+        'Mauritius': 'MU',
+        'Seychelles': 'SC',
+        'Comoros': 'KM'
+      };
+      
+      return countryMapping[countryName] || null;
+    }
+    
+    return null;
+  }, []);
+
   // Charger les données géographiques
   useEffect(() => {
     const loadWorldData = async () => {
@@ -37,6 +118,15 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
         if (!response.ok) throw new Error(`Failed to load GeoJSON: ${response.status}`);
         const data = await response.json();
         console.log('GeoJSON loaded successfully');
+        
+        // Debug: afficher quelques propriétés des pays pour comprendre la structure
+        console.log('Sample country properties:', data.features.slice(0, 3).map((f: any) => ({
+          name: f.properties?.NAME || f.properties?.name,
+          iso_a2: f.properties?.ISO_A2 || f.properties?.iso_a2,
+          admin: f.properties?.ADMIN,
+          all_props: Object.keys(f.properties || {})
+        })));
+        
         setWorldData(data);
       } catch (err) {
         console.error('Error loading GeoJSON:', err);
@@ -72,14 +162,19 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
           console.log('Raw API response:', result);
           
           if (result.success && result.data) {
-            // Convertir les données en format correct
-            const data = Object.fromEntries(
-              Object.entries(result.data)
-                .filter(([_, count]) => Number(count) > 0)
-                .map(([k, v]) => [k.toUpperCase(), Number(v)])
-            );
-            console.log('Processed participant data:', data);
-            setParticipantData(data as ParticipantData);
+            // Normaliser les codes pays et s'assurer qu'ils sont en majuscules
+            const normalizedData: ParticipantData = {};
+            Object.entries(result.data).forEach(([countryCode, count]) => {
+              if (countryCode && Number(count) > 0) {
+                const normalizedCode = countryCode.trim().toUpperCase();
+                if (normalizedCode.length === 2) {
+                  normalizedData[normalizedCode] = Number(count);
+                }
+              }
+            });
+            
+            console.log('Normalized participant data:', normalizedData);
+            setParticipantData(normalizedData);
           } else {
             console.warn('API returned error:', result.message);
             setError(result.message || (language === 'fr' ? 'Erreur lors du chargement des données' : 'Error loading participant data'));
@@ -101,13 +196,16 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
   }, [baseUrl, language]);
 
   // Fonction pour obtenir le nombre de participants d'un pays
-  const getParticipantCount = useCallback((countryCode: string): number => {
-    const code = countryCode?.toUpperCase();
-    return participantData[code] || 0;
+  const getParticipantCount = useCallback((countryCode: string | null): number => {
+    if (!countryCode) return 0;
+    const code = countryCode.toUpperCase();
+    const count = participantData[code] || 0;
+    console.log(`Getting participant count for ${code}:`, count);
+    return count;
   }, [participantData]);
 
   // Gestion du clic sur un pays
-  const handleCountryClick = useCallback((countryCode: string, countryName: string) => {
+  const handleCountryClick = useCallback((countryCode: string | null, countryName: string) => {
     console.log('Country clicked:', { countryCode, countryName });
     setSelectedCountry(countryName);
     const count = getParticipantCount(countryCode);
@@ -138,6 +236,7 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
     // Calculer les valeurs min/max pour la couleur
     const participantCounts = Object.values(participantData);
     const maxParticipants = Math.max(...participantCounts, 1);
+    console.log('Max participants for color scale:', maxParticipants);
 
     // Dessiner les pays
     mapGroup.selectAll("path")
@@ -146,11 +245,14 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
       .append("path")
       .attr("d", path)
       .attr("fill", (d: GeoJSON.Feature<GeoJSON.Geometry, GeoJSON.GeoJsonProperties>) => {
-        const countryCode = (d.properties?.iso_a2 || d.properties?.ISO_A2)?.toUpperCase();
-        const participants = getParticipantCount(countryCode || '');
+        const countryCode = getCountryCode(d.properties);
+        const participants = getParticipantCount(countryCode);
+        
         if (participants > 0) {
           const intensity = Math.min(participants / maxParticipants, 1);
-          return d3.interpolateBlues(0.3 + intensity * 0.7);
+          const color = d3.interpolateBlues(0.3 + intensity * 0.7);
+          console.log(`Country ${countryCode} (${d.properties?.NAME}) has ${participants} participants, color: ${color}`);
+          return color;
         }
         return "#f0f0f0";
       })
@@ -161,9 +263,11 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
         event: MouseEvent,
         d: GeoJSON.Feature<GeoJSON.Geometry, GeoJSON.GeoJsonProperties>
       ) {
-        const countryCode = (d.properties?.iso_a2 || d.properties?.ISO_A2)?.toUpperCase();
-        const countryName = d.properties?.name || d.properties?.NAME;
-        const participants = getParticipantCount(countryCode || '');
+        const countryCode = getCountryCode(d.properties);
+        const countryName = d.properties?.NAME || d.properties?.name || d.properties?.ADMIN;
+        const participants = getParticipantCount(countryCode);
+        
+        console.log(`Hover on ${countryName} (${countryCode}): ${participants} participants`);
         
         // Highlight du pays
         d3.select(this)
@@ -191,6 +295,7 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
         tooltip.html(`
           <div style="font-weight: bold; margin-bottom: 4px;">${countryName}</div>
           <div>${participants} ${language === 'fr' ? 'participant(s)' : 'participant(s)'}</div>
+          ${countryCode ? `<div style="font-size: 10px; color: #ccc;">Code: ${countryCode}</div>` : ''}
         `)
           .style("left", (event.pageX + 10) + "px")
           .style("top", (event.pageY - 28) + "px");
@@ -205,9 +310,9 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
         event: MouseEvent,
         d: GeoJSON.Feature<GeoJSON.Geometry, GeoJSON.GeoJsonProperties>
       ) {
-        const countryCode = (d.properties?.iso_a2 || d.properties?.ISO_A2)?.toUpperCase();
-        const countryName = d.properties?.name || d.properties?.NAME;
-        if (countryCode && countryName) {
+        const countryCode = getCountryCode(d.properties);
+        const countryName = d.properties?.NAME || d.properties?.name || d.properties?.ADMIN;
+        if (countryName) {
           handleCountryClick(countryCode, countryName);
         }
       });
@@ -215,14 +320,18 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
     // Ajouter des cercles pour les pays avec des participants
     Object.entries(participantData).forEach(([countryCode, count]) => {
       const feature = worldData.features.find(
-        (f: GeoJSON.Feature<GeoJSON.Geometry, GeoJSON.GeoJsonProperties>) => 
-          ((f.properties?.iso_a2 || f.properties?.ISO_A2) || '').toUpperCase() === countryCode
+        (f: GeoJSON.Feature<GeoJSON.Geometry, GeoJSON.GeoJsonProperties>) => {
+          const featureCode = getCountryCode(f.properties);
+          return featureCode === countryCode;
+        }
       );
       
       if (feature && count > 0) {
         const centroid = path.centroid(feature);
         if (centroid && !isNaN(centroid[0]) && !isNaN(centroid[1])) {
-          const radius = Math.sqrt(count / Math.PI) * 2 + 3; // Formule pour un rayon proportionnel
+          const radius = Math.sqrt(count / Math.PI) * 3 + 4; // Augmenter la taille des cercles
+          
+          console.log(`Adding circle for ${countryCode} at`, centroid, `with radius ${radius}`);
           
           mapGroup.append("circle")
             .attr("cx", centroid[0])
@@ -254,8 +363,9 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
                 .style("opacity", 0.9);
                 
               tooltip.html(`
-                <div style="font-weight: bold; margin-bottom: 4px;">${feature.properties?.name || feature.properties?.NAME}</div>
+                <div style="font-weight: bold; margin-bottom: 4px;">${feature.properties?.NAME || feature.properties?.name}</div>
                 <div>${count} ${language === 'fr' ? 'participant(s)' : 'participant(s)'}</div>
+                <div style="font-size: 10px; color: #ccc;">Code: ${countryCode}</div>
               `)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 28) + "px");
@@ -265,7 +375,7 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
               d3.selectAll(".world-map-tooltip").remove();
             })
             .on("click", function() {
-              const countryName = feature.properties?.name || feature.properties?.NAME;
+              const countryName = feature.properties?.NAME || feature.properties?.name;
               if (countryCode && countryName) {
                 handleCountryClick(countryCode, countryName);
               }
@@ -274,7 +384,7 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
       }
     });
 
-  }, [worldData, participantData, language, handleCountryClick, getParticipantCount]);
+  }, [worldData, participantData, language, handleCountryClick, getParticipantCount, getCountryCode]);
 
   if (isLoading) {
     return (
@@ -316,6 +426,13 @@ const WorldMap: React.FC<WorldMapProps> = ({ apiBaseUrl, language }) => {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-start">
           <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 mr-3" />
           <p className="text-red-800 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Debug info */}
+      {Object.keys(participantData).length > 0 && (
+        <div className="mb-4 p-2 bg-yellow-50 rounded text-xs">
+          <strong>Debug:</strong> Codes pays avec participants: {Object.keys(participantData).join(', ')}
         </div>
       )}
 
