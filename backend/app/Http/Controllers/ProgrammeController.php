@@ -300,6 +300,7 @@ class ProgrammeController extends Controller
 
             $validated = $request->validate([
                 'jour' => 'sometimes|date',
+                'heure' => 'sometimes|date_format:H:i', // Ajouté ici
                 'evenement_fr' => 'sometimes|string|max:255',
                 'evenement_en' => 'sometimes|string|max:255',
                 'description_fr' => 'nullable|string',
@@ -311,6 +312,7 @@ class ProgrammeController extends Controller
                 'type_evenement' => 'nullable|in:keynote,session,workshop,panel,break,meal,networking,ceremony',
                 'speaker_id' => 'nullable|exists:speakers,id'
             ]);
+
 
             $programme->update($validated);
             $programme->load('speaker'); // Recharger la relation speaker
