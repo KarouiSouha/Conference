@@ -134,3 +134,16 @@ Route::prefix('News')->controller(NewsController::class)->group(function () {
 
 Route::get('/download-badge/{id}', [BadgeController::class, 'downloadBadge'])->name('download.badge');
 
+// Dans votre controller ou routes/api.php
+Route::get('/download-payment-proof/{path}', function ($path) {
+    // Décoder le chemin si nécessaire
+    $decodedPath = urldecode($path);
+    $fullPath = storage_path('app/public/' . $decodedPath);
+    
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+    
+    return response()->download($fullPath);
+})->where('path', '.*')->name('download.payment.proof');
+
