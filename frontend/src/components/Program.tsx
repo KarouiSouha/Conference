@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, Calendar, Coffee, Users, Presentation, Award, Loader2, AlertCircle } from 'lucide-react';
+import { Clock, Calendar, Coffee, Users, Presentation, Award, Loader2, AlertCircle, Download, FileText } from 'lucide-react';
 
 interface Session {
   id: number;
@@ -33,6 +33,7 @@ const Program: React.FC<ProgramProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('0');
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const content = {
     fr: {
@@ -42,7 +43,10 @@ const Program: React.FC<ProgramProps> = ({
       error: 'Erreur lors du chargement du programme',
       noData: 'Aucun programme disponible',
       speaker: 'Intervenant',
-      location: 'Lieu'
+      location: 'Lieu',
+      downloadPdf: 'Télécharger le programme PDF',
+      downloadingPdf: 'Téléchargement en cours...',
+      downloadError: 'Erreur lors du téléchargement du PDF'
     },
     en: {
       title: 'Conference Program',
@@ -51,7 +55,10 @@ const Program: React.FC<ProgramProps> = ({
       error: 'Error loading program',
       noData: 'No program available',
       speaker: 'Speaker',
-      location: 'Location'
+      location: 'Location',
+      downloadPdf: 'Download PDF Program',
+      downloadingPdf: 'Downloading...',
+      downloadError: 'Error downloading PDF'
     }
   };
 
@@ -87,6 +94,63 @@ const Program: React.FC<ProgramProps> = ({
 
     fetchProgramData();
   }, [language, apiUrl]);
+
+  // Handle PDF download
+  const handleDownloadPdf = async () => {
+    try {
+      setDownloadingPdf(true);
+
+      const url = `${apiUrl}/Programme/download-pdf?lang=${language}`;
+      console.log('Fetching PDF from:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/pdf',
+        },
+      });
+
+      console.log('Response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'No error details available');
+        throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      console.log('Content-Type:', contentType);
+      if (!contentType?.includes('application/pdf')) {
+        const responseText = await response.text();
+        throw new Error(`Expected PDF, but received ${contentType}: ${responseText}`);
+      }
+
+      const blob = await response.blob();
+      console.log('Blob size:', blob.size, 'bytes');
+      if (blob.size === 0) {
+        throw new Error('Received empty PDF file');
+      }
+
+      const urlBlob = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = urlBlob;
+      link.download = `programme-conference-${language}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(urlBlob);
+
+      console.log('PDF download successful');
+    } catch (err) {
+      console.error('PDF download error:', err);
+      const errorMessage = err instanceof Error 
+        ? `${currentContent.downloadError}: ${err.message}`
+        : currentContent.downloadError;
+      alert(errorMessage);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   // Convert grouped data to array format for tabs
   const getDaysArray = () => {
@@ -197,9 +261,31 @@ const Program: React.FC<ProgramProps> = ({
             <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
               {currentContent.title}
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-muted-foreground mb-6">
               {currentContent.subtitle}
             </p>
+            
+            {/* Bouton de téléchargement PDF */}
+            <div className="mb-6">
+              <button
+                onClick={handleDownloadPdf}
+                disabled={downloadingPdf}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 disabled:bg-slate-400 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
+              >
+                {downloadingPdf ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {currentContent.downloadingPdf}
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    <FileText className="w-4 h-4" />
+                    {currentContent.downloadPdf}
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
