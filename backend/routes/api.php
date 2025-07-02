@@ -91,6 +91,7 @@ Route::prefix('Programme')->controller(ProgrammeController::class)->group(functi
     Route::post('/', 'store');                      // POST /api/Programme
     Route::put('/{id}', 'update');                  // PUT /api/Programme/{id}
     Route::delete('/{id}', 'destroy');              // DELETE /api/Programme/{id}
+    Route::get('/download-pdf', 'downloadPdf');  
 });
 
 Route::prefix('Registration')->controller(RegistrationController::class)->group(function () {
@@ -101,9 +102,11 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
     Route::get('/all-participants-by-country', 'allParticipantsByCountry'); // 👈 CORRIGÉ
     Route::get('/participants-by-country/{countryCode}', 'participantsByCountry'); // 👈 CORRIGÉ
     Route::get('/recent','recent');
+    
 
     // Routes avec paramètres APRÈS
     Route::get('/{id}', 'show');
+    Route::post('/send-receipt','sendReceipt');
     Route::post('/', 'store');
     Route::post('/update/{id}', 'update');
     Route::delete('/{id}', 'destroy');
@@ -133,4 +136,17 @@ Route::prefix('News')->controller(NewsController::class)->group(function () {
 });
 
 Route::get('/download-badge/{id}', [BadgeController::class, 'downloadBadge'])->name('download.badge');
+
+// Dans votre controller ou routes/api.php
+Route::get('/download-payment-proof/{path}', function ($path) {
+    // Décoder le chemin si nécessaire
+    $decodedPath = urldecode($path);
+    $fullPath = storage_path('app/public/' . $decodedPath);
+    
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+    
+    return response()->download($fullPath);
+})->where('path', '.*')->name('download.payment.proof');
 

@@ -1,7 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, User, FileText, Home, CreditCard, Mail, Globe, Upload, Download } from 'lucide-react';
+import { CheckCircle, User, FileText, Home, CreditCard, Mail, Globe, Upload, Download, Send } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -17,6 +17,7 @@ interface RecuProps {
   paymentMethod: string;
   accompanyingPersons: { name: string; age: number; discount?: number }[];
   onNewRegistration: () => void;
+  registrationId?: number; // Ajouter l'ID de l'inscription pour l'envoi par email
 }
 
 const Recu: React.FC<RecuProps> = ({
@@ -31,8 +32,11 @@ const Recu: React.FC<RecuProps> = ({
   paymentMethod,
   accompanyingPersons,
   onNewRegistration,
+  registrationId,
 }) => {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const [isEmailSending, setIsEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const content = {
     fr: {
@@ -59,6 +63,10 @@ const Recu: React.FC<RecuProps> = ({
       noDiscounts: 'Aucune réduction',
       newRegistration: 'Nouvelle inscription',
       downloadPDF: 'Télécharger le reçu (PDF)',
+      sendByEmail: 'Envoyer le reçu par email',
+      emailSending: 'Envoi en cours...',
+      emailSent: 'Email envoyé avec succès!',
+      emailError: 'Erreur lors de l\'envoi de l\'email',
       thankYou: 'Merci pour votre inscription !',
       confirmation: 'Votre inscription a été enregistrée avec succès. Vous recevrez une confirmation par e-mail sous peu.',
       organization: 'SITE 2025 - Conférence Internationale',
@@ -94,6 +102,10 @@ const Recu: React.FC<RecuProps> = ({
       noDiscounts: 'No discounts',
       newRegistration: 'New Registration',
       downloadPDF: 'Download Receipt (PDF)',
+      sendByEmail: 'Send receipt by email',
+      emailSending: 'Sending...',
+      emailSent: 'Email sent successfully!',
+      emailError: 'Error sending email',
       thankYou: 'Thank you for your registration!',
       confirmation: 'Your registration has been successfully recorded. You will receive a confirmation email shortly.',
       organization: 'SITE 2025 - International Conference',
@@ -130,8 +142,8 @@ const Recu: React.FC<RecuProps> = ({
     day: 'numeric',
   });
 
-  const downloadPDF = async () => {
-    if (!receiptRef.current) return;
+  const generatePDFBlob = async () => {
+    if (!receiptRef.current) return null;
 
     // Hide buttons before capturing
     const buttonContainer = receiptRef.current.querySelector('.button-container');
@@ -140,8 +152,8 @@ const Recu: React.FC<RecuProps> = ({
     }
 
     const canvas = await html2canvas(receiptRef.current, {
-      scale: 2, // Higher scale for better quality
-      useCORS: true, // Enable CORS for images (e.g., logo)
+      scale: 2,
+      useCORS: true,
     });
 
     // Restore buttons after capturing
@@ -159,12 +171,11 @@ const Recu: React.FC<RecuProps> = ({
 
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pageWidth - 20; // 10mm margin on each side
+    const imgWidth = pageWidth - 20;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    // Add image to PDF, handling multi-page content if necessary
     let heightLeft = imgHeight;
-    let position = 10; // Top margin
+    let position = 10;
 
     pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
     heightLeft -= pageHeight - 20;
@@ -176,7 +187,71 @@ const Recu: React.FC<RecuProps> = ({
       heightLeft -= pageHeight - 20;
     }
 
-    pdf.save(`SITE2025_Receipt_${firstName}_${lastName}.pdf`);
+    return pdf.output('blob');
+  };
+
+  const downloadPDF = async () => {
+    const pdfBlob = await generatePDFBlob();
+    if (!pdfBlob) return;
+
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `SITE2025_Receipt_${firstName}_${lastName}.pdf`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const sendReceiptByEmail = async () => {
+    setIsEmailSending(true);
+    try {
+      const pdfBlob = await generatePDFBlob();
+      if (!pdfBlob) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      // Convertir le blob en base64 pour l'envoyer
+      const reader = new FileReader();
+      reader.readAsDataURL(pdfBlob);
+      
+      reader.onloadend = async () => {
+        const base64data = reader.result?.toString().split(',')[1];
+        
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('firstName', firstName);
+        formData.append('lastName', lastName);
+        formData.append('language', language);
+        // formData.append('pdfContent', base64data || '');
+        formData.append('totalAmount', totalAmount.toString());
+        formData.append('country', country);
+        formData.append('participationType', participationType);
+        formData.append('accommodationType', accommodationType);
+        formData.append('paymentMethod', paymentMethod);
+        
+        // Ajouter les accompagnateurs s'il y en a
+        if (accompanyingPersons.length > 0) {
+          formData.append('accompanyingPersons', JSON.stringify(accompanyingPersons));
+        }
+
+        const response = await fetch('http://localhost:8000/api/Registration/send-receipt', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to send email');
+        }
+
+        setEmailSent(true);
+        setTimeout(() => setEmailSent(false), 3000); // Reset after 3 seconds
+      };
+    } catch (error) {
+      console.error('Error sending email:', error);
+      alert(content[language].emailError);
+    } finally {
+      setIsEmailSending(false);
+    }
   };
 
   return (
@@ -311,7 +386,7 @@ const Recu: React.FC<RecuProps> = ({
               ? 'Ce reçu est généré automatiquement. Veuillez conserver une copie pour vos archives.'
               : 'This receipt is generated automatically. Please keep a copy for your records.'}
           </p>
-          <div className="flex justify-center gap-4 button-container">
+          <div className="flex justify-center gap-4 button-container flex-wrap">
             <Button
               onClick={downloadPDF}
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center"
@@ -319,6 +394,27 @@ const Recu: React.FC<RecuProps> = ({
               <Download className="w-4 h-4 mr-2" />
               {content[language].downloadPDF}
             </Button>
+            
+            <Button
+              onClick={sendReceiptByEmail}
+              disabled={isEmailSending}
+              className={`${
+                emailSent 
+                  ? 'bg-green-500 hover:bg-green-600' 
+                  : 'bg-orange-600 hover:bg-orange-700'
+              } text-white px-6 py-2 rounded-lg flex items-center ${
+                isEmailSending ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              {isEmailSending 
+                ? content[language].emailSending
+                : emailSent 
+                  ? content[language].emailSent
+                  : content[language].sendByEmail
+              }
+            </Button>
+            
             <Button
               onClick={onNewRegistration}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"

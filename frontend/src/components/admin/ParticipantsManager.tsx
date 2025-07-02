@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Edit, Trash, Download, Filter, Users, CheckCircle, Clock, DollarSign, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Edit, Trash, Download, Filter, Users, CheckCircle, Clock, DollarSign, ChevronLeft, ChevronRight, Eye, FileText, Image } from "lucide-react";
 import ParticipantForm from "./ParticipantForm";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import axios from "axios";
@@ -54,6 +54,9 @@ export default function ParticipantsManager() {
   // États pour le modal de suppression
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [participantToDelete, setParticipantToDelete] = useState<Participant | null>(null);
+
+  // État pour la prévisualisation de l'image
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Fetch participants and statistics from API
   useEffect(() => {
@@ -193,6 +196,48 @@ export default function ParticipantsManager() {
     }
   };
 
+  // Fonction pour visualiser la preuve de paiement
+  const handleViewPaymentProof = (paymentProof: string) => {
+    const imageUrl = `http://localhost:8000/storage/${paymentProof}`;
+    setImagePreview(imageUrl);
+  };
+
+  // Fonction pour télécharger la preuve de paiement
+  const handleDownloadPaymentProof = async (paymentProof: string, participantName: string) => {
+    try {
+      const fileName = `preuve_paiement_${participantName.replace(/\s+/g, '_')}.${paymentProof.split('.').pop()}`;
+
+      // Utiliser la route API au lieu d'accéder directement au storage
+      const downloadUrl = `http://localhost:8000/api/download-payment-proof/${paymentProof}`;
+
+      // Créer un lien direct pour le téléchargement
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName;
+      link.target = '_blank'; // Ouvrir dans un nouvel onglet si nécessaire
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Succès",
+        description: "Preuve de paiement téléchargée avec succès !",
+        variant: "default",
+        duration: 3000,
+        className: "bg-green-50 text-green-800 border-green-200 shadow-md rounded-lg",
+      });
+    } catch (error) {
+      console.error("Erreur lors du téléchargement:", error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors du téléchargement de la preuve de paiement.",
+        variant: "destructive",
+        duration: 3000,
+        className: "bg-red-50 text-red-800 border-red-200 shadow-md rounded-lg",
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "confirmed":
@@ -216,6 +261,15 @@ export default function ParticipantsManager() {
     return participationType === "with-article"
       ? <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200 font-medium">Avec article</Badge>
       : <Badge className="bg-slate-100 text-slate-800 hover:bg-slate-100 border-slate-200 font-medium">Sans article</Badge>;
+  };
+
+  // Fonction pour obtenir l'icône selon le type de fichier
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension || '')) {
+      return <Image className="w-4 h-4" />;
+    }
+    return <FileText className="w-4 h-4" />;
   };
 
   const filteredParticipants = participants.filter((participant) =>
@@ -351,6 +405,7 @@ export default function ParticipantsManager() {
                     <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
                     <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">Statut</th>
                     <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">Paiement</th>
+                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">Preuve Paiement</th>
                     <th className="text-left py-4 px-6 text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -390,6 +445,38 @@ export default function ParticipantsManager() {
                             {(typeof participant.amount === 'number' ? participant.amount : parseFloat(participant.amount) || 0).toFixed(2)} DT
                           </p>
                         </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        {participant.payment_proof ? (
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 w-8 p-0"
+                              onClick={() => handleViewPaymentProof(participant.payment_proof!)}
+                              title="Visualiser la preuve"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50 h-8 w-8 p-0"
+                              onClick={() => handleDownloadPaymentProof(participant.payment_proof!, `${participant.first_name}_${participant.last_name}`)}
+                              title="Télécharger la preuve"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                            <div className="flex items-center text-xs text-gray-500">
+                              {getFileIcon(participant.payment_proof)}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-sm text-gray-400">
+                            <FileText className="w-4 h-4 mr-1" />
+                            <span>Aucune preuve</span>
+                          </div>
+                        )}
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
@@ -464,11 +551,10 @@ export default function ParticipantsManager() {
                   size="sm"
                   onClick={() => goToPage(page)}
                   disabled={filteredParticipants.length === 0}
-                  className={`border-2 ${
-                    currentPage === page
+                  className={`border-2 ${currentPage === page
                       ? "bg-blue-600 border-blue-600 text-white"
                       : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                  } min-w-[40px] disabled:opacity-50 disabled:cursor-not-allowed`}
+                    } min-w-[40px] disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {page}
                 </Button>
@@ -486,6 +572,27 @@ export default function ParticipantsManager() {
           </div>
         </Card>
       </div>
+
+      {/* Modal de prévisualisation d'image */}
+      {imagePreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="relative max-w-4xl max-h-full">
+            <button
+              onClick={() => setImagePreview(null)}
+              className="absolute -top-4 -right-4 bg-white rounded-full p-2 text-gray-600 hover:text-gray-800 shadow-lg z-10"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img
+              src={imagePreview}
+              alt="Preuve de paiement"
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Formulaire modal */}
       {isFormOpen && (

@@ -36,6 +36,7 @@ class Registration extends Authenticatable
         'amount',
         'is_paid',
         'paid_at',
+        'language'
     ];
 
     /**

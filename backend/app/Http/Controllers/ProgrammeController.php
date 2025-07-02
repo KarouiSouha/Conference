@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ProgrammeController extends Controller
 {
@@ -24,7 +25,7 @@ class ProgrammeController extends Controller
                 ->get()
                 ->map(function ($programme) use ($lang) {
                     $data = $programme->getContentInLanguage($lang);
-                    
+
                     // Ajouter les informations du speaker si disponible
                     if ($programme->speaker) {
                         $data['speaker'] = [
@@ -37,7 +38,7 @@ class ProgrammeController extends Controller
                     } else {
                         $data['speaker'] = null;
                     }
-                    
+
                     return $data;
                 })
                 ->groupBy(function ($item) {
@@ -81,7 +82,7 @@ class ProgrammeController extends Controller
                 ->get()
                 ->map(function ($programme) use ($lang) {
                     $data = $programme->getContentInLanguage($lang);
-                    
+
                     // Ajouter les informations du speaker si disponible
                     if ($programme->speaker) {
                         $data['speaker'] = [
@@ -94,7 +95,7 @@ class ProgrammeController extends Controller
                     } else {
                         $data['speaker'] = null;
                     }
-                    
+
                     return $data;
                 });
 
@@ -125,7 +126,7 @@ class ProgrammeController extends Controller
                 ->get()
                 ->map(function ($programme) use ($lang) {
                     $data = $programme->getContentInLanguage($lang);
-                    
+
                     // Ajouter les informations du speaker si disponible
                     if ($programme->speaker) {
                         $data['speaker'] = [
@@ -137,7 +138,7 @@ class ProgrammeController extends Controller
                     } else {
                         $data['speaker'] = null;
                     }
-                    
+
                     return $data;
                 })
                 ->groupBy(function ($item) {
@@ -169,7 +170,7 @@ class ProgrammeController extends Controller
                 ->get()
                 ->map(function ($programme) use ($lang) {
                     $data = $programme->getContentInLanguage($lang);
-                    
+
                     // Ajouter les informations du speaker si disponible
                     if ($programme->speaker) {
                         $data['speaker'] = [
@@ -180,7 +181,7 @@ class ProgrammeController extends Controller
                     } else {
                         $data['speaker'] = null;
                     }
-                    
+
                     return $data;
                 })
                 ->groupBy(function ($item) {
@@ -228,7 +229,7 @@ class ProgrammeController extends Controller
                 ->get()
                 ->map(function ($programme) use ($lang) {
                     $data = $programme->getContentInLanguage($lang);
-                    
+
                     if ($programme->speaker) {
                         $data['speaker'] = [
                             'id' => $programme->speaker->id,
@@ -239,7 +240,7 @@ class ProgrammeController extends Controller
                     } else {
                         $data['speaker'] = null;
                     }
-                    
+
                     return $data;
                 })
                 ->groupBy(function ($item) {
@@ -299,6 +300,7 @@ class ProgrammeController extends Controller
 
             $validated = $request->validate([
                 'jour' => 'sometimes|date',
+                'heure' => 'sometimes|date_format:H:i', // Ajouté ici
                 'evenement_fr' => 'sometimes|string|max:255',
                 'evenement_en' => 'sometimes|string|max:255',
                 'description_fr' => 'nullable|string',
@@ -310,6 +312,7 @@ class ProgrammeController extends Controller
                 'type_evenement' => 'nullable|in:keynote,session,workshop,panel,break,meal,networking,ceremony',
                 'speaker_id' => 'nullable|exists:speakers,id'
             ]);
+
 
             $programme->update($validated);
             $programme->load('speaker'); // Recharger la relation speaker
@@ -374,5 +377,56 @@ class ProgrammeController extends Controller
             'error' => $message,
             'message' => $e->getMessage()
         ], 500);
+    }
+    public function downloadPdf(Request $request)
+    {
+        try {
+            $lang = $request->query('lang', 'fr');
+
+            // Récupérer les données du programme
+            $programmes = Programme::with('speaker')
+                ->orderBy('jour')
+                ->orderBy('heure')
+                ->get()
+                ->map(function ($programme) use ($lang) {
+                    $data = $programme->getContentInLanguage($lang);
+
+                    if ($programme->speaker) {
+                        $data['speaker'] = [
+                            'id' => $programme->speaker->id,
+                            'name' => $programme->speaker->name,
+                            'job' => $lang === 'en' ? $programme->speaker->job_en : $programme->speaker->job_fr,
+                            'country' => $lang === 'en' ? $programme->speaker->country_en : $programme->speaker->country_fr,
+                            'description' => $lang === 'en' ? $programme->speaker->description_en : $programme->speaker->description_fr,
+                        ];
+                    } else {
+                        $data['speaker'] = null;
+                    }
+
+                    return $data;
+                })
+                ->groupBy(function ($item) {
+                    return Carbon::parse($item['jour'])->format('Y-m-d');
+                });
+
+            // Charger la vue pour le PDF
+            $pdf = Pdf::loadView('pdf.programme', [
+                'programmes' => $programmes,
+                'lang' => $lang
+            ]);
+
+            // Définir le nom du fichier
+            $filename = 'programme-conference-' . $lang . '.pdf';
+
+            // Télécharger le PDF
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la génération du PDF : ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Erreur lors de la génération du PDF',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
