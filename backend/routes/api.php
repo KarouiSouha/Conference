@@ -102,9 +102,11 @@ Route::prefix('Registration')->controller(RegistrationController::class)->group(
     Route::get('/all-participants-by-country', 'allParticipantsByCountry'); // 👈 CORRIGÉ
     Route::get('/participants-by-country/{countryCode}', 'participantsByCountry'); // 👈 CORRIGÉ
     Route::get('/recent','recent');
+    
 
     // Routes avec paramètres APRÈS
     Route::get('/{id}', 'show');
+    Route::post('/send-receipt','sendReceipt');
     Route::post('/', 'store');
     Route::post('/update/{id}', 'update');
     Route::delete('/{id}', 'destroy');

@@ -169,7 +169,7 @@ class RegistrationController extends Controller
                 'payment_proof' => $paymentProofPath,
                 'status' => 'pending',
                 'amount' => $request->amount,
-                'language' =>$request->language
+                'language' => $request->language
             ]);
 
             $mail = new RegistrationConfirmation(
@@ -475,5 +475,123 @@ class RegistrationController extends Controller
                 'message' => 'Error retrieving recent registrations: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function sendReceipt(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'firstName' => 'required|string',
+                'lastName' => 'required|string',
+                'language' => 'required|in:fr,en',
+                'totalAmount' => 'required|numeric',
+                'country' => 'required|string',
+                'participationType' => 'required|string',
+                'accommodationType' => 'required|string',
+                'paymentMethod' => 'required|string',
+                'accompanyingPersons' => 'nullable|json',
+                'registrationId' => 'nullable|integer' // Pour retrouver l'inscription si besoin
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Décoder les accompagnateurs s'ils existent
+            $accompanyingPersons = $request->accompanyingPersons
+                ? json_decode($request->accompanyingPersons, true)
+                : [];
+
+            // Préparer les données pour le PDF
+            $receiptData = [
+                'firstName' => $request->firstName,
+                'lastName' => $request->lastName,
+                'email' => $request->email,
+                'language' => $request->language,
+                'totalAmount' => $request->totalAmount,
+                'country' => $request->country,
+                'participationType' => $request->participationType,
+                'accommodationType' => $request->accommodationType,
+                'paymentMethod' => $request->paymentMethod,
+                'accompanyingPersons' => $accompanyingPersons,
+                'currentDate' => now()->format($request->language === 'fr' ? 'd/m/Y' : 'm/d/Y'),
+                'registrationId' => $request->registrationId
+            ];
+
+            // Générer le PDF côté serveur
+            $pdfContent = $this->generateReceiptPDF($receiptData);
+
+            // Créer un nom de fichier
+            $fileName = 'SITE2025_Receipt_' . str_replace(' ', '_', $request->firstName . '_' . $request->lastName) . '.pdf';
+            $tempPath = storage_path('app/temp/' . $fileName);
+
+            // Créer le dossier temp s'il n'existe pas
+            if (!file_exists(dirname($tempPath))) {
+                mkdir(dirname($tempPath), 0755, true);
+            }
+
+            // Sauvegarder le PDF temporairement
+            file_put_contents($tempPath, $pdfContent);
+
+            // Envoyer l'email avec le PDF en pièce jointe
+            Mail::send('emails.receipt', $receiptData, function ($message) use ($request, $tempPath, $fileName) {
+                $message->to($request->email)
+                    ->subject($request->language === 'fr'
+                        ? 'Reçu d\'inscription SITE 2025'
+                        : 'SITE 2025 Registration Receipt')
+                    ->attach($tempPath, [
+                        'as' => $fileName,
+                        'mime' => 'application/pdf',
+                    ]);
+            });
+
+            // Supprimer le fichier temporaire
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $request->language === 'fr'
+                    ? 'Reçu envoyé avec succès par email'
+                    : 'Receipt sent successfully by email'
+            ]);
+
+        } catch (\Exception $e) {
+            // Nettoyer le fichier temporaire en cas d'erreur
+            if (isset($tempPath) && file_exists($tempPath)) {
+                unlink($tempPath);
+            }
+
+            Log::error('Error sending receipt email: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $request->language === 'fr'
+                    ? 'Erreur lors de l\'envoi du reçu par email: ' . $e->getMessage()
+                    : 'Error sending receipt by email: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Générer le PDF du reçu côté serveur
+     */
+    private function generateReceiptPDF(array $data): string
+    {
+        // Utiliser une librairie comme DomPDF ou TCPDF
+        // Exemple avec DomPDF (composer require barryvdh/laravel-dompdf)
+
+        $pdf = app('dompdf.wrapper');
+        $html = view('emails.receipt', $data)->render();
+        $pdf->loadHTML($html);
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->output();
     }
 }
