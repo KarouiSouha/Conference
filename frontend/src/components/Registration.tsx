@@ -315,6 +315,10 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
       .sort((a, b) => a.label.localeCompare(b.label, language));
   }, [language]);
 
+  const getCountryName = (code: string) => {
+    return i18nCountries.getName(code, language, { select: 'official' }) || countries[code]?.name || code;
+  };
+
   const content = React.useMemo(() => ({
     fr: {
       title: 'Inscription SITE 2025',
@@ -576,7 +580,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
       submitData.append('title', formData.title);
       submitData.append('email', formData.email);
       submitData.append('phone', formData.phone);
-      submitData.append('country', formData.country);
+      submitData.append('country', getCountryName(formData.country));
       submitData.append('participation_type', formData.participationType);
       submitData.append('has_accompanying', formData.hasAccompanying);
       submitData.append('accompanying_details', JSON.stringify(formData.accompanyingPersons));
@@ -649,7 +653,7 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
             firstName={formData.firstName}
             lastName={formData.lastName}
             email={formData.email}
-            country={formData.country}
+            country={getCountryName(formData.country)}
             totalAmount={calculateTotalAmount()}
             accommodationType={formData.accommodationType}
             participationType={formData.participationType}
@@ -810,7 +814,8 @@ const Registration: React.FC<RegistrationProps> = ({ language = 'fr', apiBaseUrl
                       icon={Phone}
                       required
                       value={formData.phone}
-                      onChange={(e) => updateFormData('phone', e.target.value)}
+                      onChange={(e) =>
+                        updateFormData('phone', e.target.value)}
                       error={errors.phone}
                     />
                   </div>

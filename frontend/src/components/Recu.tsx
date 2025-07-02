@@ -17,7 +17,7 @@ interface RecuProps {
   paymentMethod: string;
   accompanyingPersons: { name: string; age: number; discount?: number }[];
   onNewRegistration: () => void;
-  registrationId?: number; // Ajouter l'ID de l'inscription pour l'envoi par email
+  registrationId?: number;
 }
 
 const Recu: React.FC<RecuProps> = ({
@@ -40,7 +40,7 @@ const Recu: React.FC<RecuProps> = ({
 
   const content = {
     fr: {
-      title: 'Reçu d\'Inscription SITE 2025',
+      title: "Reçu d'Inscription SITE 2025",
       issued: 'Émis le',
       participant: 'Participant',
       email: 'Email',
@@ -145,7 +145,6 @@ const Recu: React.FC<RecuProps> = ({
   const generatePDFBlob = async () => {
     if (!receiptRef.current) return null;
 
-    // Hide buttons before capturing
     const buttonContainer = receiptRef.current.querySelector('.button-container');
     if (buttonContainer) {
       buttonContainer.classList.add('hidden');
@@ -156,7 +155,6 @@ const Recu: React.FC<RecuProps> = ({
       useCORS: true,
     });
 
-    // Restore buttons after capturing
     if (buttonContainer) {
       buttonContainer.classList.remove('hidden');
     }
@@ -190,6 +188,30 @@ const Recu: React.FC<RecuProps> = ({
     return pdf.output('blob');
   };
 
+  const generatePNGBlob = async () => {
+    if (!receiptRef.current) return null;
+
+    const buttonContainer = receiptRef.current.querySelector('.button-container');
+    if (buttonContainer) {
+      buttonContainer.classList.add('hidden');
+    }
+
+    const canvas = await html2canvas(receiptRef.current, {
+      scale: 2,
+      useCORS: true,
+    });
+
+    if (buttonContainer) {
+      buttonContainer.classList.remove('hidden');
+    }
+
+    return new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/png');
+    });
+  };
+
   const downloadPDF = async () => {
     const pdfBlob = await generatePDFBlob();
     if (!pdfBlob) return;
@@ -205,33 +227,33 @@ const Recu: React.FC<RecuProps> = ({
   const sendReceiptByEmail = async () => {
     setIsEmailSending(true);
     try {
-      const pdfBlob = await generatePDFBlob();
-      if (!pdfBlob) {
-        throw new Error('Failed to generate PDF');
+      const pngBlob = await generatePNGBlob();
+      if (!pngBlob) {
+        throw new Error('Failed to generate PNG');
       }
 
-      // Convertir le blob en base64 pour l'envoyer
       const reader = new FileReader();
-      reader.readAsDataURL(pdfBlob);
-      
+      reader.readAsDataURL(pngBlob);
+
       reader.onloadend = async () => {
         const base64data = reader.result?.toString().split(',')[1];
-        
+
         const formData = new FormData();
         formData.append('email', email);
         formData.append('firstName', firstName);
         formData.append('lastName', lastName);
         formData.append('language', language);
-        // formData.append('pdfContent', base64data || '');
+        formData.append('pngContent', base64data || '');
         formData.append('totalAmount', totalAmount.toString());
         formData.append('country', country);
         formData.append('participationType', participationType);
         formData.append('accommodationType', accommodationType);
         formData.append('paymentMethod', paymentMethod);
-        
-        // Ajouter les accompagnateurs s'il y en a
         if (accompanyingPersons.length > 0) {
           formData.append('accompanyingPersons', JSON.stringify(accompanyingPersons));
+        }
+        if (registrationId) {
+          formData.append('registrationId', registrationId.toString());
         }
 
         const response = await fetch('http://localhost:8000/api/Registration/send-receipt', {
@@ -244,7 +266,7 @@ const Recu: React.FC<RecuProps> = ({
         }
 
         setEmailSent(true);
-        setTimeout(() => setEmailSent(false), 3000); // Reset after 3 seconds
+        setTimeout(() => setEmailSent(false), 3000);
       };
     } catch (error) {
       console.error('Error sending email:', error);
@@ -257,7 +279,6 @@ const Recu: React.FC<RecuProps> = ({
   return (
     <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-lg border border-gray-200 font-sans">
       <Card className="border-none shadow-none" ref={receiptRef}>
-        {/* Header */}
         <div className="flex justify-between items-center mb-8 border-b border-gray-300 pb-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">{content[language].title}</h1>
@@ -269,7 +290,6 @@ const Recu: React.FC<RecuProps> = ({
           </div>
         </div>
 
-        {/* Receipt Details */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-900">{content[language].thankYou}</h2>
@@ -300,7 +320,7 @@ const Recu: React.FC<RecuProps> = ({
                   <Globe className="w-5 h-5 text-blue-600 mr-3" />
                   <div>
                     <span className="font-semibold text-gray-900">{content[language].nationality}: </span>
-                    <span>{country === 'Tunisia' ? content[language].form.countryOptions.tunisia : content[language].form.countryOptions.international}</span>
+                    <span>{country}</span>
                   </div>
                 </div>
               </div>
@@ -329,7 +349,6 @@ const Recu: React.FC<RecuProps> = ({
               </div>
             </div>
 
-            {/* Accompanying Persons */}
             <div className="mt-6">
               <div className="flex items-center mb-4">
                 <User className="w-5 h-5 text-blue-600 mr-3" />
@@ -363,7 +382,6 @@ const Recu: React.FC<RecuProps> = ({
               )}
             </div>
 
-            {/* Discounts and Total */}
             <div className="mt-6 border-t border-gray-200 pt-4">
               {totalDiscount > 0 && (
                 <div className="flex justify-between mb-2">
@@ -379,7 +397,6 @@ const Recu: React.FC<RecuProps> = ({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="border-t border-gray-300 pt-4 text-center">
           <p className="text-xs text-gray-500 mb-4">
             {language === 'fr'

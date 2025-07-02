@@ -102,7 +102,7 @@ class RegistrationController extends Controller
                 'title' => 'required|string|max:255',
                 'email' => 'required|email|unique:registrations,email',
                 'phone' => 'required|string|max:20',
-                'country' => 'required|string|size:2',
+                'country' => 'required|string',
                 'participation_type' => 'required|in:without-article,with-article',
                 'has_accompanying' => 'required|in:yes,no',
                 'accompanying_details' => 'nullable|string',
@@ -491,7 +491,8 @@ class RegistrationController extends Controller
                 'accommodationType' => 'required|string',
                 'paymentMethod' => 'required|string',
                 'accompanyingPersons' => 'nullable|json',
-                'registrationId' => 'nullable|integer' // Pour retrouver l'inscription si besoin
+                'pngContent' => 'required|string', // Expect PNG base64 data
+                'registrationId' => 'nullable|integer'
             ]);
 
             if ($validator->fails()) {
@@ -502,12 +503,10 @@ class RegistrationController extends Controller
                 ], 422);
             }
 
-            // Décoder les accompagnateurs s'ils existent
             $accompanyingPersons = $request->accompanyingPersons
                 ? json_decode($request->accompanyingPersons, true)
                 : [];
 
-            // Préparer les données pour le PDF
             $receiptData = [
                 'firstName' => $request->firstName,
                 'lastName' => $request->lastName,
@@ -523,22 +522,21 @@ class RegistrationController extends Controller
                 'registrationId' => $request->registrationId
             ];
 
-            // Générer le PDF côté serveur
-            $pdfContent = $this->generateReceiptPDF($receiptData);
+            // Generate PDF from PNG
+            $pdfContent = $this->generateReceiptPDF($request->pngContent);
 
-            // Créer un nom de fichier
+            // Create a file name for the PDF
             $fileName = 'SITE2025_Receipt_' . str_replace(' ', '_', $request->firstName . '_' . $request->lastName) . '.pdf';
             $tempPath = storage_path('app/temp/' . $fileName);
 
-            // Créer le dossier temp s'il n'existe pas
             if (!file_exists(dirname($tempPath))) {
                 mkdir(dirname($tempPath), 0755, true);
             }
 
-            // Sauvegarder le PDF temporairement
+            // Save the PDF temporarily
             file_put_contents($tempPath, $pdfContent);
 
-            // Envoyer l'email avec le PDF en pièce jointe
+            // Send email with PDF attachment and Blade template for email body
             Mail::send('emails.receipt', $receiptData, function ($message) use ($request, $tempPath, $fileName) {
                 $message->to($request->email)
                     ->subject($request->language === 'fr'
@@ -550,7 +548,7 @@ class RegistrationController extends Controller
                     ]);
             });
 
-            // Supprimer le fichier temporaire
+            // Clean up the temporary file
             if (file_exists($tempPath)) {
                 unlink($tempPath);
             }
@@ -563,7 +561,6 @@ class RegistrationController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            // Nettoyer le fichier temporaire en cas d'erreur
             if (isset($tempPath) && file_exists($tempPath)) {
                 unlink($tempPath);
             }
@@ -580,18 +577,36 @@ class RegistrationController extends Controller
     }
 
     /**
-     * Générer le PDF du reçu côté serveur
+     * Generate a PDF from the provided PNG base64 content
      */
-    private function generateReceiptPDF(array $data): string
+    private function generateReceiptPDF(string $pngBase64): string
     {
-        // Utiliser une librairie comme DomPDF ou TCPDF
-        // Exemple avec DomPDF (composer require barryvdh/laravel-dompdf)
+        // Decode base64 PNG content
+        $pngContent = base64_decode($pngBase64);
 
+        // Create a temporary file for the PNG
+        $tempPngPath = storage_path('app/temp/receipt_temp_' . uniqid() . '.png');
+        if (!file_exists(dirname($tempPngPath))) {
+            mkdir(dirname($tempPngPath), 0755, true);
+        }
+        file_put_contents($tempPngPath, $pngContent);
+
+        // Initialize DomPDF
         $pdf = app('dompdf.wrapper');
-        $html = view('emails.receipt', $data)->render();
-        $pdf->loadHTML($html);
         $pdf->setPaper('A4', 'portrait');
 
-        return $pdf->output();
+        // Create HTML with the PNG image
+        $html = '<html><body><img src="' . $tempPngPath . '" style="width: 100%; height: auto;"></body></html>';
+        $pdf->loadHTML($html);
+
+        // Generate PDF content
+        $pdfContent = $pdf->output();
+
+        // Clean up temporary PNG file
+        if (file_exists($tempPngPath)) {
+            unlink($tempPngPath);
+        }
+
+        return $pdfContent;
     }
 }

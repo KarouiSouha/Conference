@@ -141,6 +141,7 @@ return [
          * @link http://www.php.net/image
          */
         'pdf_backend' => 'CPDF',
+        'remote_enabled' => true,
 
         /**
          * html target media view which should be rendered into pdf.
@@ -267,7 +268,7 @@ return [
          *
          * @var bool
          */
-        'enable_remote' => false,
+        'enable_remote' => true,
 
         /**
          * List of allowed remote hosts
