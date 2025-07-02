@@ -13,6 +13,7 @@ use App\Mail\RegistrationConfirmation;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Mail\PaymentConfirmationEmail;
 
 
 class RegistrationController extends Controller
@@ -108,7 +109,8 @@ class RegistrationController extends Controller
                 'accommodation_type' => 'required|in:without-accommodation,with-accommodation',
                 'payment_method' => 'required|in:bank-transfer,administrative-order,check',
                 'payment_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
-                'amount' => 'required|numeric'
+                'amount' => 'required|numeric',
+                'language' => 'nullable'
             ], [
                 'email.unique' => 'Cette adresse email est déjà utilisée pour une inscription.',
                 'first_name.required' => 'Le prénom est requis.',
@@ -166,7 +168,8 @@ class RegistrationController extends Controller
                 'payment_method' => $request->payment_method,
                 'payment_proof' => $paymentProofPath,
                 'status' => 'pending',
-                'amount' => $request->amount
+                'amount' => $request->amount,
+                'language' =>$request->language
             ]);
 
             $mail = new RegistrationConfirmation(
@@ -384,12 +387,14 @@ class RegistrationController extends Controller
             $registration = Registration::findOrFail($id);
             $registration->markAsPaid();
 
+            // Send payment confirmation email
+            Mail::to($registration->email)->send(new PaymentConfirmationEmail($registration));
+
             return response()->json([
                 'success' => true,
                 'data' => $registration->fresh(),
                 'message' => 'Inscription marquée comme payée'
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -452,23 +457,23 @@ class RegistrationController extends Controller
         }
     }
     /**
- * Get recent registrations.
- */
-public function recent(): JsonResponse
-{
-    try {
-        $recentRegistrations = Registration::orderBy('created_at', 'desc')->take(3)->get();
+     * Get recent registrations.
+     */
+    public function recent(): JsonResponse
+    {
+        try {
+            $recentRegistrations = Registration::orderBy('created_at', 'desc')->take(3)->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $recentRegistrations,
-            'message' => 'Recent registrations retrieved successfully'
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error retrieving recent registrations: ' . $e->getMessage()
-        ], 500);
+            return response()->json([
+                'success' => true,
+                'data' => $recentRegistrations,
+                'message' => 'Recent registrations retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving recent registrations: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
 }
