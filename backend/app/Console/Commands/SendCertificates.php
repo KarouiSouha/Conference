@@ -65,7 +65,7 @@ class SendCertificates extends Command
 
         Mail::send([], [], function ($message) use ($email, $path) {
             $message->to($email)
-                ->subject('Your Participation Certificate')
+                ->subject('Your Participation Certificate in SITE2025')
                 ->attach($path);
         });
     }
