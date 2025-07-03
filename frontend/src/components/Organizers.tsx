@@ -21,14 +21,14 @@ const Organizers: React.FC<OrganizersProps> = ({
           name: 'ISETB',
           fullName: 'Institut Supérieur des Études Technologiques de Bizerte',
           description: 'Institution d\'enseignement supérieur spécialisée dans les technologies',
-          image: '/assets/iset.jpg',
+          image: '/asset/images/iset.jpg',
           website: 'https://www.isetb.tn'
         },
         {
           name: 'ADT',
           fullName: 'Association de Développement Technologique',
           description: 'Association dédiée au développement et à l\'innovation technologique',
-          image: '/assets/ADT.jpg',
+          image: '/asset/images/ADT.jpg',
           website: 'https://www.adt.tn'
         }
       ]

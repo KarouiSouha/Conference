@@ -37,9 +37,6 @@ const Footer: React.FC<FooterProps> = ({ language }) => {
       
       <div className="relative z-10 container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
-          {/* Section organisateurs en haut du footer */}
-        
-
           {/* Main content grid */}
           <div className="grid md:grid-cols-5 gap-6 mb-8">
             

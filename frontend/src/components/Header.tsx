@@ -72,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage }) => {
           {/* Desktop Layout */}
           <div className="hidden lg:flex items-center justify-between w-full h-20">
             <div className="flex items-center">
-              <img src="/assets/Logo.png" alt="Logo" className="w-24 sm:w-32 h-auto" />
+              <img src="/asset/images/Logo.png" alt="Logo" className="w-24 sm:w-32 h-auto" />
             </div>
 
             {/* Desktop Navigation */}
