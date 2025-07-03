@@ -90,8 +90,7 @@ Route::prefix('Programme')->controller(ProgrammeController::class)->group(functi
     Route::get('/current-month', 'currentMonth');    // GET /api/Programme/current-month?lang=fr
     Route::post('/', 'store');                      // POST /api/Programme
     Route::put('/{id}', 'update');                  // PUT /api/Programme/{id}
-    Route::delete('/{id}', 'destroy');              // DELETE /api/Programme/{id}
-    Route::get('/download-pdf', 'downloadPdf');  
+    Route::delete('/{id}', 'destroy');              // DELETE /api/Programme/{id} 
 });
 
 Route::prefix('Registration')->controller(RegistrationController::class)->group(function () {

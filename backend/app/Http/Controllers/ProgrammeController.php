@@ -378,55 +378,5 @@ class ProgrammeController extends Controller
             'message' => $e->getMessage()
         ], 500);
     }
-    public function downloadPdf(Request $request)
-    {
-        try {
-            $lang = $request->query('lang', 'fr');
-
-            // Récupérer les données du programme
-            $programmes = Programme::with('speaker')
-                ->orderBy('jour')
-                ->orderBy('heure')
-                ->get()
-                ->map(function ($programme) use ($lang) {
-                    $data = $programme->getContentInLanguage($lang);
-
-                    if ($programme->speaker) {
-                        $data['speaker'] = [
-                            'id' => $programme->speaker->id,
-                            'name' => $programme->speaker->name,
-                            'job' => $lang === 'en' ? $programme->speaker->job_en : $programme->speaker->job_fr,
-                            'country' => $lang === 'en' ? $programme->speaker->country_en : $programme->speaker->country_fr,
-                            'description' => $lang === 'en' ? $programme->speaker->description_en : $programme->speaker->description_fr,
-                        ];
-                    } else {
-                        $data['speaker'] = null;
-                    }
-
-                    return $data;
-                })
-                ->groupBy(function ($item) {
-                    return Carbon::parse($item['jour'])->format('Y-m-d');
-                });
-
-            // Charger la vue pour le PDF
-            $pdf = Pdf::loadView('pdf.programme', [
-                'programmes' => $programmes,
-                'lang' => $lang
-            ]);
-
-            // Définir le nom du fichier
-            $filename = 'programme-conference-' . $lang . '.pdf';
-
-            // Télécharger le PDF
-            return $pdf->download($filename);
-        } catch (\Exception $e) {
-            Log::error('Erreur lors de la génération du PDF : ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'error' => 'Erreur lors de la génération du PDF',
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
+   
 }
