@@ -20,23 +20,40 @@ class SendCertificates extends Command
         $speakers = Speaker::all();
 
         foreach ($participants as $p) {
-            $this->generateAndSend($p->firstName . ' ' . $p->lastName, $p->email, $p->language);
+            $this->generateAndSend($p->first_name . ' ' . $p->last_name, $p->email);
         }
 
         foreach ($speakers as $s) {
-            $this->generateAndSend($s->name, $s->email, $s->language);
+            $this->generateAndSend($s->name, $s->email);
         }
 
-        $this->info('All certificates sent!');
+        // Vider le dossier après envoi
+        $this->clearCertsDirectory();
+
+        $this->info('All certificates sent and directory cleared!');
     }
 
-    private function generateAndSend($name, $email, $lang)
+    private function clearCertsDirectory()
     {
-        $template = public_path("certificates/certificate_{$lang}.png");
-        $image = Image::make($template);
+        $certsPath = storage_path('app/public/certs');
 
-        $image->text($name, 860, 700, function ($font) {
-            $font->file(public_path('fonts/ARIAL.ttf')); // Change if you have another font
+        $files = glob($certsPath . '/*'); // Récupère tous les fichiers du dossier
+
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                unlink($file); // Supprime chaque fichier
+            }
+        }
+    }
+
+
+    private function generateAndSend($name, $email)
+    {
+        $template = public_path("certificates/certificate_en.png");
+        $image = Image::read($template);
+
+        $image->text($name, 970, 750, function ($font) {
+            $font->file(public_path('fonts/ARIAL.TTF')); // Change if you have another font
             $font->size(48);
             $font->color('#000000');
             $font->align('center');
@@ -48,8 +65,8 @@ class SendCertificates extends Command
 
         Mail::send([], [], function ($message) use ($email, $path) {
             $message->to($email)
-                    ->subject('Your Participation Certificate')
-                    ->attach($path);
+                ->subject('Your Participation Certificate')
+                ->attach($path);
         });
     }
 }

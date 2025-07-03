@@ -26,7 +26,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('certificates:send')
                  ->timezone('Africa/Tunis')
-                 ->yearlyOn(07, 03, '18:49'); // chaque 26 octobre à 18h
+                 ->yearlyOn(7, 3, '19:58'); // chaque 26 octobre à 18h
     }
 
     /**
